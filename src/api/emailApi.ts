@@ -19,7 +19,7 @@ export interface SendEmailResponse {
 
 export const sendEmailToLead = async (data: SendEmailRequest): Promise<SendEmailResponse> => {
   try {
-    const response = await axiosInstance.post("/v1/lead/sendEmail", data);
+    const response = await axiosInstance.post("/lead/sendEmail", data);
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || "Failed to send email");
@@ -28,7 +28,7 @@ export const sendEmailToLead = async (data: SendEmailRequest): Promise<SendEmail
 
 export const sendBulkEmailsToLeads = async (data: SendBulkEmailRequest): Promise<SendEmailResponse> => {
   try {
-    const response = await axiosInstance.post("/v1/lead/sendBulkEmails", data);
+    const response = await axiosInstance.post("/lead/sendBulkEmails", data);
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || "Failed to send bulk emails");

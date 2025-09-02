@@ -14,7 +14,7 @@ export interface ContactUsResponse {
 }
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://audit.vanurmedia.in',
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: {
     'Content-Type': 'application/json',
   }
@@ -30,7 +30,7 @@ export const contactUs = async (
   };
 
   const response = await api.post<ContactUsResponse>(
-    "/api/v1/user/createContact", // Fixed: Changed from "users" to "user"
+    "/user/createContact", // Fixed: Changed from "users" to "user"
     requestData
   );
   return response.data;

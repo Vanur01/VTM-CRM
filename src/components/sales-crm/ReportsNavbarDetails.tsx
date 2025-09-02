@@ -129,7 +129,11 @@ const ReportsNavbarDetails: React.FC<ReportsNavbarDetailsProps> = ({
           
           <div className="flex gap-3 items-center">
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              if (typeof window !== "undefined") {
+                window.location.reload()
+              }
+            }}
             className="w-9 h-9 flex items-center justify-center bg-white text-indigo-600 rounded-full shadow hover:bg-indigo-50 transition cursor-pointer"
           >
             <Refresh fontSize="small"/>

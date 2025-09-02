@@ -14,12 +14,12 @@ export interface BookDemoResponse {
 }
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://audit.vanurmedia.in'
+  baseURL: process.env.NEXT_PUBLIC_API_URL
 });
 
 export const bookDemo = async (data: BookDemoRequest): Promise<BookDemoResponse> => {
   try {
-    const response = await api.post<BookDemoResponse>('/api/v1/user/createBooking', data);
+    const response = await api.post<BookDemoResponse>('/user/createBooking', data);
     return response.data;
   } catch (error) {
     console.error('API Error:', error);

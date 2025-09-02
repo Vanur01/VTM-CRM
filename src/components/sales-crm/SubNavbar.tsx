@@ -243,19 +243,22 @@ const handleCreateClick = () => {
       // Create a Blob with the CSV data
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
 
-      // Create a temporary link element and trigger download
-      const link = document.createElement("a");
-      if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute(
-          "download",
-          `leads_export_${new Date().toISOString().split("T")[0]}.csv`
-        );
-        link.style.visibility = "hidden";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      // Check if we're in browser environment
+      if (typeof window !== "undefined" && typeof document !== "undefined") {
+        // Create a temporary link element and trigger download
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+          const url = URL.createObjectURL(blob);
+          link.setAttribute("href", url);
+          link.setAttribute(
+            "download",
+            `leads_export_${new Date().toISOString().split("T")[0]}.csv`
+          );
+          link.style.visibility = "hidden";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
       }
 
       setSuccessMessage({
@@ -325,18 +328,21 @@ const handleCreateClick = () => {
       // Create a Blob with the CSV data
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
 
-      // Create a temporary link element and trigger download
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.href = url;
-      link.setAttribute(
-        "download",
-        `tasks_export_${new Date().toISOString().split("T")[0]}.csv`
-      );
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      // Check if we're in browser environment
+      if (typeof window !== "undefined" && typeof document !== "undefined") {
+        // Create a temporary link element and trigger download
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.setAttribute(
+          "download",
+          `tasks_export_${new Date().toISOString().split("T")[0]}.csv`
+        );
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
 
       setSuccessMessage({
         title: "Success",

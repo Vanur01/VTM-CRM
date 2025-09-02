@@ -371,8 +371,10 @@ export default function MainSidebar({
         setCollapsed(!collapsed);
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    if (typeof window !== "undefined") {
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }
   }, [collapsed, setCollapsed]);
 
   // Handlers

@@ -74,6 +74,9 @@ const FAQ = () => {
 
   // ✅ Moved useEffect inside the component
   useEffect(() => {
+    // Check if we're in browser environment
+    if (typeof window === "undefined" || typeof document === "undefined") return;
+
     const style = document.createElement('style');
     style.textContent = `
       @keyframes float {

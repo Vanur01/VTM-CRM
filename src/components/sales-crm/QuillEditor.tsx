@@ -1,11 +1,16 @@
 "use client";
 import React, { useRef, useState, useEffect } from "react";
-import ReactQuill, { ReactQuillProps } from "react-quill";
+import dynamic from "next/dynamic";
+// Dynamically import react-quill to avoid SSR issues
+const ReactQuill = dynamic(() => import('react-quill'), {
+  ssr: false,
+  loading: () => <div className="h-32 bg-gray-100 rounded border flex items-center justify-center">Loading editor...</div>
+}) as any;
 import "react-quill/dist/quill.snow.css";
 
 import { AllowedToken } from './DynamicQuillEditor';
 
-interface QuillEditorProps extends Partial<ReactQuillProps> {
+interface QuillEditorProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -55,7 +60,7 @@ const QuillEditor: React.FC<any> = ({
   ...props
 }) => {
   const tokens = allowedTokens ?? DEFAULT_TOKENS;
-  const quillRef = useRef<ReactQuill>(null);
+  const quillRef = useRef<any>(null);
   const lastSelection = useRef<any>(null); // to track the last cursor position
   const [selectedToken, setSelectedToken] = useState("");
 

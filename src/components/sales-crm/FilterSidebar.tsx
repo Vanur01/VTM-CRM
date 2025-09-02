@@ -21,13 +21,40 @@ interface LeadFilters {
   email?: string;
   phone?: string;
   company?: string;
+  companyName?: string;
   leadSource?: string;
+  source?: string;
   leadStatus?: string;
-  priority?: string;
   status?: string;
+  priority?: string;
+  temperature?: string;
+  industry?: string;
+  followUpDate?: string;
+  searchText?: string;
   'address.city'?: string;
   'address.state'?: string;
   'address.street'?: string;
+  'address.country'?: string;
+  'address.postalCode'?: string;
+  website?: string;
+  title?: string;
+  mobile?: string;
+  leadOwner?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  convertedDate?: string;
+  expectedCloseDate?: string;
+  actualCloseDate?: string;
+  annualRevenue?: number;
+  numberOfEmployees?: number;
+  rating?: number;
+  tags?: string[];
+  isConverted?: boolean;
+  isDeleted?: boolean;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 export default function FilterSidebar() {
@@ -87,66 +114,52 @@ export default function FilterSidebar() {
   const getFilterFields = () => {
     if (pathname.includes('/tasks')) {
       return [
-        "Status",
         "Priority",
-        "Due Date",
-        "Completion Date",
-        "Created At"
+        "Status"
       ];
     }
     if (pathname.includes('/deals')) {
       return [
-        "Type",
-        "Lead Source",
-        "Stage",
-        "Min Amount",
-        "Max Amount",
-        "Start Date",
-        "End Date"
+        "Industry",
+        "Source",
+        "Status",
+        "Priority",
+        "Temperature",
+        "Follow Up Date",
+        "Sort By",
+        "Sort Order"
       ];
     }
     if (pathname.includes('/calls')) {
       return [
-        "Call Type",
-        "Outgoing Call Status",
-        "Call Purpose",
-        "Call Agenda",
-        "Created At",
-        "Updated At"
+        "Call Type"
       ];
     }
     if (pathname.includes('/meetings')) {
       return [
         "Meeting Venue",
-        "Participants",
-        "From Date Time",
-        "To Date Time",
-        "Created At"
+        "Status"
       ];
     }
+    // Updated leads filter fields - only the specific ones you requested
     return [
+      "Industry",
+      "Source", 
       "Status",
-      "Lead Source",
-      "Lead Status",
       "Priority",
+      "Temperature",
+      "Follow Up Date",
+      "Sort Order"
     ];
   };
 
   const getFilterValue = (field: string): string => {
     if (pathname.includes('/tasks')) {
       switch (field) {
-        case "Subject":
-          return "subject";
-        case "Status":
-          return "status";
         case "Priority":
           return "priority";
-        case "Due Date":
-          return "dueDate";
-        case "Completion Date":
-          return "completionDate";
-        case "Created At":
-          return "createdAt";
+        case "Status":
+          return "status";
         default:
           return field.toLowerCase();
       }
@@ -154,22 +167,22 @@ export default function FilterSidebar() {
     
     if (pathname.includes('/deals')) {
       switch (field) {
-        case "Deal Name":
-          return "dealName";
-        case "Type":
-          return "type";
-        case "Lead Source":
-          return "leadSource";
-        case "Stage":
-          return "stage";
-        case "Min Amount":
-          return "minAmount";
-        case "Max Amount":
-          return "maxAmount";
-        case "Start Date":
-          return "startDate";
-        case "End Date":
-          return "endDate";
+        case "Industry":
+          return "industry";
+        case "Source":
+          return "source";
+        case "Status":
+          return "status";
+        case "Priority":
+          return "priority";
+        case "Temperature":
+          return "temperature";
+        case "Follow Up Date":
+          return "followUpDate";
+        case "Sort By":
+          return "sortBy";
+        case "Sort Order":
+          return "sortOrder";
         default:
           return field.toLowerCase();
       }
@@ -179,16 +192,6 @@ export default function FilterSidebar() {
       switch (field) {
         case "Call Type":
           return "callType";
-        case "Outgoing Call Status":
-          return "outgoingCallStatus";
-        case "Call Purpose":
-          return "callPurpose";
-        case "Call Agenda":
-          return "callAgenda";
-        case "Created At":
-          return "createdAt";
-        case "Updated At":
-          return "updatedAt";
         default:
           return field.toLowerCase();
       }
@@ -196,50 +199,33 @@ export default function FilterSidebar() {
 
     if (pathname.includes('/meetings')) {
       switch (field) {
-        case "Title":
-          return "title";
-        case "Host":
-          return "host";
         case "Meeting Venue":
           return "meetingVenue";
-        case "Participants":
-          return "participants";
-        case "From Date Time":
-          return "fromDateTime";
-        case "To Date Time":
-          return "toDateTime";
-        case "Created At":
-          return "createdAt";
+        case "Status":
+          return "status";
         default:
           return field.toLowerCase();
       }
     }
     
+    // Updated mapping for leads - only the specific fields
     switch (field) {
-      case "Company":
-        return "company";
-      case "First Name":
-        return "firstName";
-      case "Last Name":
-        return "lastName";
-      case "Email":
-        return "email";
-      case "Phone":
-        return "phone";
-      case "Lead Source":
-        return "leadSource";
-      case "Lead Status":
-        return "leadStatus";
-      case "Priority":
-        return "priority";
+      case "Industry":
+        return "industry";
+      case "Source":
+        return "source";
       case "Status":
         return "status";
-      case "City":
-        return "address.city";
-      case "State":
-        return "address.state";
-      case "Street":
-        return "address.street";
+      case "Priority":
+        return "priority";
+      case "Temperature":
+        return "temperature";
+      case "Follow Up Date":
+        return "followUpDate";
+      case "Sort By":
+        return "sortBy";
+      case "Sort Order":
+        return "sortOrder";
       default:
         return field.toLowerCase();
     }
@@ -247,11 +233,6 @@ export default function FilterSidebar() {
 
   const formatDateForApi = (dateStr: string, field: string): string => {
     const date = new Date(dateStr);
-    
-    // For dueDate, send in YYYY-MM-DD format
-    if (field === "Due Date") {
-      return date.toISOString().split('T')[0];
-    }
     
     // For createdAt and completionDate, send in MM/DD/YYYY format
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -261,39 +242,30 @@ export default function FilterSidebar() {
   };
 
   const getFieldType = (field: string): string => {
-    if (pathname.includes('/tasks')) {
-      if (['Due Date', 'Completion Date', 'Created At'].includes(field)) {
-        return 'date';
-      }
-    }
     if (pathname.includes('/deals')) {
-      if (['Start Date', 'End Date'].includes(field)) {
-        return 'date';
-      }
-      if (['Min Amount', 'Max Amount'].includes(field)) {
-        return 'number';
-      }
-    }
-    if (pathname.includes('/calls')) {
-      if (['Created At', 'Updated At'].includes(field)) {
+      if (['Follow Up Date'].includes(field)) {
         return 'date';
       }
     }
-    if (pathname.includes('/meetings')) {
-      if (['From Date Time', 'To Date Time', 'Created At'].includes(field)) {
-        return 'date';
-      }
+    
+    // Updated field types for leads - only the specific fields
+    if (['Follow Up Date'].includes(field)) {
+      return 'date';
     }
+    
     return 'text';
   };
 
   const applyFilters = () => {
     if (pathname.includes('/tasks')) {
-      const filters: any = {};
+      const filters: any = {
+        page: 1,
+        limit: 10
+      };
       
-      // Add search text to subject if present
+      // Add search text for general search
       if (searchText) {
-        filters.subject = searchText;
+        filters.search = searchText;
       }
 
       // Add selected field filters with their values
@@ -301,12 +273,7 @@ export default function FilterSidebar() {
         if (value) {
           const filterKey = getFilterValue(field);
           if (filterKey) {
-            // Handle date fields specially
-            if (['dueDate', 'completionDate', 'createdAt'].includes(filterKey)) {
-              filters[filterKey] = formatDateForApi(value, field);
-            } else {
-              filters[filterKey] = value;
-            }
+            filters[filterKey] = value;
           }
         }
       });
@@ -315,9 +282,9 @@ export default function FilterSidebar() {
     } else if (pathname.includes('/deals')) {
       const filters: any = {};
 
-      // Add search text to dealName if present
+      // Add search text if present
       if (searchText) {
-        filters.dealName = searchText;
+        filters.searchText = searchText;
       }
 
       // Add selected field filters with their values
@@ -326,12 +293,8 @@ export default function FilterSidebar() {
           const filterKey = getFilterValue(field);
           if (filterKey) {
             // Handle date fields specially
-            if (['startDate', 'endDate'].includes(filterKey)) {
+            if (['followUpDate'].includes(filterKey)) {
               filters[filterKey] = formatDateForApi(value, field);
-            }
-            // Handle numeric fields for amounts
-            else if (['minAmount', 'maxAmount'].includes(filterKey)) {
-              filters[filterKey] = parseFloat(value);
             } else {
               filters[filterKey] = value;
             }
@@ -341,7 +304,10 @@ export default function FilterSidebar() {
 
       setDealsFilters(filters);
     } else if (pathname.includes('/calls')) {
-      const filters: any = {};
+      const filters: any = {
+        page: 1,
+        limit: 10
+      };
       
       // Add search text if present
       if (searchText) {
@@ -353,23 +319,28 @@ export default function FilterSidebar() {
         if (value) {
           const filterKey = getFilterValue(field);
           if (filterKey) {
-            // Handle date fields specially
-            if (['createdAt', 'updatedAt'].includes(filterKey)) {
-              filters[filterKey] = formatDateForApi(value, field);
-            } else {
-              filters[filterKey] = value;
-            }
+            filters[filterKey] = value;
           }
         }
       });
 
       fetchAllCalls(filters);
     } else if (pathname.includes('/meetings')) {
-      const filters: any = {};
+      const filters: any = {
+        page: 1,
+        limit: 10
+      };
+      
+      // Add companyId - required for meetings API
+      if (!user?.companyId) {
+        console.error('Company ID not found');
+        return;
+      }
+      filters.companyId = user.companyId;
       
       // Add search text if present
       if (searchText) {
-        filters.title = searchText;
+        filters.search = searchText;
       }
 
       // Add selected field filters with their values
@@ -377,33 +348,32 @@ export default function FilterSidebar() {
         if (value) {
           const filterKey = getFilterValue(field);
           if (filterKey) {
-            // Handle date fields specially
-            if (['fromDateTime', 'toDateTime', 'createdAt'].includes(filterKey)) {
-              filters[filterKey] = formatDateForApi(value, field);
-            } else {
-              filters[filterKey] = value;
-            }
+            filters[filterKey] = value;
           }
         }
       });
 
       fetchMeetings(filters);
     } else {
-      // Default leads/contacts filtering
-      const filters: LeadFilters = {};
+      // Default leads/contacts filtering - updated for specific fields only
+      const filters: any = {};
 
       if (searchText) {
-        filters.firstName = searchText;
-        filters.lastName = searchText;
-        filters.email = searchText;
-        filters.company = searchText;
+        filters.searchText = searchText;
       }
 
       filterValues.forEach(({ field, value }) => {
         if (value) {
-          const filterKey = getFilterValue(field) as keyof LeadFilters;
+          const filterKey = getFilterValue(field);
           if (filterKey) {
-            filters[filterKey] = value;
+            // Handle date fields
+            if (['followUpDate'].includes(filterKey)) {
+              filters[filterKey] = formatDateForApi(value, field);
+            }
+            // Handle string fields
+            else {
+              filters[filterKey] = value;
+            }
           }
         }
       });
@@ -424,13 +394,15 @@ export default function FilterSidebar() {
     setFilterValues([]);
     
     if (pathname.includes('/tasks')) {
-      fetchTasksWithFilters({});
+      fetchTasksWithFilters({ page: 1, limit: 10 });
     } else if (pathname.includes('/deals')) {
       clearDealsFilters();
     } else if (pathname.includes('/calls')) {
-      fetchAllCalls({});
+      fetchAllCalls({ page: 1, limit: 10 });
     } else if (pathname.includes('/meetings')) {
-      fetchMeetings({});
+      if (user?.companyId) {
+        fetchMeetings({ page: 1, limit: 10, companyId: user.companyId });
+      }
     } else {
       if (user?.companyId) {
         fetchLeads(user.companyId, {});
@@ -452,6 +424,14 @@ export default function FilterSidebar() {
     return "Filter"; // fallback
   };
 
+  const getSearchPlaceholder = () => {
+    if (pathname.includes("/tasks")) return "Search tasks...";
+    if (pathname.includes("/calls")) return "Search calls...";
+    if (pathname.includes("/meetings")) return "Search meetings...";
+    if (pathname.includes("/deals")) return "Search deals...";
+    return "Search leads..."; // fallback for leads/contacts
+  };
+
   // Enum options for dropdowns based on backend models
   const LEAD_STATUS_OPTIONS = [
     "new",
@@ -464,6 +444,7 @@ export default function FilterSidebar() {
     "unreachable",
     "disqualified",
   ];
+
   const LEAD_STATUS_LABELS: Record<string, string> = {
     new: "New",
     contacted: "Contacted",
@@ -475,19 +456,45 @@ export default function FilterSidebar() {
     unreachable: "Unreachable",
     disqualified: "Disqualified",
   };
-  const LEAD_STATUS_SIMPLE_OPTIONS = ["hot", "warm", "cold"];
+
+  const LEAD_STATUS_SIMPLE_OPTIONS = ["Hot", "Warm", "Cold", "New"];
   const LEAD_STATUS_SIMPLE_LABELS: Record<string, string> = {
-    hot: "Hot",
-    warm: "Warm",
-    cold: "Cold",
+    Hot: "Hot",
+    Warm: "Warm",
+    Cold: "Cold",
+    New: "New",
   };
+
+  // Updated Task Status Options as requested
   const TASK_STATUS_OPTIONS = [
-    "Not Started",
-    "In Progress",
-    "Completed",
-    "Deferred",
-    "Waiting on someone else",
+    "open",
+    "progress", 
+    "done",
+    "cancel"
   ];
+
+  const TASK_STATUS_LABELS: Record<string, string> = {
+    open: "Open",
+    progress: "Progress",
+    done: "Done",
+    cancel: "Cancel"
+  };
+
+  // Task Priority Options as requested
+  const TASK_PRIORITY_OPTIONS = [
+    "low",
+    "medium", 
+    "high",
+    "urgent"
+  ];
+
+  const TASK_PRIORITY_LABELS: Record<string, string> = {
+    low: "Low",
+    medium: "Medium",
+    high: "High",
+    urgent: "Urgent"
+  };
+
   const DEAL_STAGE_OPTIONS = [
     "Qualification",
     "Needs Analysis",
@@ -498,19 +505,60 @@ export default function FilterSidebar() {
     "Closed Won",
     "Closed Lost",
   ];
+
+  // Updated Call Type Options to match API
+  const CALL_TYPE_OPTIONS = [
+    "inbound",
+    "outbound"
+    ];
+
+  const CALL_TYPE_LABELS: Record<string, string> = {
+    inbound: "Incoming",
+    outbound: "Outgoing"
+  };
+
+  // Updated Call Status Options to match API
   const CALL_STATUS_OPTIONS = [
     "scheduled",
     "completed",
     "missed",
-    "cancel",
+    "cancelled"
   ];
+
+  const CALL_STATUS_LABELS: Record<string, string> = {
+    scheduled: "Scheduled",
+    completed: "Completed", 
+    missed: "Missed",
+    cancelled: "Cancelled"
+  };
+
+  // Updated Meeting Status Options to match API
   const MEETING_STATUS_OPTIONS = [
     "scheduled",
     "completed",
     "missed",
-    "cancel",
+    "cancelled",
     "rescheduled",
   ];
+
+  const MEETING_STATUS_LABELS: Record<string, string> = {
+    scheduled: "Scheduled",
+    completed: "Completed",
+    missed: "Missed", 
+    cancelled: "Cancelled",
+    rescheduled: "Rescheduled"
+  };
+
+
+  
+  // Updated Meeting Venue Options
+  const MEETING_VENUE_OPTIONS = [
+    "In-office",
+    "Client location",
+    "Online",
+  ];
+
+  // Updated Priority Options to match API
   const PRIORITY_OPTIONS = ["low", "medium", "high", "critical"];
   const PRIORITY_LABELS: Record<string, string> = {
     low: "Low",
@@ -518,9 +566,87 @@ export default function FilterSidebar() {
     high: "High",
     critical: "Critical",
   };
+  
+  const TEMPERATURE_OPTIONS = ["Hot", "Warm", "Cold"];
+  const TEMPERATURE_LABELS: Record<string, string> = {
+    Hot: "Hot",
+    Warm: "Warm", 
+    Cold: "Cold",
+  };
+  
+  const INDUSTRY_OPTIONS = [
+    "Technology",
+    "Finance",
+    "Healthcare",
+    "Education",
+    "Retail",
+    "Manufacturing",
+    "Real Estate",
+    "Consulting",
+    "Media",
+    "Non-Profit",
+    "Government",
+    "IT",
+    "Other"
+  ];
+
+  const SOURCE_OPTIONS = [
+    "Website",
+    "Social Media",
+    "Email Campaign",
+    "Cold Call",
+    "Referral",
+    "Event",
+    "Advertisement",
+    "Partner",
+    "Other"
+  ];
+  
+  const BOOLEAN_OPTIONS = ["true", "false"];
+  const BOOLEAN_LABELS: Record<string, string> = {
+    true: "Yes",
+    false: "No",
+  };
+
+  const SORT_BY_OPTIONS = [
+    "createdAt",
+    "updatedAt",
+    "firstName",
+    "lastName",
+    "companyName",
+    "followUpDate",
+    "priority"
+  ];
+  const SORT_BY_LABELS: Record<string, string> = {
+    createdAt: "Created Date",
+    updatedAt: "Updated Date",
+    firstName: "First Name",
+    lastName: "Last Name",
+    companyName: "Company Name",
+    followUpDate: "Follow Up Date",
+    priority: "Priority",
+  };
+
+  const SORT_ORDER_OPTIONS = ["asc", "desc"];
+  const SORT_ORDER_LABELS: Record<string, string> = {
+    asc: "Ascending",
+    desc: "Descending",
+  };
 
   return (
     <div className="h-full max-w-70 overflow-y-auto py-4 ml-2 my-2 px-4 bg-white custom-scrollbar space-y-4 border-r border-gray-200">
+      {/* Search Text Input - Now visible for all sections */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700">Search</label>
+        <TextField
+          size="small"
+          fullWidth
+          placeholder={getSearchPlaceholder()}
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+        />
+      </div>
+
       <div>
         <div className={sectionHeader} onClick={handleToggle}>
           <div className="flex items-center gap-2">
@@ -530,7 +656,7 @@ export default function FilterSidebar() {
           <span>{filterByFieldsOpen ? "−" : "+"}</span>
         </div>
         <Collapse in={filterByFieldsOpen}>
-          <div className="space-y-1 pl-3 mt-2">
+          <div className="space-y-1 pl-3 mt-2 max-h-96 overflow-y-auto custom-scrollbar">
             {getFilterFields().map((option) => (
               <div key={option} className="space-y-2">
                 <FormControlLabel
@@ -548,27 +674,82 @@ export default function FilterSidebar() {
                     // Determine if this field should be a dropdown and which options to use
                     let dropdownOptions: string[] | null = null;
                     let optionLabels: Record<string, string> | null = null;
-                    if (pathname.includes('/tasks') && option === 'Status') {
-                      dropdownOptions = TASK_STATUS_OPTIONS;
-                    } else if (pathname.includes('/deals') && option === 'Stage') {
-                      dropdownOptions = DEAL_STAGE_OPTIONS;
-                    } else if (pathname.includes('/calls') && option === 'Outgoing Call Status') {
-                      dropdownOptions = CALL_STATUS_OPTIONS;
-                    } else if (pathname.includes('/meetings') && option === 'Status') {
-                      dropdownOptions = MEETING_STATUS_OPTIONS;
-                    } else if ((pathname.includes('/leads') || pathname.includes('/contacts') || !pathname.includes('/')) && option === 'Status') {
-                      dropdownOptions = LEAD_STATUS_SIMPLE_OPTIONS;
-                      optionLabels = LEAD_STATUS_SIMPLE_LABELS;
-                    } else if ((pathname.includes('/leads') || pathname.includes('/contacts') || !pathname.includes('/')) && option === 'Lead Status') {
-                      dropdownOptions = LEAD_STATUS_OPTIONS;
-                      optionLabels = LEAD_STATUS_LABELS;
-                    } else if (pathname.includes('/tasks') && option === 'Priority') {
-                      dropdownOptions = PRIORITY_OPTIONS;
-                      optionLabels = PRIORITY_LABELS;
-                    } else if ((pathname.includes('/leads') || pathname.includes('/contacts') || !pathname.includes('/')) && option === 'Priority') {
-                      dropdownOptions = PRIORITY_OPTIONS;
-                      optionLabels = PRIORITY_LABELS;
+                    
+                    // Tasks filtering
+                    if (pathname.includes('/tasks')) {
+                      if (option === 'Status') {
+                        dropdownOptions = TASK_STATUS_OPTIONS;
+                        optionLabels = TASK_STATUS_LABELS;
+                      } else if (option === 'Priority') {
+                        dropdownOptions = TASK_PRIORITY_OPTIONS;
+                        optionLabels = TASK_PRIORITY_LABELS;
+                      }
                     }
+                    // Calls filtering  
+                    else if (pathname.includes('/calls')) {
+                      if (option === 'Call Type') {
+                        dropdownOptions = CALL_TYPE_OPTIONS;
+                        optionLabels = CALL_TYPE_LABELS;
+                      }
+                    }
+                    // Meetings filtering
+                    else if (pathname.includes('/meetings')) {
+                      if (option === 'Status') {
+                        dropdownOptions = MEETING_STATUS_OPTIONS;
+                        optionLabels = MEETING_STATUS_LABELS;
+                      } else if (option === 'Meeting Venue') {
+                        dropdownOptions = MEETING_VENUE_OPTIONS;
+                      }
+                    }
+                    // Deals filtering
+                    else if (pathname.includes('/deals')) {
+                      if (option === 'Status') {
+                        dropdownOptions = LEAD_STATUS_SIMPLE_OPTIONS;
+                        optionLabels = LEAD_STATUS_SIMPLE_LABELS;
+                      } else if (option === 'Priority') {
+                        dropdownOptions = PRIORITY_OPTIONS;
+                        optionLabels = PRIORITY_LABELS;
+                      } else if (option === 'Temperature') {
+                        dropdownOptions = TEMPERATURE_OPTIONS;
+                        optionLabels = TEMPERATURE_LABELS;
+                      } else if (option === 'Industry') {
+                        dropdownOptions = INDUSTRY_OPTIONS;
+                      } else if (option === 'Source') {
+                        dropdownOptions = SOURCE_OPTIONS;
+                      } else if (option === 'Sort By') {
+                        dropdownOptions = SORT_BY_OPTIONS;
+                        optionLabels = SORT_BY_LABELS;
+                      } else if (option === 'Sort Order') {
+                        dropdownOptions = SORT_ORDER_OPTIONS;
+                        optionLabels = SORT_ORDER_LABELS;
+                      } else if (option === 'Stage') {
+                        dropdownOptions = DEAL_STAGE_OPTIONS;
+                      }
+                    }
+                    // Leads/Contacts filtering
+                    else if (pathname.includes('/leads') || pathname.includes('/contacts') || !pathname.includes('/')) {
+                      if (option === 'Status') {
+                        dropdownOptions = LEAD_STATUS_SIMPLE_OPTIONS;
+                        optionLabels = LEAD_STATUS_SIMPLE_LABELS;
+                      } else if (option === 'Priority') {
+                        dropdownOptions = PRIORITY_OPTIONS;
+                        optionLabels = PRIORITY_LABELS;
+                      } else if (option === 'Temperature') {
+                        dropdownOptions = TEMPERATURE_OPTIONS;
+                        optionLabels = TEMPERATURE_LABELS;
+                      } else if (option === 'Industry') {
+                        dropdownOptions = INDUSTRY_OPTIONS;
+                      } else if (option === 'Source') {
+                        dropdownOptions = SOURCE_OPTIONS;
+                      } else if (option === 'Sort By') {
+                        dropdownOptions = SORT_BY_OPTIONS;
+                        optionLabels = SORT_BY_LABELS;
+                      } else if (option === 'Sort Order') {
+                        dropdownOptions = SORT_ORDER_OPTIONS;
+                        optionLabels = SORT_ORDER_LABELS;
+                      }
+                    }
+                    
                     if (dropdownOptions) {
                       return (
                         <TextField
@@ -600,10 +781,9 @@ export default function FilterSidebar() {
                         value={filterValues.find((f) => f.field === option)?.value || ""}
                         onChange={(e) => handleFilterValueChange(option, e.target.value)}
                         inputProps={{
-                          max: ['Created At', 'Due Date', 'Completion Date', 'Updated At'].includes(option) 
+                          max: ['Follow Up Date', 'From Date Time', 'To Date Time'].includes(option) 
                             ? new Date().toISOString().split('T')[0] 
                             : undefined,
-                          step: ['Min Amount', 'Max Amount'].includes(option) ? '0.01' : undefined
                         }}
                         className="ml-6 mb-2"
                       />

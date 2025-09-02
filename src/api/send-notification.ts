@@ -1,4 +1,3 @@
-// pages/api/send-notification.ts (or any server script)
 import admin from '@/firebase/admin';
 import { NextApiRequest, NextApiResponse } from 'next';
 

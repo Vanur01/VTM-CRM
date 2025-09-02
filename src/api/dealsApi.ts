@@ -36,7 +36,7 @@ export interface CreateDealPayload {
   probability: number;
   type: string;
   leadSource: string;
-  stage?: string; // Made optional since API only uses type
+  stage?: string; 
   expectedRevenue: number; // Required as a number
   nextStep?: string;
   dealOwner?: string; // Optional field
@@ -71,7 +71,7 @@ const dealApi = {
         });
       }
       const queryString = queryParams.toString();
-      const url = queryString ? `/v1/deal/getAllDeals?${queryString}` : '/v1/deal/getAllDeals';
+      const url = queryString ? `/deal/getAllDeals?${queryString}` : '/deal/getAllDeals';
       console.log('API URL:', url);
       const response = await axios.get<DealsResponse>(url);
       return response.data;
@@ -91,7 +91,7 @@ const dealApi = {
         });
       }
       const queryString = queryParams.toString();
-      const url = queryString ? `/v1/deal/getDeals?${queryString}` : '/v1/deal/getDeals';
+      const url = queryString ? `/deal/getDeals?${queryString}` : '/deal/getDeals';
       console.log('API URL:', url);
       const response = await axios.get<DealsResponse>(url);
       return response.data;
@@ -102,7 +102,7 @@ const dealApi = {
 
   getDealById: async (id: string) => {
     try {
-      const response = await axios.get(`/v1/deal/getDeal/${id}`);
+      const response = await axios.get(`/deal/getDeal/${id}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -111,7 +111,7 @@ const dealApi = {
 
   createDeal: async (dealData: CreateDealPayload) => {
     try {
-      const response = await axios.post('/v1/deal/addDeal', dealData);
+      const response = await axios.post('/deal/addDeal', dealData);
       return response.data;
     } catch (error) {
       throw error;
@@ -120,7 +120,7 @@ const dealApi = {
 
   updateDeal: async (dealId: string, dealData: CreateDealPayload) => {
     try {
-      const response = await axios.put(`/v1/deal/updateDeal/${dealId}`, dealData);
+      const response = await axios.put(`/deal/updateDeal/${dealId}`, dealData);
       return response.data;
     } catch (error) {
       throw error;
@@ -129,7 +129,7 @@ const dealApi = {
 
   updateDealStage: async (dealId: string, stageData: UpdateDealStagePayload) => {
     try {
-      const response = await axios.put(`/v1/deal/updateDealStage/${dealId}`, stageData);
+      const response = await axios.put(`/deal/updateDealStage/${dealId}`, stageData);
       return response.data;
     } catch (error) {
       throw error;
@@ -138,7 +138,7 @@ const dealApi = {
 
   deleteDeal: async (dealId: string) => {
     try {
-      const response = await axios.delete(`/v1/deal/deleteDeal/${dealId}`);
+      const response = await axios.delete(`/deal/deleteDeal/${dealId}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -147,7 +147,7 @@ const dealApi = {
 
   bulkDeleteDeals: async (dealIds: string[]) => {
     try {
-      const response = await axios.delete('/v1/deal/deleteAllDeals', {
+      const response = await axios.delete('/deal/deleteAllDeals', {
         data: { dealIds }
       });
       return response.data;

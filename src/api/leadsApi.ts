@@ -156,11 +156,33 @@ export interface LeadFilters {
   source?: string; // Changed from leadSource
   priority?: string;
   temperature?: string; // Added temperature
+  industry?: string; // Added industry filter
+  followUpDate?: string; // Added follow up date filter
+  searchText?: string; // Added search text filter
   "address.street"?: string;
   "address.city"?: string;
   "address.state"?: string;
+  "address.country"?: string; // Added country filter
+  "address.postalCode"?: string; // Added postal code filter
   page?: number;
   limit?: number;
+  sortBy?: string; // Added sorting field
+  sortOrder?: 'asc' | 'desc'; // Added sorting order
+  website?: string; // Added website filter
+  title?: string; // Added title filter
+  mobile?: string; // Added mobile filter
+  leadOwner?: string; // Added lead owner filter
+  createdAt?: string; // Added created date filter
+  updatedAt?: string; // Added updated date filter
+  convertedDate?: string; // Added converted date filter
+  expectedCloseDate?: string; // Added expected close date filter
+  actualCloseDate?: string; // Added actual close date filter
+  annualRevenue?: number; // Added annual revenue filter
+  numberOfEmployees?: number; // Added number of employees filter
+  rating?: number; // Added rating filter
+  tags?: string[]; // Added tags filter
+  isConverted?: boolean; // Added conversion status filter
+  isDeleted?: boolean; // Added deletion status filter
 }
 
 
@@ -168,7 +190,7 @@ export const createLead = async (
   data: CreateLeadRequest
 ): Promise<{success: boolean; statusCode: number; message: string; result: Lead}> => {
   const response = await axiosInstance.post<{success: boolean; statusCode: number; message: string; result: Lead}>(
-    "/api/v1/lead/createNewLead",
+    "/lead/createNewLead",
     data
   );
   return response.data;
@@ -192,16 +214,24 @@ export const getAllLeads = async (
 }> => {
   const queryParams = new URLSearchParams();
 
-
   if (filters) {
     Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        queryParams.append(key, String(value));
+      if (value !== undefined && value !== null && value !== '') {
+        // Handle array values (like tags)
+        if (Array.isArray(value)) {
+          value.forEach((item) => {
+            if (item !== undefined && item !== null && item !== '') {
+              queryParams.append(key, String(item));
+            }
+          });
+        } else {
+          queryParams.append(key, String(value));
+        }
       }
     });
   }
 
-  const url = `/api/v1/lead/getAllLeads/${companyId}${
+  const url = `/lead/getAllLeads/${companyId}${
     queryParams.toString() ? `?${queryParams.toString()}` : ""
   }`;
 
@@ -226,7 +256,7 @@ export const getAllLeads = async (
 };
 
 export const getAllDeleteLeads = async (): Promise<any> => {
-  const response = await axiosInstance.get<any>("/v1/lead/getAllDeleteLeads");
+  const response = await axiosInstance.get<any>("/lead/getAllDeleteLeads");
   return response.data;
 };
 
@@ -236,7 +266,7 @@ export const getLeadById = async (id: string, companyId: string): Promise<GetLea
   }
   
   const response = await axiosInstance.get<GetLeadResponse>(
-    `/api/v1/lead/leadDetails/${companyId}/${id}`
+    `/lead/leadDetails/${companyId}/${id}`
   );
   return response.data;
 };
@@ -251,7 +281,7 @@ export const updateLead = async (
   }
   
   const response = await axiosInstance.put<GetLeadResponse>(
-    `/api/v1/lead/updateLeadDetails/${companyId}/${id}`,
+    `/lead/updateLeadDetails/${companyId}/${id}`,
     data
   );
   return response.data;
@@ -263,7 +293,7 @@ export const assignSingleLead = async (
   email: string
 ): Promise<AssignLeadResponse> => {
   const response = await axiosInstance.get<AssignLeadResponse>(
-    `/v1/lead/assignSingleLead/${leadId}/status/${email}`
+    `/lead/assignSingleLead/${leadId}/status/${email}`
   );
   return response.data;
 };
@@ -272,7 +302,7 @@ export const bulkLeadAssign = async (
   data: BulkAssignLeadRequest
 ): Promise<BaseResponse> => {
   const response = await axiosInstance.post<BaseResponse>(
-    "/v1/lead/bulkLeadAssign",
+    "/lead/bulkLeadAssign",
     data
   );
   return response.data;
@@ -280,7 +310,7 @@ export const bulkLeadAssign = async (
 
 export const deleteLead = async (leadId: string, companyId: string): Promise<BaseResponse> => {
   const response = await axiosInstance.delete<BaseResponse>(
-    `/api/v1/lead/deleteLead/${companyId}/${leadId}`
+    `/lead/deleteLead/${companyId}/${leadId}`
   );
   return response.data;
 };
@@ -290,7 +320,7 @@ export const bulkDeleteLead = async (
   companyId: string
 ): Promise<BaseResponse> => {
   const response = await axiosInstance.delete<BaseResponse>(
-    `/api/v1/lead/bulkDeleteLeads/${companyId}`,
+    `/lead/bulkDeleteLeads/${companyId}`,
     { data }
   );
   return response.data;
@@ -300,7 +330,7 @@ export const restoreLeads = async (
   data: BulkRestoreLeadRequest
 ): Promise<BaseResponse> => {
   const response = await axiosInstance.post<BaseResponse>(
-    "/v1/lead/restoreLeads",
+    "/lead/restoreLeads",
     data
   );
   return response.data;
@@ -323,7 +353,7 @@ export const getUserLeads = async (
     });
   }
 
-  const url = `/v1/lead/getUserLeads/${userId}${
+  const url = `/lead/getUserLeads/${userId}${
     queryParams.toString() ? `?${queryParams.toString()}` : ""
   }`;
   const response = await axiosInstance.get<GetUserLeadsResponse>(url);
@@ -335,7 +365,7 @@ export const importLeads = async (file: File): Promise<ImportLeadsResponse> => {
   formData.append("file", file);
 
   const response = await axiosInstance.post<ImportLeadsResponse>(
-    "/api/v1/lead/import",
+    "/lead/import",
     formData,
     {
       headers: {
@@ -466,7 +496,7 @@ interface MeetingListResponse extends BaseResponse {
 }
 
 export interface AddNoteRequest {
-  content: string; // Changed from 'note' to 'content' to match API
+  content: string; 
 }
 
 export interface AddNoteResponse extends BaseResponse {
@@ -498,7 +528,7 @@ export const addNote = async (
   data: AddNoteRequest
 ): Promise<AddNoteResponse> => {
   const response = await axiosInstance.post<AddNoteResponse>(
-    `/api/v1/lead/addNotes/${leadId}`,
+    `/lead/addNotes/${leadId}`,
     data
   );
   return response.data;
@@ -510,7 +540,7 @@ export const updateNote = async (
   data: UpdateNoteRequest
 ): Promise<UpdateNoteResponse> => {
   const response = await axiosInstance.put<UpdateNoteResponse>(
-    `/api/v1/lead/updateNotes/${leadId}/${noteId}`,
+    `/lead/updateNotes/${leadId}/${noteId}`,
     data
   );
   return response.data;
@@ -524,7 +554,7 @@ export const uploadFile = async (
   formData.append("files", file); // Changed from "file" to "files" to match backend
 
   const response = await axiosInstance.post<GetLeadResponse>(
-    `/api/v1/lead/uploadAttachment/${leadId}`, // Updated endpoint
+    `/lead/uploadAttachment/${leadId}`, // Updated endpoint
     formData,
     {
       headers: {
@@ -540,16 +570,16 @@ export const deleteAttachment = async (
   attachmentId: string
 ): Promise<GetLeadResponse> => {
   const response = await axiosInstance.delete<GetLeadResponse>(
-    `/api/v1/lead/deleteAttachment/${leadId}/${attachmentId}`
+    `/lead/deleteAttachment/${leadId}/${attachmentId}`
   );
   return response.data;
 };
 
 const leadsApi = {
-  createTask: async (leadId: string, taskData: CreateTaskPayload) => {
+  createTask: async (leadId: string, companyId: string, taskData: CreateTaskPayload) => {
     try {
       const response = await axiosInstance.post(
-        `/v1/lead/addTask/${leadId}`,
+        `/task/createNewTask/${leadId}/${companyId}`,
         taskData
       );
       return response.data;
@@ -558,10 +588,10 @@ const leadsApi = {
     }
   },
 
-  createMeeting: async (leadId: string, meetingData: CreateMeetingRequest) => {
+  createMeeting: async (leadId: string, companyId: string, meetingData: CreateMeetingRequest) => {
     try {
       const response = await axiosInstance.post(
-        `/v1/lead/addMeeting/${leadId}`,
+        `/meeting/createMeeting/${leadId}/${companyId}`,
         meetingData
       );
       return response.data;
@@ -570,10 +600,10 @@ const leadsApi = {
     }
   },
 
-  createCall: async (leadId: string, callData: CreateCallRequest) => {
+  createCall: async (leadId: string, companyId: string, callData: CreateCallRequest) => {
     try {
       const response = await axiosInstance.post(
-        `/v1/lead/addCall/${leadId}`,
+        `/call/addCall/${leadId}/${companyId}`,
         callData
       );
       return response.data;
@@ -585,8 +615,8 @@ const leadsApi = {
   getTask: async (leadId: string, taskId: string, type?: string): Promise<{ data: Task }> => {
     try {
       const url = type 
-        ? `/v1/lead/getTask/${leadId}/${taskId}?type=${type}`
-        : `/v1/lead/getTask/${leadId}/${taskId}`;
+        ? `/lead/getTask/${leadId}/${taskId}?type=${type}`
+        : `/lead/getTask/${leadId}/${taskId}`;
       const response = await axiosInstance.get(url);
       return response.data;
     } catch (error) {
@@ -598,8 +628,8 @@ const leadsApi = {
   getTaskList: async (leadId: string, type?: string): Promise<TaskListResponse> => {
     try {
       const url = type === "close" 
-        ? `/v1/lead/closeTaskList/${leadId}`
-        : `/v1/lead/taskList/${leadId}`;
+        ? `/lead/closeTaskList/${leadId}`
+        : `/lead/taskList/${leadId}`;
       const response = await axiosInstance.get<TaskListResponse>(url);
       return response.data;
     } catch (error) {
@@ -610,8 +640,8 @@ const leadsApi = {
   getCallList: async (leadId: string, type?: string): Promise<CallListResponse> => {
     try {
       const url = type === "close" 
-        ? `/v1/lead/closeCallList/${leadId}`
-        : `/v1/lead/callList/${leadId}`;
+        ? `/lead/closeCallList/${leadId}`
+        : `/lead/callList/${leadId}`;
       const response = await axiosInstance.get<CallListResponse>(url);
       return response.data;
     } catch (error) {
@@ -622,8 +652,8 @@ const leadsApi = {
   getMeetingList: async (leadId: string, type?: string): Promise<MeetingListResponse> => {
     try {
       const url = type === "close" 
-        ? `/v1/lead/closeMeetingList/${leadId}`
-        : `/v1/lead/meetingList/${leadId}`;
+        ? `/lead/closeMeetingList/${leadId}`
+        : `/lead/meetingList/${leadId}`;
       const response = await axiosInstance.get<MeetingListResponse>(url);
       return response.data;
     } catch (error) {
@@ -634,7 +664,7 @@ const leadsApi = {
   getClosedTaskList: async (leadId: string): Promise<TaskListResponse> => {
     try {
       const response = await axiosInstance.get<TaskListResponse>(
-        `/v1/lead/closeTaskList/${leadId}`
+        `/lead/closeTaskList/${leadId}`
       );
       return response.data;
     } catch (error) {
@@ -645,7 +675,7 @@ const leadsApi = {
   getClosedCallList: async (leadId: string): Promise<CallListResponse> => {
     try {
       const response = await axiosInstance.get<CallListResponse>(
-        `/v1/lead/closeCallList/${leadId}`
+        `/lead/closeCallList/${leadId}`
       );
       return response.data;
     } catch (error) {
@@ -657,7 +687,7 @@ const leadsApi = {
   ): Promise<MeetingListResponse> => {
     try {
       const response = await axiosInstance.get<MeetingListResponse>(
-        `/v1/lead/closeMeetingList/${leadId}`
+        `/lead/closeMeetingList/${leadId}`
       );
       return response.data;
     } catch (error) {
@@ -676,7 +706,7 @@ const leadsApi = {
       console.log('Task data being sent:', taskData);
       
       const response = await axiosInstance.put(
-        `/v1/lead/editTask/${leadId}/${taskId}`,
+        `/lead/editTask/${leadId}/${taskId}`,
         taskData
       );
       return response.data;
@@ -689,7 +719,7 @@ const leadsApi = {
   updateTaskStatus: async (leadId: string, taskId: string) => {
     try {
       const response = await axiosInstance.put(
-        `/v1/lead/completedTask/${leadId}/${taskId}`
+        `/lead/completedTask/${leadId}/${taskId}`
       );
       return response.data;
     } catch (error) {
@@ -705,8 +735,8 @@ const leadsApi = {
     try {
       // Using meetingId (UUID format) instead of _id (MongoDB ObjectId)
       const url = type 
-        ? `/v1/lead/getMeeting/${leadId}/${meetingId}?type=${type}`
-        : `/v1/lead/getMeeting/${leadId}/${meetingId}`;
+        ? `/lead/getMeeting/${leadId}/${meetingId}?type=${type}`
+        : `/lead/getMeeting/${leadId}/${meetingId}`;
       const response = await axiosInstance.get(url);
       return response.data;
     } catch (error) {
@@ -723,7 +753,7 @@ const leadsApi = {
     try {
       // Using meetingId (UUID format) instead of _id (MongoDB ObjectId)
       const response = await axiosInstance.put(
-        `/v1/lead/editMeeting/${leadId}/${meetingId}`,
+        `/lead/editMeeting/${leadId}/${meetingId}`,
         meetingData
       );
       return response.data;
@@ -736,7 +766,7 @@ const leadsApi = {
   completedMeeting: async (leadId: string, meetingId: string) => {
     try {
       const response = await axiosInstance.put(
-        `/v1/lead/completedMeeting/${leadId}/${meetingId}`
+        `/lead/completedMeeting/${leadId}/${meetingId}`
       );
       return response.data;
     } catch (error) {
@@ -748,8 +778,8 @@ const leadsApi = {
   getCall: async (leadId: string, callId: string, type?: string): Promise<{ data: Call }> => {
     try {
       const url = type 
-        ? `/v1/lead/getCall/${leadId}/${callId}?type=${type}`
-        : `/v1/lead/getCall/${leadId}/${callId}`;
+        ? `/lead/getCall/${leadId}/${callId}?type=${type}`
+        : `/lead/getCall/${leadId}/${callId}`;
       const response = await axiosInstance.get(url);
       return response.data;
     } catch (error) {
@@ -764,7 +794,7 @@ const leadsApi = {
   ) => {
     try {
       const response = await axiosInstance.put(
-        `/v1/lead/editCall/${leadId}/${callId}`,
+        `/lead/editCall/${leadId}/${callId}`,
         callData
       );
       return response.data;
@@ -776,7 +806,7 @@ const leadsApi = {
   completeCall: async (leadId: string, callId: string) => {
     try {
       const response = await axiosInstance.put(
-        `/v1/lead/completedCall/${leadId}/${callId}`
+        `/lead/completedCall/${leadId}/${callId}`
       );
       return response.data;
     } catch (error) {
@@ -787,7 +817,7 @@ const leadsApi = {
   cancelCall: async (leadId: string, callId: string) => {
     try {
       const response = await axiosInstance.put(
-        `/v1/lead/cancelCall/${leadId}/${callId}`
+        `/lead/cancelCall/${leadId}/${callId}`
       );
       return response.data;
     } catch (error) {
@@ -798,7 +828,7 @@ const leadsApi = {
   deleteMeeting: async (meetingId: string) => {
     try {
       const response = await axiosInstance.delete<BaseResponse>(
-        `/v1/meeting/deleteMeeting/${meetingId}`
+        `/meeting/deleteMeeting/${meetingId}`
       );
       return response.data;
     } catch (error) {
@@ -813,7 +843,7 @@ const leadsApi = {
   ) => {
     try {
       const response = await axiosInstance.put(
-        `/v1/lead/rescheduledCall/${leadId}/${callId}`,
+        `/lead/rescheduledCall/${leadId}/${callId}`,
         data
       );
       return response.data;
@@ -825,7 +855,7 @@ const leadsApi = {
   deleteTask: async (taskId: string) => {
     try {
       const response = await axiosInstance.delete(
-        `/v1/task/deleteTask/${taskId}`
+        `/task/deleteTask/${taskId}`
       );
       return response.data;
     } catch (error) {

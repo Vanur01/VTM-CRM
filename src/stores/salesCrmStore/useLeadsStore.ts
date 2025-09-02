@@ -64,7 +64,7 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
   fetchLeads: async (companyId: string, filters?: LeadFilters) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await getAllLeads(companyId);
+      const response = await getAllLeads(companyId, filters);
       console.log(response);
       // Convert response data to Lead type
       const leads = response.data.response.map((item: any) => ({
@@ -88,8 +88,8 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
         website: item.website,
         title: item.title,
         industry: item.industry,
-        leadSource: item.leadSource,
-        leadStatus: item.leadStatus,
+        leadSource: item.leadSource || item.source, // Support both field names
+        leadStatus: item.leadStatus || item.status, // Support both field names
         priority: item.priority,
         status: item.status,
         followUpDate: item.followUpDate,

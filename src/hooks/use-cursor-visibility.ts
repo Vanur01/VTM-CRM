@@ -51,6 +51,8 @@ export function useCursorVisibility({
   })
 
   const updateRect = React.useCallback(() => {
+    if (typeof document === "undefined") return
+    
     const element = elementRef?.current ?? document.body
 
     const { x, y, width, height } = element.getBoundingClientRect()
@@ -58,6 +60,8 @@ export function useCursorVisibility({
   }, [elementRef])
 
   React.useEffect(() => {
+    if (typeof window === "undefined" || typeof document === "undefined") return
+
     const element = elementRef?.current ?? document.body
 
     updateRect()
@@ -77,7 +81,7 @@ export function useCursorVisibility({
 
   React.useEffect(() => {
     const ensureCursorVisibility = () => {
-      if (!editor) return
+      if (!editor || typeof window === "undefined") return
 
       const { state, view } = editor
 

@@ -8,7 +8,7 @@ export interface AddTemplateRequest {
 }
 
 export const addTemplate = async (data: AddTemplateRequest) => {
-  const response = await axiosInstance.post('/api/v1/email/createEmailTemplate', data);
+  const response = await axiosInstance.post('/email/createEmailTemplate', data);
   return response.data;
 };
 
@@ -37,7 +37,7 @@ export interface GetAllTemplatesResponse {
 }
 
 export const getAllTemplates = async (): Promise<GetAllTemplatesResponse> => {
-  const response = await axiosInstance.get('/api/v1/email/getAllEmailTemplates');
+  const response = await axiosInstance.get('/email/getAllEmailTemplates');
   return response.data;
 };
 
@@ -51,7 +51,7 @@ export interface GetTemplateByIdResponse {
 export const getTemplateById = async (templateId: string): Promise<GetTemplateByIdResponse> => {
   try {
     console.log(`API: Fetching template with ID ${templateId}`);
-    const response = await axiosInstance.get(`/api/v1/email/getEmailTemplateById/${templateId}`);
+    const response = await axiosInstance.get(`/email/getEmailTemplateById/${templateId}`);
     
     if (!response.data.success) {
       throw new Error(response.data.message || 'Failed to fetch template');
@@ -65,11 +65,11 @@ export const getTemplateById = async (templateId: string): Promise<GetTemplateBy
 };
 
 export const updateTemplate = async (templateId: string, data: Partial<AddTemplateRequest>) => {
-  const response = await axiosInstance.put(`/api/v1/email/updateEmailTemplate/${templateId}`, data);
+  const response = await axiosInstance.put(`/email/updateEmailTemplate/${templateId}`, data);
   return response.data;
 };
 
 export const deleteTemplate = async (templateId: string) => {
-  const response = await axiosInstance.delete(`/api/v1/email/deleteEmailTemplate/${templateId}`);
+  const response = await axiosInstance.delete(`/email/deleteEmailTemplate/${templateId}`);
   return response.data;
 };

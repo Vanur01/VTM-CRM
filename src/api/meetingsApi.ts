@@ -1,4 +1,3 @@
-// src/api/meetingsApi.ts
 import axiosInstance from '@/utils/axios';
 
 export interface Meeting {
@@ -123,6 +122,8 @@ export interface MeetingFilters {
   host?: string;
   fromDate?: string;
   toDate?: string;
+  status?: string; // Added status filter
+  search?: string; // Added search parameter for general text search
   page?: number;
   limit?: number;
   companyId?: string;
@@ -151,7 +152,7 @@ export const createMeeting = async (data: CreateMeetingRequest): Promise<GetMeet
     throw new Error('Lead ID and Company ID are required');
   }
   const response = await axiosInstance.post<GetMeetingResponse>(
-    `/api/v1/meeting/createMeeting/${data.leadId}/${data.companyId}`, 
+    `/meeting/createMeeting/${data.leadId}/${data.companyId}`, 
     data
   );
   return response.data;
@@ -177,7 +178,7 @@ export const getAllMeetings = async (filters?: MeetingFilters): Promise<GetAllMe
     });
   }
 
-  const url = `/api/v1/meeting/getAllMeetings/${filters.companyId}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  const url = `/meeting/getAllMeetings/${filters.companyId}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   try {
     const response = await axiosInstance.get<GetAllMeetingsResponse>(url);
     
@@ -203,7 +204,7 @@ export const getAllMeetings = async (filters?: MeetingFilters): Promise<GetAllMe
 export const getMeetingById = async (id: string): Promise<GetMeetingResponse> => {
   try {
     console.log(`Fetching meeting with ID: ${id}`);
-    const response = await axiosInstance.get<GetMeetingResponse>(`/api/v1/meeting/getMeetingById/${id}`);
+    const response = await axiosInstance.get<GetMeetingResponse>(`/meeting/getMeetingById/${id}`);
     
     if (!response.data) {
       console.error("Empty response when fetching meeting details");
@@ -228,7 +229,7 @@ export const updateMeeting = async (id: string, data: CreateMeetingRequest): Pro
       console.warn('Warning: No companyId provided for meeting update');
     }
     
-    const response = await axiosInstance.put<GetMeetingResponse>(`/api/v1/meeting/updateMeeting/${id}`, data);
+    const response = await axiosInstance.put<GetMeetingResponse>(`/meeting/updateMeeting/${id}`, data);
     console.log("Meeting updated successfully:", response.data.message);
     return response.data;
   } catch (error: any) {
@@ -241,14 +242,14 @@ export const updateMeeting = async (id: string, data: CreateMeetingRequest): Pro
 };
 
 export const deleteMeeting = async (meetingId: string): Promise<BaseResponse> => {
-  const response = await axiosInstance.delete<BaseResponse>(`/api/v1/meeting/deleteMeeting/${meetingId}`);
+  const response = await axiosInstance.delete<BaseResponse>(`/meeting/deleteMeeting/${meetingId}`);
   return response.data;
 };
 
 export const deleteAllMeetings = async (): Promise<BaseResponse> => {
   try {
     console.log('Sending request to delete all meetings...');
-    const response = await axiosInstance.delete<BaseResponse>('/api/v1/meeting/deleteAllMeetings');
+    const response = await axiosInstance.delete<BaseResponse>('/meeting/deleteAllMeetings');
     console.log('Delete all meetings API response:', response.data);
     return response.data;
   } catch (error) {
@@ -260,7 +261,7 @@ export const deleteAllMeetings = async (): Promise<BaseResponse> => {
 export const bulkDeleteMeetings = async (meetingIds: string[]): Promise<BaseResponse> => {
   try {
     console.log('Sending request to bulk delete meetings:', meetingIds);
-    const response = await axiosInstance.delete<BaseResponse>('/api/v1/meeting/bulkDeleteMeetings', {
+    const response = await axiosInstance.delete<BaseResponse>('/meeting/bulkDeleteMeetings', {
       data: { meetingIds }
     });
     console.log('Bulk delete meetings API response:', response.data);
@@ -288,7 +289,7 @@ export const getUserMeetings = async (filters?: MeetingFilters): Promise<GetAllM
     });
   }
 
-  const url = `/api/v1/meeting/getLeadforMeetings/${filters.leadId}/${filters.companyId}${
+  const url = `/meeting/getLeadforMeetings/${filters.leadId}/${filters.companyId}${
     queryParams.toString() ? `?${queryParams.toString()}` : ''
   }`;
   
@@ -315,12 +316,12 @@ export const getUserMeetings = async (filters?: MeetingFilters): Promise<GetAllM
 };
 
 export const addNote = async (meetingId: string, data: AddNoteRequest): Promise<AddNoteResponse> => {
-  const response = await axiosInstance.put(`/api/v1/meeting/addNotes/${meetingId}`, data);
+  const response = await axiosInstance.put(`/meeting/addNotes/${meetingId}`, data);
   return response.data;
 };
 
 export const addNotes = async (meetingId: string, data: AddNoteRequest): Promise<AddNoteResponse> => {
-  const response = await axiosInstance.post<AddNoteResponse>(`/api/v1/meeting/addNotes/${meetingId}`, { note: data.note });
+  const response = await axiosInstance.post<AddNoteResponse>(`/meeting/addNotes/${meetingId}`, { note: data.note });
   return response.data;
 };
 
@@ -328,7 +329,7 @@ export const uploadFile = async (meetingId: string, file: File): Promise<UploadF
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await axiosInstance.post(`/api/v1/meeting/uploadFile/${meetingId}`, formData, {
+  const response = await axiosInstance.post(`/meeting/uploadFile/${meetingId}`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },

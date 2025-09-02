@@ -48,7 +48,7 @@ export async function getAllUsers(userType: string, page: number = 1, limit: num
 }
 
 export async function getUserById(id: string) {
-  const response = await axiosInstance.get(`/v1/users/${id}`);
+  const response = await axiosInstance.get(`/users/${id}`);
   return response.data;
 }
 
@@ -61,27 +61,27 @@ export interface CreateUserRequest {
 }
 
 export async function createUser(userData: CreateUserRequest) {
-  const response = await axiosInstance.post('/v1/users/addUsers', userData);
+  const response = await axiosInstance.post('/users/addUsers', userData);
   return response.data;
 }
 
 export async function updateUser(id: string, userData: Partial<User>) {
-  const response = await axiosInstance.put(`/v1/users/${id}`, userData);
+  const response = await axiosInstance.put(`/users/${id}`, userData);
   return response.data;
 }
 
 export async function deleteUser(id: string) {
-  const response = await axiosInstance.delete(`/v1/users/deleteUser/${id}`);
+  const response = await axiosInstance.delete(`/users/deleteUser/${id}`);
   return response.data;
 }
 
 export async function toggleUserActiveStatus(id: string, isActive: boolean) {
-  const response = await axiosInstance.put(`/v1/users/UserActiveOrDeactive/${id}/status/${isActive}`);
+  const response = await axiosInstance.put(`/users/UserActiveOrDeactive/${id}/status/${isActive}`);
   return response.data;
 }
 
 export async function getProfile(id: string) {
-  const response = await axiosInstance.get(`/v1/users/getProfile/${id}`);
+  const response = await axiosInstance.get(`/users/getProfile/${id}`);
   return response.data;
 }
 
@@ -98,7 +98,7 @@ export async function updateProfile(id: string, profileData: {
     country: string;
   };
 }) {
-  const response = await axiosInstance.put(`/v1/users/updateProfile/${id}`, profileData);
+  const response = await axiosInstance.put(`/users/updateProfile/${id}`, profileData);
   return response.data;
 }
 
@@ -106,7 +106,7 @@ export async function uploadProfilePic( file: File) {
   const formData = new FormData();
   formData.append('image', file);
   
-  const response = await axiosInstance.post(`/v1/users/uploadProfilePic`, formData, {
+  const response = await axiosInstance.post(`/users/uploadProfilePic`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -114,4 +114,3 @@ export async function uploadProfilePic( file: File) {
   return response.data;
 }
 
-// ... existing code ...

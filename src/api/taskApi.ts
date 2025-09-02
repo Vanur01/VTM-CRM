@@ -29,6 +29,7 @@ export interface TaskFilters {
   priority?: string;
   page?: number;
   limit?: number;
+  search?: string; // Added search parameter for general text search
 }
 
 export interface Task {
@@ -78,7 +79,7 @@ const taskApi = {
   getTaskById: async (taskId: string, companyId: string): Promise<SingleTaskResponse> => {
     try {
       const response = await axios.get<SingleTaskResponse>(
-        `/api/v1/task/getTaskById/${taskId}/${companyId}`
+        `/task/getTaskById/${taskId}/${companyId}`
       );
       return response.data;
     } catch (error) {
@@ -97,7 +98,7 @@ const taskApi = {
         });
       }
       const response = await axios.get<TaskResponse>(
-        `/api/v1/task/getAllTask/${companyId}?${queryParams.toString()}`
+        `/task/getAllTask/${companyId}?${queryParams.toString()}`
       );
       return response.data;
     } catch (error) {
@@ -108,7 +109,7 @@ const taskApi = {
   createTask: async (leadId: string, companyId: string, taskData: CreateTaskPayload) => {
     try {
       const response = await axios.post(
-        `/api/v1/task/createNewTask/${leadId}/${companyId}`,
+        `/task/createNewTask/${leadId}/${companyId}`,
         taskData
       );
       return response.data;
@@ -120,7 +121,7 @@ const taskApi = {
   updateTask: async (taskId: string, taskData: UpdateTaskPayload) => {
     try {
       const response = await axios.put(
-        `/api/v1/task/updateTask/${taskId}`,
+        `/task/updateTask/${taskId}`,
         taskData
       );
       return response.data;
@@ -132,7 +133,7 @@ const taskApi = {
   deleteTask: async (taskId: string) => {
     try {
       console.log('Deleting task with ID:', taskId);
-      const response = await axios.delete(`/api/v1/task/deleteTask/${taskId}`);
+      const response = await axios.delete(`/task/deleteTask/${taskId}`);
       console.log('Delete task response:', response.data);
       return response.data;
     } catch (error: any) {
@@ -153,7 +154,7 @@ const taskApi = {
 
   bulkDeleteTasks: async (taskIds: string[]) => {
     try {
-      const response = await axios.delete('/api/v1/task/bulkTaskDelete', {
+      const response = await axios.delete('/task/bulkTaskDelete', {
         data: { taskIds }
       });
       return response.data;
@@ -172,7 +173,7 @@ const taskApi = {
   getLeadAllTasks: async (leadId: string, companyId: string): Promise<TaskResponse> => {
     try {
       const response = await axios.get<TaskResponse>(
-        `/api/v1/task/getLeadAllTasks/${leadId}/${companyId}`
+        `/task/getLeadAllTasks/${leadId}/${companyId}`
       );
       return response.data;
     } catch (error) {

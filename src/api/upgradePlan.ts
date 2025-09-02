@@ -1,4 +1,3 @@
-// src/api/upgradePlan.ts
 import axiosInstance from "@/utils/axios";
 
 export interface UpgradePlanRequest {
@@ -37,7 +36,7 @@ export interface UpgradePlanResponse {
 export const upgradePlan = async (data: UpgradePlanRequest): Promise<UpgradePlanResponse> => {
   try {
     const response = await axiosInstance.post<UpgradePlanResponse>(
-      "/api/v1/subscription/upgradePlan",
+      "/subscription/upgradePlan",
       data
     );
     return response.data;

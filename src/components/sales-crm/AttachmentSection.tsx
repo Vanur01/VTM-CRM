@@ -195,7 +195,9 @@ const AttachmentSection: React.FC<AttachmentSectionProps> = ({
   );
 
   const handleFileClick = (attachment: Attachment) => {
-    window.open(attachment.url, "_blank");
+    if (typeof window !== "undefined") {
+      window.open(attachment.url, "_blank");
+    }
   };
 
   const getProgressColor = () => {
@@ -351,7 +353,9 @@ const AttachmentSection: React.FC<AttachmentSectionProps> = ({
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
-                      window.open(attachment.url, "_blank");
+                      if (typeof window !== "undefined") {
+                        window.open(attachment.url, "_blank");
+                      }
                     }}
                     className="text-gray-500 hover:text-indigo-600"
                   >

@@ -366,7 +366,7 @@ const LeadPage = () => {
           />
         </td>
 
-        <td className="py-4 px-4">{item.leadId || item._id}</td>
+        {/* <td className="py-4 px-4">{item.leadId || item._id}</td> */}
         <td className="py-4 px-4">{item.fullName}</td>
         <td className="py-4 px-4 group-hover:text-blue-600 group-hover:underline">
           <a href={`mailto:${item.email}`} onClick={(e) => e.stopPropagation()}>
@@ -419,7 +419,7 @@ const LeadPage = () => {
       accessor: "select",
       className: "py-2 px-4 w-10 text-center",
     },
-    { header: "Lead ID", accessor: "leadId", className: "py-2 px-4" },
+    // { header: "Lead ID", accessor: "leadId", className: "py-2 px-4" },
     { header: "Lead Name", accessor: "name", className: "py-2 px-4" },
     { header: "Email", accessor: "email", className: "py-2 px-4" },
     { header: "Phone", accessor: "phone", className: "py-2 px-4" },

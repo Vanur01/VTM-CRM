@@ -1,4 +1,3 @@
-// src/api/companyApi.ts
 import axiosInstance from '@/utils/axios';
 
 export interface CreateCompanyRequest {
@@ -44,11 +43,11 @@ export interface GetCompanyResponse {
 }
 
 export const createCompany = async (userId: string, data: CreateCompanyRequest): Promise<CreateCompanyResponse> => {
-  const response = await axiosInstance.post<CreateCompanyResponse>(`/api/v1/admin/createCompany/${userId}`, data);
+  const response = await axiosInstance.post<CreateCompanyResponse>(`/admin/createCompany/${userId}`, data);
   return response.data;
 };
 
 export const getCompanyDetails = async (companyId: string): Promise<GetCompanyResponse> => {
-  const response = await axiosInstance.get<GetCompanyResponse>(`/api/v1/admin/getCompanyDetails/${companyId}`);
+  const response = await axiosInstance.get<GetCompanyResponse>(`/admin/getCompanyDetails/${companyId}`);
   return response.data;
 };

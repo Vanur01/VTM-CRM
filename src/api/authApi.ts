@@ -1,4 +1,3 @@
-// src/api/authApi.ts
 import axiosInstance from "@/utils/axios";
 
 interface Address {
@@ -143,7 +142,7 @@ export async function login(
   deviceToken: string
 ) {
   const response = await axiosInstance.post<LoginResponse>(
-    "/api/v1/user/login",
+    "/user/login",
     { email, password, deviceToken }
   );
 
@@ -154,7 +153,7 @@ export const register = async (
   data: RegisterRequest
 ): Promise<RegisterResponse> => {
   const response = await axiosInstance.post<RegisterResponse>(
-    "/api/v1/user/register",
+    "/user/register",
     {
       name: data.name,
       email: data.email,
@@ -167,7 +166,7 @@ export const register = async (
 };
 
 export const logout = async (userId: string, deviceToken: string) => {
-  const response = await axiosInstance.post(`/api/v1/user/logout`, {
+  const response = await axiosInstance.post(`/user/logout`, {
     userId,
     deviceToken,
   });
@@ -177,7 +176,7 @@ export const logout = async (userId: string, deviceToken: string) => {
 export const generateNewTokens = async (refresh_token: string) => {
   try {
     const response = await axiosInstance.post<RefreshTokenResponse>(
-      "/api/v1/user/generatedAuthNewToken",
+      "/user/generatedAuthNewToken",
       {
         refresh_token,
       }

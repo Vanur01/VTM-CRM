@@ -1,6 +1,5 @@
 import axiosInstance from '@/utils/axios';
 
-// Type definitions based on your API response
 export interface Module {
   _id: string;
   name: string;
@@ -56,7 +55,7 @@ export const getAllPlans = async (params: GetAllPlansParams = {}): Promise<Plans
   const { page = 1, limit = 10 } = params;
   
   const response = await axiosInstance.get<PlansResponse>(
-    `/api/v1/plan/getAllPlans`,
+    `/plan/getAllPlans`,
     {
       params: {
         page,

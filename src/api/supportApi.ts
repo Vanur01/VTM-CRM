@@ -22,7 +22,6 @@ export interface SupportTicket {
   __v: number;
 }
 
-// API response interface
 export interface CreateSupportTicketResponse {
   statusCode: number;
   status: string;
@@ -85,7 +84,7 @@ export const createSupportTicket = async (
   data: CreateSupportTicketRequest
 ): Promise<CreateSupportTicketResponse> => {
   const response = await axiosInstance.post<CreateSupportTicketResponse>(
-    '/v1/users/support',
+    '/users/support',
     data
   );
   return response.data;
@@ -100,7 +99,7 @@ export const getAllSupportTicketsByCompany = async (
   companyId: string
 ): Promise<GetAllSupportTicketsByCompanyResponse> => {
   const response = await axiosInstance.get<GetAllSupportTicketsByCompanyResponse>(
-    `/v1/users/getAllSupportTicketByCompany/${companyId}`
+    `/users/getAllSupportTicketByCompany/${companyId}`
   );
   return response.data;
 };
@@ -114,7 +113,7 @@ export const getSupportTicketById = async (
   ticketId: string
 ): Promise<GetSupportTicketByIdResponse> => {
   const response = await axiosInstance.get<GetSupportTicketByIdResponse>(
-    `/v1/users/getSupportTicket/${ticketId}`
+    `/users/getSupportTicket/${ticketId}`
   );
   return response.data;
 };

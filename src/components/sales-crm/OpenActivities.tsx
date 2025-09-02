@@ -157,7 +157,7 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
     router.push(`/sales-crm/meetings/${meetingId}`);
   };
   const handleCallClick = (callId: string) => {
-    router.push(`/sales-crm/calls/${callId}/edit`);
+    router.push(`/sales-crm/calls/${callId}`);
   };
 
   const handleCompleteCallConfirm = async () => {

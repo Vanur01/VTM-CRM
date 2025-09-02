@@ -94,7 +94,9 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           } else {
             // Paid plan - redirect to payment URL
             if (subscription.paymentUrl) {
-              window.location.href = subscription.paymentUrl;
+              if (typeof window !== "undefined") {
+                window.location.href = subscription.paymentUrl;
+              }
             } else {
               setLocalError("Payment URL not found. Please try again.");
             }

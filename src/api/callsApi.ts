@@ -1,4 +1,3 @@
-// src/api/callsApi.ts
 import axiosInstance from '@/utils/axios';
 
 // Types
@@ -166,14 +165,13 @@ export interface CallFilters {
   page?: number;
   limit?: number;
   search?: string;
-  callType?: "outgoing" | "incoming";
+  callType?: "outgoing" | "incoming"; 
 }
 
 export interface AddNoteRequest {
   note: string;
 }
 
-// API functions
 export const getAllCalls = async (companyId: string, filters?: CallFilters): Promise<CallsResponse> => {
   const params = new URLSearchParams();
   if (filters?.page) params.append('page', filters.page.toString());
@@ -182,7 +180,7 @@ export const getAllCalls = async (companyId: string, filters?: CallFilters): Pro
   if (filters?.callType) params.append('callType', filters.callType);
   
   const queryString = params.toString();
-  const url = `/api/v1/call/getAllCall/${companyId}${queryString ? `?${queryString}` : ''}`;
+  const url = `/call/getAllCall/${companyId}${queryString ? `?${queryString}` : ''}`;
   
   const response = await axiosInstance.get(url);
   return response.data;
@@ -196,34 +194,34 @@ export const getCalls = async (companyId: string, filters?: CallFilters): Promis
   if (filters?.callType) params.append('callType', filters.callType);
   
   const queryString = params.toString();
-  const url = `/api/v1/call/getAllCall/${companyId}${queryString ? `?${queryString}` : ''}`;
+  const url = `/call/getAllCall/${companyId}${queryString ? `?${queryString}` : ''}`;
   
   const response = await axiosInstance.get(url);
   return response.data;
 };
 
 export const getCallById = async (callId: string): Promise<CallResponse> => {
-  const response = await axiosInstance.get(`/api/v1/call/getCallbById/${callId}`);
+  const response = await axiosInstance.get(`/call/getCallbById/${callId}`);
   return response.data;
 };
 
 export const createCall = async (leadId: string, companyId: string, callData: CreateCallRequest): Promise<CreateCallResponse> => {
-  const response = await axiosInstance.post(`/api/v1/call/addCall/${leadId}/${companyId}`, callData);
+  const response = await axiosInstance.post(`/call/addCall/${leadId}/${companyId}`, callData);
   return response.data;
 };
 
 export const updateCall = async (callId: string, callData: UpdateCallRequest): Promise<CreateCallResponse> => {
-  const response = await axiosInstance.put(`/api/v1/call/updateCall/${callId}`, callData);
+  const response = await axiosInstance.put(`/call/updateCall/${callId}`, callData);
   return response.data;
 };
 
 export const deleteCall = async (callId: string): Promise<{ success: boolean }> => {
-  const response = await axiosInstance.delete(`/api/v1/call/deleteCall/${callId}`);
+  const response = await axiosInstance.delete(`/call/deleteCall/${callId}`);
   return { success: true };
 };
 
 export const bulkCallDelete = async (data: { callIds: string[] }): Promise<{ success: boolean }> => {
-  const response = await axiosInstance.delete('/api/v1/call/bulkDeleteCalls', { data });
+  const response = await axiosInstance.delete('/call/bulkDeleteCalls', { data });
   return { success: true };
 };
 
@@ -233,7 +231,7 @@ export const getLeadForAllCalls = async (leadId: string, companyId: string, filt
   if (filters?.limit) params.append('limit', filters.limit.toString());
   
   const queryString = params.toString();
-  const url = `/api/v1/call/getLeadForAllCalls/${leadId}/${companyId}${queryString ? `?${queryString}` : ''}`;
+  const url = `/call/getLeadForAllCalls/${leadId}/${companyId}${queryString ? `?${queryString}` : ''}`;
   
   const response = await axiosInstance.get(url);
   return response.data;
@@ -245,14 +243,14 @@ export const getLeadForAllCloseCalls = async (leadId: string, companyId: string,
   if (filters?.limit) params.append('limit', filters.limit.toString());
   
   const queryString = params.toString();
-  const url = `/api/v1/call/getLeadForAllCloseCalls/${leadId}/${companyId}${queryString ? `?${queryString}` : ''}`;
+  const url = `/call/getLeadForAllCloseCalls/${leadId}/${companyId}${queryString ? `?${queryString}` : ''}`;
   
   const response = await axiosInstance.get(url);
   return response.data;
 };
 
 export const addCallNote = async (callId: string, noteData: AddNoteRequest): Promise<{ data: Call }> => {
-  const response = await axiosInstance.put(`/v1/call/addNotes/${callId}`, noteData);
+  const response = await axiosInstance.put(`/call/addNotes/${callId}`, noteData);
   return response.data;
 };
 

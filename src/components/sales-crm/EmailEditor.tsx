@@ -1,6 +1,11 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import ReactQuill from "react-quill";
+import dynamic from "next/dynamic";
+// Dynamically import react-quill to avoid SSR issues
+const ReactQuill = dynamic(() => import('react-quill'), {
+  ssr: false,
+  loading: () => <div className="h-32 bg-gray-100 rounded border flex items-center justify-center">Loading editor...</div>
+});
 import "react-quill/dist/quill.snow.css";
 
 interface EmailEditorProps {

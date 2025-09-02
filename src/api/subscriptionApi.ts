@@ -24,7 +24,7 @@ export const getSubscription = async (
   data: GetSubscriptionRequest
 ): Promise<GetSubscriptionResponse> => {
   const response = await axiosInstance.post<GetSubscriptionResponse>(
-    '/v1/users/getSubscription',
+    '/users/getSubscription',
     data
   );
   return response.data;
