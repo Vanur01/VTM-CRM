@@ -1,53 +1,102 @@
 import axiosInstance from '@/utils/axios';
 
-export interface DateRange {
-  start: string;
-  end: string;
-  bucket: string;
-}
-
-export interface LeadAnalytics {
-  created: number;
+// New API Response Structure
+export interface TimelineLeads {
+  _id: {
+    date: string;
+  };
+  count: number;
   converted: number;
-  conversionRate: number;
-  avgTimeToConvertDays: number | null;
-  statusBreakdown: Array<{ _id: string; count: number }>;
-  sourceBreakdown: Array<{ _id: string; count: number }>;
-  timeseries: Array<{ ts: string; count: number }>;
+  contacted: number;
+  qualified: number;
+  formattedDate: string;
 }
 
-interface CallAnalytics {
-  byType: Array<{ _id: string; count: number }>;
-  byStatus: Array<{ _id: string; count: number }>;
-  timeseries: Array<{ ts: string; count: number }>;
-}
-
-interface MeetingAnalytics {
-  byStatus: Array<{ _id: string; count: number }>;
-  timeseries: Array<{ ts: string; count: number }>;
-}
-
-interface TaskCompletion {
+export interface ConversionRateData {
+  _id: {
+    date: string;
+  };
   total: number;
-  done: number;
-  completionRate: number;
+  converted: number;
+  contacted: number;
+  date: string;
+  conversionRate: number;
+  contactRate: number;
+  formattedDate: string;
 }
 
-interface TaskAnalytics {
-  byStatus: Array<{ _id: string; count: number }>;
-  completion: TaskCompletion;
-  timeseries: Array<{ ts: string; count: number }>;
-  source: 'personal' | 'team/company';
+export interface Timeline {
+  leads: TimelineLeads[];
+  conversionRate: ConversionRateData[];
+  groupBy: 'day' | 'week' | 'month';
+}
+
+export interface DistributionByStatus {
+  count: number;
+  status: string;
+}
+
+export interface DistributionByOwner {
+  _id: string;
+  ownerName: string;
+  ownerEmail: string;
+  totalLeads: number;
+  convertedLeads: number;
+  contactedLeads: number;
+  qualifiedLeads: number;
+  conversionRate: number;
+  contactRate: number;
+  qualificationRate: number;
+}
+
+export interface Distribution {
+  byStatus: DistributionByStatus[];
+  byOwner: DistributionByOwner[];
+}
+
+export interface ActivityData {
+  _id: {
+    date: string;
+  };
+  count: number;
+  completed: number;
+}
+
+export interface Activities {
+  calls: ActivityData[];
+  meetings: ActivityData[];
+  tasks: ActivityData[];
+}
+
+export interface LeadSourcePerformance {
+  _id: string;
+  total: number;
+  converted: number;
+  source: string;
+  conversionRate: number;
+}
+
+export interface Performance {
+  averageConversionTime: number;
+  leadSourcePerformance: LeadSourcePerformance[];
+  statusTransitionTimes: any[];
+}
+
+export interface Summary {
+  totalLeads: number;
+  totalConverted: number;
+  totalContacted: number;
+  totalQualified: number;
+  overallConversionRate: number;
+  overallContactRate: number;
 }
 
 export interface AnalyticsData {
-  dateRange: DateRange;
-  role: string;
-  companyId: string;
-  leads: LeadAnalytics;
-  calls: CallAnalytics;
-  meetings: MeetingAnalytics;
-  tasks: TaskAnalytics;
+  timeline: Timeline;
+  distribution: Distribution;
+  activities: Activities;
+  performance: Performance;
+  summary: Summary;
 }
 
 interface AnalyticsParams {
@@ -61,18 +110,10 @@ interface AnalyticsResponse {
   success: boolean;
   statusCode: number;
   message: string;
-  result: {
-    success: boolean;
-    filter: string;
-    data: AnalyticsData;
-  };
+  result: AnalyticsData;
 }
 
-export async function getallanalytics(params: AnalyticsParams): Promise<{
-  success: boolean;
-  filter: string;
-  data: AnalyticsData;
-}> {
+export async function getallanalytics(params: AnalyticsParams): Promise<AnalyticsData> {
   const response = await axiosInstance.get<AnalyticsResponse>("/dashboard/getAnalytics", { 
     params: {
       companyId: params.companyId,

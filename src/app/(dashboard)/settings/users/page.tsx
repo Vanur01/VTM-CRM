@@ -3,12 +3,14 @@
 import { useState, useEffect, useRef } from 'react';
 import ConfirmationDialog from '@/components/sales-crm/ConfirmationDialog';
 import useUserStore from '@/stores/salesCrmStore/useUserStore';
+import { useAuthStore } from '@/stores/salesCrmStore/useAuthStore';
 import { ChevronLeft, ChevronRight, MoreHorizontal, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 export default function UsersPage() {
-  const { users, loading, error, fetchUsers, addUser, updateUserData, toggleUserStatus, removeUser } = useUserStore();
+  const { users, allUsers, loading, error, fetchUsersByManager, fetchAllUsers, addUserOrManagerByAdmin, addUserByManager } = useUserStore();
+  const { user: currentUser, company } = useAuthStore();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
@@ -19,14 +21,20 @@ export default function UsersPage() {
     email: '',
     mobile: '',
     password: '',
-    userType: 'USER',
+    role: 'user' as 'manager' | 'user',
   });
   const [actionDropdownOpen, setActionDropdownOpen] = useState<string | null>(null);
   const actionPopoverRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    fetchUsers('USER', currentPage, itemsPerPage);
-  }, [fetchUsers, currentPage, itemsPerPage]);
+    if (currentUser?.companyId) {
+      if (currentUser?.role === 'admin') {
+        fetchAllUsers(currentUser.companyId);
+      } else if (currentUser?.role === 'manager') {
+        fetchUsersByManager(currentUser.companyId);
+      }
+    }
+  }, [fetchAllUsers, fetchUsersByManager, currentUser]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -47,50 +55,68 @@ export default function UsersPage() {
     };
   }, [actionDropdownOpen]);
 
+  console.log(currentUser?.role)
+
   const handleAddUser = async () => {
     try {
-      await addUser(newUser);
-      await fetchUsers('USER', currentPage, itemsPerPage);
+      if (currentUser?.role === 'admin' && currentUser?.companyId) {
+        await addUserOrManagerByAdmin(currentUser.companyId, {
+          name: newUser.name,
+          email: newUser.email,
+          mobile: newUser.mobile,
+          password: newUser.password,
+          role: newUser.role
+        });
+      } else if (currentUser?.role === 'manager' && currentUser?.companyId) {
+        await addUserByManager(currentUser.companyId, {
+          name: newUser.name,
+          email: newUser.email,
+          mobile: newUser.mobile,
+          password: newUser.password,
+          role: newUser.role
+        });
+      }
+      
+      
+      // Refresh the users list
+      if (currentUser?.companyId) {
+        if (currentUser?.role === 'admin') {
+          await fetchAllUsers(currentUser.companyId);
+        } else if (currentUser?.role === 'manager') {
+          await fetchUsersByManager(currentUser.companyId);
+        }
+      }
+      
       setIsAddDialogOpen(false);
       setNewUser({
         name: '',
         email: '',
         mobile: '',
         password: '',
-        userType: 'USER',
+        role: 'user',
       });
+      toast.success('User added successfully');
     } catch (e) {
-      // Optionally handle error
+      toast.error('Failed to add user');
     }
   };
 
+
+
   const handleToggleStatus = async (id: string, currentStatus: boolean) => {
-    try {
-      await toggleUserStatus(id, !currentStatus);
-      await fetchUsers('USER', currentPage, itemsPerPage);
-      toast.success('User status changed successfully');
-    } catch (error) {
-      toast.error('Unable to change user status ');
-      console.error('Error toggling user status:', error);
-    }
+    // For now, we'll remove this functionality since it's not in the new API
+    toast.info('Status toggle functionality will be available soon');
   };
 
   const handleDeleteClick = (userId: string) => {
-    setUserToDelete(userId);
-    setIsDeleteDialogOpen(true);
+    // For now, we'll remove this functionality since it's not in the new API
+    toast.info('Delete functionality will be available soon');
   };
 
   const handleDeleteConfirm = async () => {
-    if (userToDelete) {
-      try {
-        await removeUser(userToDelete);
-        await fetchUsers('USER', currentPage, itemsPerPage);
-        setIsDeleteDialogOpen(false);
-        setUserToDelete(null);
-      } catch (error) {
-        console.error('Error deleting user:', error);
-      }
-    }
+    // For now, we'll remove this functionality since it's not in the new API
+    setIsDeleteDialogOpen(false);
+    setUserToDelete(null);
   };
 
   const handlePageChange = (newPage: number) => {
@@ -101,6 +127,9 @@ export default function UsersPage() {
     setItemsPerPage(newLimit);
     setCurrentPage(1);
   };
+
+  // Determine which users to display based on role
+  const displayUsers = currentUser?.role === 'admin' ? allUsers : users;
 
   if (error) {
     return (
@@ -113,7 +142,7 @@ export default function UsersPage() {
     );
   }
 
-  if (!users || users.length === 0) {
+  if (!displayUsers || displayUsers.length === 0) {
     return (
       <div className="p-6">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -197,13 +226,12 @@ export default function UsersPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                   <select
-                    value={newUser.userType}
-                    onChange={(e) => setNewUser({ ...newUser, userType: e.target.value })}
+                    value={newUser.role}
+                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value as 'user' | 'manager' })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   >
-                    <option value="USER">User</option>
-                    <option value="ADMIN">Admin</option>
-                    <option value="MANAGER">Manager</option>
+                    <option value="user">User</option>
+                    {currentUser?.role === 'admin' && <option value="manager">Manager</option>}
                   </select>
                 </div>
                 <button
@@ -223,10 +251,8 @@ export default function UsersPage() {
   const columns = [
     { header: 'Name', accessor: 'name' },
     { header: 'Email', accessor: 'email' },
-    { header: 'Mobile', accessor: 'mobile' },
-    { header: 'Role', accessor: 'userType' },
+    { header: 'Role', accessor: 'role' },
     { header: 'Status', accessor: 'isActive' },
-    { header: 'Created At', accessor: 'createdAt' },
     { header: 'Actions', accessor: 'actions' },
   ];
 
@@ -237,16 +263,15 @@ export default function UsersPage() {
     >
       <td className="px-6 py-4 font-medium text-gray-900">{user.name}</td>
       <td className="px-6 py-4 text-gray-700">{user.email}</td>
-      <td className="px-6 py-4 text-gray-700">{user.mobile}</td>
       <td className="px-6 py-4">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          user.userType === 'ADMIN' 
+          user.role === 'admin' 
             ? 'bg-indigo-100 text-indigo-800' 
-            : user.userType === 'MANAGER' 
+            : user.role === 'manager' 
             ? 'bg-yellow-100 text-yellow-800' 
             : 'bg-gray-100 text-gray-800'
         }`}>
-          {user.userType}
+          {user.role?.charAt(0).toUpperCase() + user.role?.slice(1) || 'User'}
         </span>
       </td>
       <td className="px-6 py-4">
@@ -260,7 +285,6 @@ export default function UsersPage() {
           {user.isActive ? 'Active' : 'Inactive'}
         </span>
       </td>
-      <td className="px-6 py-4 text-gray-500 text-sm">{new Date(user.createdAt).toLocaleDateString()}</td>
       <td className="px-6 py-4 relative">
         <Popover>
           <PopoverTrigger asChild>
@@ -338,13 +362,13 @@ export default function UsersPage() {
                   </td>
                 </tr>
               ) : (
-                users.map((user, idx) => renderRow(user, idx))
+                displayUsers.map((user, idx) => renderRow(user, idx))
               )}
             </tbody>
           </table>
         </div>
         
-        {!loading && users.length === 0 && (
+        {!loading && displayUsers.length === 0 && (
           <div className="text-center py-12">
             <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
             <p className="text-gray-500">Get started by adding a new user.</p>
@@ -368,7 +392,7 @@ export default function UsersPage() {
           </button>
           <button
             onClick={() => handlePageChange(currentPage + 1)}
-            disabled={users.length < itemsPerPage}
+            disabled={displayUsers.length < itemsPerPage}
             className="flex items-center gap-1 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Next
@@ -434,13 +458,12 @@ export default function UsersPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                 <select
-                  value={newUser.userType}
-                  onChange={(e) => setNewUser({ ...newUser, userType: e.target.value })}
+                  value={newUser.role}
+                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value as 'user' | 'manager' })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
-                  <option value="USER">User</option>
-                  <option value="ADMIN">Admin</option>
-                  <option value="MANAGER">Manager</option>
+                  <option value="user">User</option>
+                  {currentUser?.role === 'admin' && <option value="manager">Manager</option>}
                 </select>
               </div>
               <button

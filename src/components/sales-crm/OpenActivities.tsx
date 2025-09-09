@@ -52,15 +52,22 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
     error: tasksError,
     fetchLeadTasks,
     deleteTask,
-    updateTask
+    updateTask,
+    completedTask
   } = useTasksStore();
   
   const {
     calls,
     isLoading: callsLoading,
     error: callsError,
-    fetchLeadCalls
+    fetchLeadCalls,
+    rescheduleCall,
+    completeOrCancelCall
   } = useCallsStore();
+  
+  const {
+    completedMeeting
+  } = useMeetingsStore();
   
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -165,11 +172,12 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
 
     try {
       setIsCompletingCall(true);
-      await leadsApi.completeCall(leadId, callToAction.id);
-      await fetchLeadCalls(leadId);
+      
+      // Use the new completeOrCancelCall API
+      await completeOrCancelCall(callToAction.id, 'completed');
+      
       setShowCompleteCallModal(false);
       setCallToAction(null);
-      // window.location.reload();
     } catch (err) {
       console.error("Error completing call:", err);
     } finally {
@@ -182,11 +190,12 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
 
     try {
       setIsCancellingCall(true);
-      await leadsApi.cancelCall(leadId, callToAction.id);
-      await fetchLeadCalls(leadId);
+      
+      // Use the new completeOrCancelCall API
+      await completeOrCancelCall(callToAction.id, 'cancel');
+      
       setShowCancelCallModal(false);
       setCallToAction(null);
-      // window.location.reload();
     } catch (err) {
       console.error("Error cancelling call:", err);
     } finally {
@@ -195,20 +204,18 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
   };
 
   const handleRescheduleCallConfirm = async () => {
-    if (!callToAction || !rescheduleDate || !rescheduleNotes) return;
+    if (!callToAction || !rescheduleDate) return;
 
     try {
       setIsReschedulingCall(true);
-      await leadsApi.rescheduleCall(leadId, callToAction.id, {
-        callStartTime: new Date(rescheduleDate).toISOString(),
-        notes: rescheduleNotes,
-      });
-      await fetchLeadCalls(leadId);
+      
+      // Use the new rescheduleCall API
+      await rescheduleCall(callToAction.id, new Date(rescheduleDate).toISOString());
+      
       setShowRescheduleCallModal(false);
       setCallToAction(null);
       setRescheduleDate("");
       setRescheduleNotes("");
-      // window.location.reload();
     } catch (err) {
       console.error("Error rescheduling call:", err);
     } finally {
@@ -241,8 +248,8 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
     try {
       setIsCompletingTask(true);
       
-      // Call the API to update task status to 'done'
-      await updateTask(taskToComplete.id, { status: 'done' });
+      // Call the new completedTask API
+      await completedTask(taskToComplete.id);
       
       // Reset states
       setShowCompleteTaskModal(false);
@@ -282,8 +289,13 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
 
     try {
       setIsCompletingMeeting(true);
-      await leadsApi.completedMeeting(leadId, meetingToComplete.id);
+      
+      // Call the new completedMeeting API
+      await completedMeeting(meetingToComplete.id);
+      
+      // Refresh meetings list
       await fetchMeetings();
+      
       setShowCompleteMeetingModal(false);
       setMeetingToComplete(null);
 
@@ -293,6 +305,51 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
     } finally {
       setIsCompletingMeeting(false);
     }
+  };
+
+  const handleCompleteCall = (call: Call) => {
+    const callId = call.callId || call._id;
+    if (!callId) {
+      console.warn('Call is missing ID');
+      return;
+    }
+    
+    setCallToAction({
+      id: callId,
+      subject: call.callPurpose || 'Call',
+    });
+    setShowCompleteCallModal(true);
+    handleCloseContextMenu();
+  };
+
+  const handleCancelCall = (call: Call) => {
+    const callId = call.callId || call._id;
+    if (!callId) {
+      console.warn('Call is missing ID');
+      return;
+    }
+    
+    setCallToAction({
+      id: callId,
+      subject: call.callPurpose || 'Call',
+    });
+    setShowCancelCallModal(true);
+    handleCloseContextMenu();
+  };
+
+  const handleRescheduleCall = (call: Call) => {
+    const callId = call.callId || call._id;
+    if (!callId) {
+      console.warn('Call is missing ID');
+      return;
+    }
+    
+    setCallToAction({
+      id: callId,
+      subject: call.callPurpose || 'Call',
+    });
+    setShowRescheduleCallModal(true);
+    handleCloseContextMenu();
   };
 
   const handleDeleteActivity = () => {
@@ -996,7 +1053,7 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
         <MenuItem
           onClick={() => {
             const meeting = meetings.find((m) => m._id === contextMenu.itemId || m.id === contextMenu.itemId);
-            if (meeting && meeting.meetingId) {
+            if (meeting && meeting._id) {
               handleCompleteMeeting(meeting);
             }
           }}
@@ -1038,12 +1095,10 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
         </MenuItem>
         <MenuItem
           onClick={() => {
-            const call = calls.find((c) => c._id === contextMenu.itemId);
-            if (call && call.callId) {
-              setCallToAction({ id: call.callId, subject: call.callPurpose });
-              setShowRescheduleCallModal(true);
+            const call = calls.find((c) => c._id === contextMenu.itemId || c.callId === contextMenu.itemId);
+            if (call) {
+              handleRescheduleCall(call);
             }
-            handleCloseContextMenu();
           }}
           className="hover:bg-indigo-50 transition-colors"
         >
@@ -1052,12 +1107,10 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
         </MenuItem>
         <MenuItem
           onClick={() => {
-            const call = calls.find((c) => c._id === contextMenu.itemId);
-            if (call && call.callId) {
-              setCallToAction({ id: call.callId, subject: call.callPurpose });
-              setShowCompleteCallModal(true);
+            const call = calls.find((c) => c._id === contextMenu.itemId || c.callId === contextMenu.itemId);
+            if (call) {
+              handleCompleteCall(call);
             }
-            handleCloseContextMenu();
           }}
           className="hover:bg-emerald-50 transition-colors"
         >
@@ -1068,12 +1121,10 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
 
         <MenuItem
           onClick={() => {
-            const call = calls.find((c) => c._id === contextMenu.itemId);
-            if (call && call.callId) {
-              setCallToAction({ id: call.callId, subject: call.callPurpose });
-              setShowCancelCallModal(true);
+            const call = calls.find((c) => c._id === contextMenu.itemId || c.callId === contextMenu.itemId);
+            if (call) {
+              handleCancelCall(call);
             }
-            handleCloseContextMenu();
           }}
           className="hover:bg-orange-50 transition-colors"
         >

@@ -20,6 +20,8 @@ import {
   updateCall,
   getLeadForAllCalls,
   getLeadForAllCloseCalls,
+  rescheduleCall,
+  completeOrCancelCall,
 } from "@/api/callsApi";
 import { useAuthStore } from "./useAuthStore";
 
@@ -47,6 +49,8 @@ interface CallsActions {
   setCurrentCall: (call: Call | null) => void;
   resetError: () => void;
   addNote: (callId: string, note: string) => Promise<void>;
+  rescheduleCall: (callId: string, rescheduledDate: string) => Promise<void>;
+  completeOrCancelCall: (callId: string, status: 'completed' | 'cancel') => Promise<void>;
   fetchLeadCalls: (leadId: string, filters?: CallFilters) => Promise<void>;
   fetchLeadCloseCalls: (leadId: string, filters?: CallFilters) => Promise<void>;
 }
@@ -373,6 +377,52 @@ export const useCallsStore = create<CallsStore>((set, get) => ({
         isLoading: false, 
         error: error instanceof Error ? error.message : 'Failed to fetch lead close calls' 
       });
+    }
+  },
+
+  rescheduleCall: async (callId: string, rescheduledDate: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await rescheduleCall(callId, rescheduledDate);
+      
+      // Update the call in local state
+      const calls = get().calls.map(call => {
+        const currentCallId = call.callId || call._id;
+        return currentCallId === callId 
+          ? { ...call, outgoingCallStatus: 'scheduled' as const, callStartTime: rescheduledDate } 
+          : call;
+      });
+      
+      set({ calls, isLoading: false });
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to reschedule call',
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+
+  completeOrCancelCall: async (callId: string, status: 'completed' | 'cancel') => {
+    set({ isLoading: true, error: null });
+    try {
+      await completeOrCancelCall(callId, status);
+      
+      // Update the call status in local state
+      const calls = get().calls.map(call => {
+        const currentCallId = call.callId || call._id;
+        return currentCallId === callId 
+          ? { ...call, outgoingCallStatus: status } 
+          : call;
+      });
+      
+      set({ calls, isLoading: false });
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to update call status',
+        isLoading: false 
+      });
+      throw error;
     }
   },
 }));

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getAllUsers, User } from '@/api/userApi';
+import { getAllUsers, getUsersByManager } from '@/api/userApi';
+import { useAuthStore } from '@/stores/salesCrmStore/useAuthStore';
 
 interface AssignLeadsDialogProps {
   isOpen: boolean;
@@ -9,12 +10,13 @@ interface AssignLeadsDialogProps {
 }
 
 export default function AssignLeadsDialog({ isOpen, onClose, onAssign, selectedCount }: AssignLeadsDialogProps) {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [assigning, setAssigning] = useState(false);
+  const { user: currentUser, company } = useAuthStore();
 
   useEffect(() => {
     if (isOpen) {
@@ -26,8 +28,15 @@ export default function AssignLeadsDialog({ isOpen, onClose, onAssign, selectedC
     try {
       setLoading(true);
       setError(null);
-      const fetchedUsers = await getAllUsers('USER');
-      setUsers(fetchedUsers);
+      if (currentUser?.companyId) {
+        let users;
+        if (currentUser?.role === 'admin') {
+          users = await getAllUsers(currentUser.companyId);
+        } else if (currentUser?.role === 'manager') {
+          users = await getUsersByManager(currentUser.companyId);
+        }
+        setUsers(users || []);
+      }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to fetch users');
     } finally {

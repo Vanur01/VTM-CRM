@@ -20,6 +20,7 @@ interface TasksState {
   updateTask: (taskId: string, taskData: UpdateTaskPayload) => Promise<void>;
   fetchLeadTasks: (leadId: string, companyId: string) => Promise<void>;
   fetchTasksWithFilters: (filters: TaskFilters) => Promise<void>;
+  completedTask: (taskId: string) => Promise<void>;
   setError: (error: string | null) => void;
 }
 
@@ -224,6 +225,25 @@ export const useTasksStore = create<TasksState>((set, get) => ({
         error: error instanceof Error ? error.message : 'Failed to fetch lead tasks', 
         isLoading: false 
       });
+    }
+  },
+
+  completedTask: async (taskId: string) => {
+    try {
+      set({ isLoading: true, error: null });
+      await taskApi.completedTask(taskId);
+      
+      // Update the task status in local state
+      const tasks = get().tasks.map(task =>
+        task.id === taskId ? { ...task, status: 'done' as const } : task
+      );
+      set({ tasks, isLoading: false });
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to complete task',
+        isLoading: false 
+      });
+      throw error;
     }
   },
 

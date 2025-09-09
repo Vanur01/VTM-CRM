@@ -19,19 +19,8 @@ import {
 import ConfirmationDialog from "@/components/sales-crm/ConfirmationDialog";
 import { toast } from "sonner";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-  CardAction,
-} from "@/components/ui/card";
-import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
 } from "@mui/material";
 
 import {
@@ -114,7 +103,7 @@ export default function EmailTemplatesPage() {
                 </p>
               </div>
             </div>
-            <Link href="/sales-crm/settings/email/add">
+            <Link href="/settings/email/add">
               <button className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-900 text-white px-6 py-3 rounded-lg font-semibold shadow-lg cursor-pointer ">
                 <Plus className="w-5 h-5" />
                 Add New Template
@@ -196,7 +185,7 @@ export default function EmailTemplatesPage() {
                 : "Get started by creating your first email template."}
             </p>
             {!searchTerm && (
-              <Link href="/sales-crm/settings/email/add">
+              <Link href="/settings/email/add">
                 <button className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
                   <Plus className="w-5 h-5" />
                   Create First Template
@@ -246,7 +235,7 @@ export default function EmailTemplatesPage() {
                           <Eye className="w-4 h-4" />
                         </button>
                         <Link
-                          href={`/sales-crm/settings/email/edit?id=${template.templateId}`}
+                          href={`/settings/email/edit?id=${template.templateId}`}
                         >
                           <button
                             className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
@@ -350,7 +339,7 @@ export default function EmailTemplatesPage() {
                           <Eye className="w-5 h-5" />
                         </button>
                         <Link
-                          href={`/sales-crm/settings/email/edit?id=${template.id}`}
+                          href={`/settings/email/edit?id=${template.id}`}
                         >
                           <button
                             className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"

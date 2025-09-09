@@ -1,182 +1,151 @@
 import { create } from 'zustand';
-import { getUserDashboard, getAdminDashboard } from '@/api/dashboardApi';
+import { getUserDashboard } from '@/api/dashboardApi';
 
-// Types based on new API response
-export interface KPIValue {
-  count?: number;
-  amount?: number;
-  percentage?: string;
-  growth: string;
-  target: number;
-  completion: string;
+// New API Response Types
+export interface Lead {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  status: string;
+  followUpDate?: string;
+  fullName: string;
+  address: {
+    full: string;
+  };
+  id: string;
+  ownerId?: string;
+  companyId?: string;
+  company?: string | null;
+  createdAt?: string;
 }
 
-export interface TopKPIs {
-  totalLeads: KPIValue;
-  totalDeals: KPIValue;
-  conversionRate: KPIValue;
-  activeUsers: KPIValue;
-  revenueClosed: KPIValue;
+export interface LeadsByStage {
+  status: string;
+  count: number;
+  leads: Lead[];
 }
 
-export interface TeamPerformance {
+export interface DashboardCall {
+  _id: string;
+  callOwner: string;
+  companyId: string;
+  leadId: string;
+  callType: string;
+  outgoingCallStatus: string;
+  callStartTime: string;
+  callPurpose: string;
+  callAgenda: string;
+  callResult: string | null;
+  notes: string | null;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
+export interface DashboardMeeting {
+  _id: string;
+  meetingOwner: string;
+  leadId: string;
+  companyId: string;
+  title: string;
+  meetingVenue: string;
+  status: string;
+  notes: string | null;
+  attachment: string[];
+  participants: string[];
+  participantsReminder: boolean;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
+export interface DashboardTask {
+  _id: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  completedAt: string | null;
+  taskOwner: string;
+  assign: string | null;
+  leadId: string;
+  companyId: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
+export interface DashboardActivities {
+  calls: DashboardCall[];
+  meetings: DashboardMeeting[];
+  tasks: DashboardTask[];
+}
+
+export interface DashboardUser {
+  _id: string;
+  email: string;
   name: string;
   role: string;
-  leads: number;
-  deals: number;
-  revenue: number;
-  score: number;
+  company: string;
+  isActive: boolean;
 }
 
-export interface LeadsFunnelStage {
-  stage: string;
-  count: number;
-  percentage: string;
-}
-
-export interface LeadsFunnel {
+export interface DashboardCounts {
   totalLeads: number;
-  stages: LeadsFunnelStage[];
+  calls: number;
+  meetings: number;
+  tasks: number;
+  users: number;
+  managers: number;
 }
 
-export interface DealsFunnelStage {
-  stage: string;
-  count: number;
-  amount: number;
-  percentage: string;
+export interface NewDashboardData {
+  followLeads: Lead[];
+  leadsByStage: LeadsByStage[];
+  convertedLeads: Lead[];
+  activities: DashboardActivities;
+  users: DashboardUser[];
+  managers: DashboardUser[];
+  counts: DashboardCounts;
 }
 
-export interface DealsFunnel {
-  totalDeals: number;
-  stages: DealsFunnelStage[];
-}
-
-export interface TaskPipelineStage {
-  stage: string;
-  count: number;
-}
-
-export interface TaskPipeline {
-  totalTasks: number;
-  stages: TaskPipelineStage[];
-}
-
-export interface LeadFunnelChartItem {
-  label: string;
-  count: number;
-}
-
-export interface ActivityHeatmap {
-  [day: string]: {
-    calls: number;
-    meetings: number;
-  };
-}
-
-export interface UpcomingMeeting {
-  time: string;
-  title: string;
-  attendees: string[];
-  type: string;
-}
-
-// For user dashboard API response
-export interface UserDashboardKPI {
-  count: number;
-  trend?: string;
-  trendValue?: string;
-}
-
-export interface UserDashboardKPIs {
-  leads: UserDashboardKPI;
-  deals: UserDashboardKPI;
-  tasksDueToday: UserDashboardKPI;
-  meetingsToday: { count: number };
-  followUps: { count: number };
-}
-
-export interface UserDashboardCharts {
-  dealsClosed: {
-    labels: string[];
-    data: number[];
-  };
-  conversionFunnel: {
-    labels: string[];
-    data: number[];
-  };
-}
-
-export interface UserDashboardData {
-  kpis: UserDashboardKPIs;
-  charts: UserDashboardCharts;
-}
-
-export interface DashboardData {
-  filter: string;
-  teamPerformance: TeamPerformance[];
-  leadsFunnel: LeadsFunnel;
-  dealsFunnel: DealsFunnel;
-  taskPipeline: TaskPipeline;
-  leadFunnelChart: LeadFunnelChartItem[];
-  ActivityHeatmap: ActivityHeatmap;
-  upcomingMeetings: UpcomingMeeting[];
-  topKPIs: TopKPIs;
-}
-
+// Legacy types for admin dashboard
 interface DashboardStore {
-  adminData: DashboardData | null;
-  userData: UserDashboardData | null;
+  dashboardData: NewDashboardData | null;
   loading: boolean;
   error: string | null;
-  lastFetched: number | null;
-  fetchAdminDashboard: (force?: boolean) => Promise<void>;
-  fetchUserDashboard: () => Promise<void>;
+  fetchDashboard: (companyId: string, startDate?: string, endDate?: string) => Promise<void>;
   exportDashboard: () => void;
 }
 
-// Cache duration in milliseconds (15 minutes)
-const CACHE_DURATION = 15 * 60 * 1000;
+interface DashboardStore {
+  dashboardData: NewDashboardData | null;
+  loading: boolean;
+  error: string | null;
+  fetchDashboard: (companyId: string, startDate?: string, endDate?: string) => Promise<void>;
+  exportDashboard: () => void;
+}
 
 export const useDashboardStore = create<DashboardStore>((set, get) => ({
-  adminData: null,
-  userData: null,
+  dashboardData: null,
   loading: false,
   error: null,
-  lastFetched: null,
-  fetchAdminDashboard: async (force = false) => {
-    const now = Date.now();
-    const { lastFetched, adminData } = get();
-    
-    // Return cached data if available and not expired
-    if (!force && lastFetched && adminData && (now - lastFetched < CACHE_DURATION)) {
-      return;
-    }
-
+  fetchDashboard: async (companyId: string, startDate?: string, endDate?: string) => {
     set({ loading: true, error: null });
     try {
-      const res = await getAdminDashboard();
-      set({ 
-        adminData: res.data, 
-        loading: false,
-        lastFetched: Date.now()
-      });
+      const res = await getUserDashboard(companyId, startDate, endDate);
+      set({ dashboardData: res.result, loading: false });
     } catch (error: any) {
-      set({ error: error?.message || 'Failed to fetch admin dashboard', loading: false });
-    }
-  },
-  fetchUserDashboard: async () => {
-    set({ loading: true, error: null });
-    try {
-      const res = await getUserDashboard();
-      set({ userData: res.data, loading: false });
-    } catch (error: any) {
-      set({ error: error?.message || 'Failed to fetch user dashboard', loading: false });
+      set({ error: error?.message || 'Failed to fetch dashboard', loading: false });
     }
   },
   exportDashboard: () => {
-    const { adminData } = get();
-    if (!adminData) return;
-    const json = JSON.stringify(adminData, null, 2);
+    const { dashboardData } = get();
+    if (!dashboardData) return;
+    const json = JSON.stringify(dashboardData, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

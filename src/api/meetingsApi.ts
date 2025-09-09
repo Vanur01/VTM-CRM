@@ -315,6 +315,36 @@ export const getUserMeetings = async (filters?: MeetingFilters): Promise<GetAllM
   }
 };
 
+export const getCloseLeadforMeetings = async (leadId: string, companyId: string, filters?: MeetingFilters): Promise<GetAllMeetingsResponse> => {
+  const queryParams = new URLSearchParams();
+  
+  if (filters) {
+    // Handle pagination parameters
+    if (filters.page) queryParams.append('page', String(filters.page));
+    if (filters.limit) queryParams.append('limit', String(filters.limit));
+    
+    // Handle other filters
+    Object.entries(filters).forEach(([key, value]) => {
+      if (key !== 'leadId' && key !== 'companyId' && key !== 'page' && key !== 'limit' && value !== undefined && value !== null && value !== '') {
+        queryParams.append(key, String(value));
+      }
+    });
+  }
+
+  const url = `/meeting/getCloseLeadforMeetings/${leadId}/${companyId}${
+    queryParams.toString() ? `?${queryParams.toString()}` : ''
+  }`;
+  
+  try {
+    const response = await axiosInstance.get<GetAllMeetingsResponse>(url);
+    console.log("Closed meetings API response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching closed meetings:", error);
+    throw error;
+  }
+};
+
 export const addNote = async (meetingId: string, data: AddNoteRequest): Promise<AddNoteResponse> => {
   const response = await axiosInstance.put(`/meeting/addNotes/${meetingId}`, data);
   return response.data;
@@ -335,4 +365,26 @@ export const uploadFile = async (meetingId: string, file: File): Promise<UploadF
     },
   });
   return response.data;
+};
+
+export const completedMeeting = async (meetingId: string): Promise<BaseResponse> => {
+  try {
+    console.log('Marking meeting as completed with ID:', meetingId);
+    const response = await axiosInstance.patch<BaseResponse>(`/meeting/completedMeeting/${meetingId}`);
+    console.log('Complete meeting response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Complete meeting error:', error);
+    console.error('Error response:', error.response);
+    
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    } else if (error.response?.status === 500) {
+      throw new Error('Server error occurred while completing meeting. Please try again.');
+    } else if (error.response?.status === 404) {
+      throw new Error('Meeting not found or may have already been completed.');
+    } else {
+      throw new Error('Failed to complete meeting. Please check your connection and try again.');
+    }
+  }
 };

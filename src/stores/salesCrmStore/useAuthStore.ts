@@ -51,6 +51,19 @@ export interface User {
   companyId: string;
 }
 
+export interface Company {
+  _id: string;
+  user: string;
+  companyId: string;
+  companyName: string;
+  size: string;
+  industry: string;
+  managers: string[];
+  users: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface RegisteredUser {
   _id: string;
   email: string;
@@ -65,6 +78,7 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   user: User | null;
+  company: Company | null;
   registeredUser: RegisteredUser | null;
   isRegistrationComplete: boolean;
   isCompanySetupComplete: boolean;
@@ -101,6 +115,7 @@ const getInitialState = (): AuthState => ({
   refreshToken: Cookies.get("refreshToken") || null,
   isAuthenticated: !!Cookies.get("token"),
   user: Cookies.get("user") ? JSON.parse(Cookies.get("user")!) : null,
+  company: Cookies.get("company") ? JSON.parse(Cookies.get("company")!) : null,
   registeredUser: Cookies.get("registeredUser") ? JSON.parse(Cookies.get("registeredUser")!) : null,
   isRegistrationComplete: !!Cookies.get("isRegistrationComplete"),
   isCompanySetupComplete: !!Cookies.get("isCompanySetupComplete"),
@@ -120,7 +135,8 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     if (!response.success) {
       throw new Error(response.message || "Login failed");
     }
-    const { user: userData, subscription } = response.result;
+    const { user: userData, company: companyData, subscription } = response.result;
+    
     const userObj: User = {
       _id: userData._id,
       name: userData.name,
@@ -171,16 +187,35 @@ export const useAuthStore = create<AuthStore>()((set) => ({
       billingCycle: subscription?.billingCycle || "",
       companyId: userData.company || "",
     };
+
+    const companyObj: Company | null = companyData ? {
+      _id: companyData._id,
+      user: companyData.user,
+      companyId: companyData.companyId,
+      companyName: companyData.companyName,
+      size: companyData.size,
+      industry: companyData.industry,
+      managers: companyData.managers || [],
+      users: companyData.users || [],
+      createdAt: companyData.createdAt,
+      updatedAt: companyData.updatedAt,
+    } : null;
+
     set({
       token: userData.tokens,
       refreshToken: userData.refreshTokens,
       isAuthenticated: true,
       user: userObj,
+      company: companyObj,
     });
+    
     Cookies.set("token", userData.tokens, COOKIE_OPTIONS);
     Cookies.set("refreshToken", userData.refreshTokens, COOKIE_OPTIONS);
     Cookies.set("user", JSON.stringify(userObj), COOKIE_OPTIONS);
-    console.log(userObj);
+    if (companyObj) {
+      Cookies.set("company", JSON.stringify(companyObj), COOKIE_OPTIONS);
+    }
+    console.log({ user: userObj, company: companyObj });
   },
 
   logoutUser: async (deviceToken?: string) => {
@@ -206,12 +241,14 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     Cookies.remove("token");
     Cookies.remove("refreshToken");
     Cookies.remove("user");
+    Cookies.remove("company");
 
     set({
       token: null,
       refreshToken: null,
       isAuthenticated: false,
       user: null,
+      company: null,
     });
   },
 

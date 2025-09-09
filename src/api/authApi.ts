@@ -107,6 +107,19 @@ interface LoginResponse {
       updatedAt: string;
       __v: number;
     };
+    company?: {
+      _id: string;
+      user: string;
+      companyId: string;
+      companyName: string;
+      size: string;
+      industry: string;
+      managers: string[];
+      users: string[];
+      createdAt: string;
+      updatedAt: string;
+      __v: number;
+    };
     subscription?: {
       _id: string;
       user: string;

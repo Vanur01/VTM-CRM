@@ -254,4 +254,50 @@ export const addCallNote = async (callId: string, noteData: AddNoteRequest): Pro
   return response.data;
 };
 
+export const rescheduleCall = async (callId: string, rescheduledDate: string): Promise<{ success: boolean; data: Call }> => {
+  try {
+    console.log('Rescheduling call with ID:', callId, 'to date:', rescheduledDate);
+    const response = await axiosInstance.post(`/call/callRescheduled/${callId}`, {
+      rescheduledDate
+    });
+    console.log('Reschedule call response:', response.data);
+    return { success: true, data: response.data.result };
+  } catch (error: any) {
+    console.error('Reschedule call error:', error);
+    console.error('Error response:', error.response);
+    
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    } else if (error.response?.status === 500) {
+      throw new Error('Server error occurred while rescheduling call. Please try again.');
+    } else if (error.response?.status === 404) {
+      throw new Error('Call not found or may have already been rescheduled.');
+    } else {
+      throw new Error('Failed to reschedule call. Please check your connection and try again.');
+    }
+  }
+};
+
+export const completeOrCancelCall = async (callId: string, status: 'completed' | 'cancel'): Promise<{ success: boolean; data: Call }> => {
+  try {
+    console.log('Updating call status with ID:', callId, 'to status:', status);
+    const response = await axiosInstance.patch(`/call/callCompleteOrCancel/${callId}/${status}`);
+    console.log('Complete/Cancel call response:', response.data);
+    return { success: true, data: response.data.result };
+  } catch (error: any) {
+    console.error('Complete/Cancel call error:', error);
+    console.error('Error response:', error.response);
+    
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    } else if (error.response?.status === 500) {
+      throw new Error('Server error occurred while updating call status. Please try again.');
+    } else if (error.response?.status === 404) {
+      throw new Error('Call not found or may have already been updated.');
+    } else {
+      throw new Error('Failed to update call status. Please check your connection and try again.');
+    }
+  }
+};
+
 

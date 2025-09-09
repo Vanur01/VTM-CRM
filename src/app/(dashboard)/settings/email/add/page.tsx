@@ -66,7 +66,7 @@ export default function Page() {
       });
       toast.success("Template added successfully");
       isNavigating.current = true;
-      router.push("/sales-crm/settings/email");
+      router.push("/settings/email");
     } catch (error: any) {
       console.error("Error adding template:", error);
       // Show more detailed error if available
@@ -83,7 +83,7 @@ export default function Page() {
       }
     }
     isNavigating.current = true;
-    router.push("/sales-crm/settings/email");
+    router.push("/settings/email");
   };
 
   return (

@@ -11,8 +11,10 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import { motion } from "framer-motion";
-import leadsApi, { Task, Call, Meeting } from "@/api/leadsApi";
-import { ca } from "date-fns/locale";
+import taskApi, { Task } from "@/api/taskApi";
+import { Call, getLeadForAllCloseCalls } from "@/api/callsApi";
+import { Meeting, getCloseLeadforMeetings } from "@/api/meetingsApi";
+import { useAuthStore } from "@/stores/salesCrmStore/useAuthStore";
 
 interface ClosedActivitiesProps {
   leadId: string;
@@ -20,6 +22,7 @@ interface ClosedActivitiesProps {
 
 const ClosedActivities: React.FC<ClosedActivitiesProps> = ({ leadId }) => {
   const router = useRouter();
+  const { user } = useAuthStore();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [calls, setCalls] = useState<Call[]>([]);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -39,15 +42,19 @@ const ClosedActivities: React.FC<ClosedActivitiesProps> = ({ leadId }) => {
   });
 
   useEffect(() => {
-    fetchClosedTasks();
-    fetchClosedCalls();
-    fetchClosedMeetings();
-  }, [leadId]);
+    if (user?.companyId && leadId) {
+      fetchClosedTasks();
+      fetchClosedCalls();
+      fetchClosedMeetings();
+    }
+  }, [leadId, user?.companyId]);
 
   const fetchClosedTasks = async () => {
+    if (!user?.companyId) return;
+    
     try {
-      const response = await leadsApi.getTaskList(leadId, "close");
-      setTasks(response.data.data);
+      const response = await taskApi.getAllCloseTasks(leadId, user.companyId);
+      setTasks(response.result.tasks);
       setError((prev) => ({ ...prev, tasks: null }));
     } catch (err) {
       setError((prev) => ({ ...prev, tasks: "Failed to fetch closed tasks" }));
@@ -58,9 +65,11 @@ const ClosedActivities: React.FC<ClosedActivitiesProps> = ({ leadId }) => {
   };
 
   const fetchClosedCalls = async () => {
+    if (!user?.companyId) return;
+    
     try {
-      const response = await leadsApi.getCallList(leadId, "close");
-      setCalls(response.data.data);
+      const response = await getLeadForAllCloseCalls(leadId, user.companyId);
+      setCalls(response.result.calls);
       setError((prev) => ({ ...prev, calls: null }));
     } catch (err) {
       setError((prev) => ({ ...prev, calls: "Failed to fetch closed calls" }));
@@ -71,9 +80,11 @@ const ClosedActivities: React.FC<ClosedActivitiesProps> = ({ leadId }) => {
   };
 
   const fetchClosedMeetings = async () => {
+    if (!user?.companyId) return;
+    
     try {
-      const response = await leadsApi.getMeetingList(leadId, "close");
-      setMeetings(response.data.data);
+      const response = await getCloseLeadforMeetings(leadId, user.companyId);
+      setMeetings(response.result.meetings);
       setError((prev) => ({ ...prev, meetings: null }));
     } catch (err) {
       setError((prev) => ({
@@ -197,35 +208,34 @@ const ClosedActivities: React.FC<ClosedActivitiesProps> = ({ leadId }) => {
             ) : (
               tasks.map((task) => (
                 <motion.div
-                  key={task._id}
+                  key={task.id}
                   whileHover={{ y: -2 }}
                   className="p-4 rounded-lg border border-gray-100 hover:border-blue-100 hover:shadow-sm transition-all mb-4"
                 >
                   <h4 
                     className="font-medium text-gray-900 mb-2 hover:text-blue-600 cursor-pointer transition-colors"
                     onClick={() => {
-                      const taskId = task.taskId ;
-                      console.log("Task ID:", taskId);
-                      if (taskId) handleTaskClick(taskId);
+                      console.log("Task ID:", task.id);
+                      if (task.id) handleTaskClick(task.id);
                     }}
                   >
-                    {task.subject}
+                    {task.title}
                   </h4>
                   <div className="flex items-center text-sm text-gray-500 mb-2">
                     <AccessTimeIcon
                       fontSize="small"
                       className="mr-1.5 text-gray-400"
                     />
-                    {formatDateTime(task.dueDate)}
+                    {task.completedAt ? formatDateTime(task.completedAt) : formatDateTime(task.createdAt || '')}
                   </div>
                   <div className="flex items-center text-sm text-gray-500 mb-3">
                     <Avatar
                       sx={{ width: 24, height: 24, fontSize: 12 }}
                       className="mr-2 bg-blue-100 text-blue-600"
                     >
-                      {task.taskOwner.charAt(0).toUpperCase()}
+                      {task.taskOwner.name.charAt(0).toUpperCase()}
                     </Avatar>
-                    {task.taskOwner}
+                    {task.taskOwner.name}
                   </div>
                   <div className="flex gap-2">
                     <Chip
@@ -305,7 +315,7 @@ const ClosedActivities: React.FC<ClosedActivitiesProps> = ({ leadId }) => {
                   <h4 
                     className="font-medium text-gray-900 mb-2 hover:text-purple-600 cursor-pointer transition-colors"
                     onClick={() => {
-                      const meetingId = meeting.meetingId || meeting.id || meeting._id;
+                      const meetingId = meeting._id;
                       if (meetingId) handleMeetingClick(meetingId);
                     }}
                   >
@@ -424,11 +434,11 @@ const ClosedActivities: React.FC<ClosedActivitiesProps> = ({ leadId }) => {
                   <h4 
                     className="font-medium text-gray-900 mb-2 hover:text-green-600 cursor-pointer transition-colors"
                     onClick={() => {
-                      const callId = call.callId || call.id || call._id;
+                      const callId = call.callId || call._id;
                       if (callId) handleCallClick(callId);
                     }}
                   >
-                    {call.subject}
+                    {call.callPurpose}
                   </h4>
                   <div className="flex items-center text-sm text-gray-500 mb-2">
                     <AccessTimeIcon
@@ -442,9 +452,12 @@ const ClosedActivities: React.FC<ClosedActivitiesProps> = ({ leadId }) => {
                       sx={{ width: 24, height: 24, fontSize: 12 }}
                       className="mr-2 bg-green-100 text-green-600"
                     >
-                      {call.callOwner.charAt(0).toUpperCase()}
+                      {typeof call.callOwner === 'string' 
+                        ? call.callOwner.charAt(0).toUpperCase()
+                        : call.callOwner.name.charAt(0).toUpperCase()
+                      }
                     </Avatar>
-                    {call.callOwner}
+                    {typeof call.callOwner === 'string' ? call.callOwner : call.callOwner.name}
                   </div>
                   <div className="flex gap-2 mb-2">
                     <Chip

@@ -14,6 +14,7 @@ import {
   getUserMeetings,
   addNote,
   uploadFile,
+  completedMeeting,
 } from "@/api/meetingsApi";
 
 // API response types
@@ -82,6 +83,7 @@ interface MeetingsActions {
   deleteMeeting: (meetingId: string) => Promise<boolean>;
   deleteAllMeetings: () => Promise<boolean>;
   bulkDeleteMeetings: (meetingIds: string[]) => Promise<void>;
+  completedMeeting: (meetingId: string) => Promise<void>;
   addNote: (meetingId: string, note: string) => Promise<void>;
   uploadFile: (meetingId: string, file: File) => Promise<void>;
 }
@@ -458,6 +460,29 @@ bulkDeleteMeetings: async (meetingIds: string[]) => {
       set({
         error: error instanceof Error ? error.message : "Failed to add note",
         isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  completedMeeting: async (meetingId: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await completedMeeting(meetingId);
+      
+      // Update the meeting status in local state
+      const meetings = get().meetings.map(meeting => {
+        const currentMeetingId = meeting._id || meeting.id || meeting.meetingId;
+        return currentMeetingId === meetingId 
+          ? { ...meeting, status: 'completed' } 
+          : meeting;
+      });
+      
+      set({ meetings, isLoading: false });
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to complete meeting',
+        isLoading: false 
       });
       throw error;
     }

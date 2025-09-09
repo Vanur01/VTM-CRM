@@ -192,7 +192,7 @@ export default function EditEmailTemplatePageContent() {
             <div className="text-red-500 mb-6 text-lg">{error}</div>
             <button
               className="px-6 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              onClick={() => router.push("/sales-crm/settings/email")}
+              onClick={() => router.push("/settings/email")}
             >
               Back to Templates
             </button>
@@ -228,7 +228,7 @@ export default function EditEmailTemplatePageContent() {
             </div>
             <button
               className="px-6 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              onClick={() => router.push("/sales-crm/settings/email")}
+              onClick={() => router.push("/settings/email")}
             >
               Back to Templates
             </button>

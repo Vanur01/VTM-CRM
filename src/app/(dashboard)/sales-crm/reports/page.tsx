@@ -140,7 +140,7 @@ const ReportsPage = () => {
   };
 
   const handleRowClick = (item: (typeof ReportsData)[0]) => {
-    router.push(`/reports/${item.id}`);
+    router.push(`/sales-crm/reports/${item.id}`);
   };
 
   const renderRow = (item: (typeof ReportsData)[0], index: number) => {
@@ -184,11 +184,6 @@ const ReportsPage = () => {
               </MenuItem>
               <MenuItem onClick={() => handleOptionClick("Delete", index)}>
                 Delete
-              </MenuItem>
-              <MenuItem
-                onClick={() => handleOptionClick("Assign Owner", index)}
-              >
-                Assign Owner
               </MenuItem>
               <MenuItem
                 onClick={() => handleOptionClick("Log Follow-Up", index)}

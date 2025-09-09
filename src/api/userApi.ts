@@ -1,5 +1,3 @@
-// ... existing code ...
-
 import axiosInstance from "@/utils/axios";
 
 export interface User {
@@ -8,6 +6,7 @@ export interface User {
   name: string;
   mobile: string;
   userType: string;
+  role: string;
   isActive: boolean;
   deviceTokens: string[];
   status: number;
@@ -19,6 +18,8 @@ export interface User {
   updatedAt: string;
   profilePic: string | null;
   companyName?: string;
+  companyId?: string;
+  managerId?: string;
   address?: {
     street: string;
     city: string;
@@ -28,89 +29,67 @@ export interface User {
   };
 }
 
-export interface GetAllUsersResponse {
+export interface AddUserOrManagerRequest {
+  name: string;
+  email: string;
+  password: string;
+  mobile: string;
+  role: 'user' | 'manager';
+}
+
+export interface GetUsersByManagerResponse {
   statusCode: number;
   status: string;
   message: string;
   data: {
-    totalPages: number;
-    currentPage: number;
-    totalUsers: number;
     users: User[];
   };
 }
 
-export async function getAllUsers(userType: string, page: number = 1, limit: number = 10) {
-  const response = await axiosInstance.get<GetAllUsersResponse>('/v1/users/getAllUsers', {
-    params: { userType, page, limit }
-  });
+export interface AddUserOrManagerResponse {
+  statusCode: number;
+  status: string;
+  message: string;
+  data: {
+    user: User;
+  };
+}
+
+export interface GetAllUsersResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  result: {
+    _id: string;
+    email: string;
+    name: string;
+    role: string;
+    company: string;
+    isActive: boolean;
+  }[];
+}
+
+// Add User or Manager by Admin
+export async function addUserOrManager(companyId: string, userData: AddUserOrManagerRequest): Promise<User> {
+  const response = await axiosInstance.post<AddUserOrManagerResponse>(`/admin/addUserOrManager/${companyId}`, userData);
+  return response.data.data.user;
+}
+
+// Get Users by Manager
+export async function getUsersByManager(managerId: string): Promise<User[]> {
+  const response = await axiosInstance.get<GetUsersByManagerResponse>(`/admin/getUsersByManager/${managerId}`);
   return response.data.data.users;
 }
 
-export async function getUserById(id: string) {
-  const response = await axiosInstance.get(`/users/${id}`);
-  return response.data;
+// Manager Add User
+export async function managerAddUser(companyId: string, userData: AddUserOrManagerRequest): Promise<User> {
+  const response = await axiosInstance.post<AddUserOrManagerResponse>(`/admin/managerAddUser/${companyId}`, userData);
+  return response.data.data.user;
 }
 
-export interface CreateUserRequest {
-  name: string;
-  email: string;
-  mobile: string;
-  password: string;
-  userType: string;
-}
-
-export async function createUser(userData: CreateUserRequest) {
-  const response = await axiosInstance.post('/users/addUsers', userData);
-  return response.data;
-}
-
-export async function updateUser(id: string, userData: Partial<User>) {
-  const response = await axiosInstance.put(`/users/${id}`, userData);
-  return response.data;
-}
-
-export async function deleteUser(id: string) {
-  const response = await axiosInstance.delete(`/users/deleteUser/${id}`);
-  return response.data;
-}
-
-export async function toggleUserActiveStatus(id: string, isActive: boolean) {
-  const response = await axiosInstance.put(`/users/UserActiveOrDeactive/${id}/status/${isActive}`);
-  return response.data;
-}
-
-export async function getProfile(id: string) {
-  const response = await axiosInstance.get(`/users/getProfile/${id}`);
-  return response.data;
-}
-
-export async function updateProfile(id: string, profileData: {
-  name: string;
-  email: string;
-  mobile: string;
-  companyName?: string;
-  address?: {
-    street: string;
-    city: string;
-    state: string;
-    pincode: string;
-    country: string;
-  };
-}) {
-  const response = await axiosInstance.put(`/users/updateProfile/${id}`, profileData);
-  return response.data;
-}
-
-export async function uploadProfilePic( file: File) {
-  const formData = new FormData();
-  formData.append('image', file);
-  
-  const response = await axiosInstance.post(`/users/uploadProfilePic`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return response.data;
+// Get All Users by Company
+export async function getAllUsers(companyId: string): Promise<GetAllUsersResponse['result']> {
+  const response = await axiosInstance.get<GetAllUsersResponse>(`/admin/getAllUsers/${companyId}`);
+  return response.data.result;
 }
 

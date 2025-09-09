@@ -1,10 +1,7 @@
 'use client';
 
-import { useAuthStore } from '@/stores/salesCrmStore/useAuthStore';
 import { useState, useEffect } from 'react';
-import { getProfile, updateProfile, uploadProfilePic } from '@/api/userApi';
 import { toast } from 'sonner';
-import Image from 'next/image';
 import { User } from 'lucide-react';
 
 interface ProfileData {
@@ -22,8 +19,23 @@ interface ProfileData {
   companyName?: string;
 }
 
+// Static user data
+const STATIC_USER_DATA: ProfileData = {
+  _id: "user123",
+  name: "John Doe",
+  email: "john.doe@company.com",
+  mobile: "+1 (555) 123-4567",
+  status: 1,
+  profilePic: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+  isActive: true,
+  userType: "Manager",
+  signupStatus: 1,
+  createdAt: "2024-01-15T10:30:00Z",
+  updatedAt: "2024-09-01T14:20:00Z",
+  companyName: "Acme Corporation"
+};
+
 export default function UserSettingsPage({ params }: { params: { id: string } }) {
-  const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [uploadingPic, setUploadingPic] = useState(false);
   const [formData, setFormData] = useState({
@@ -37,27 +49,22 @@ export default function UserSettingsPage({ params }: { params: { id: string } })
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const response = await getProfile(params.id);
-        const profileData: ProfileData = response.data;
-        setFormData(prev => ({
-          ...prev,
-          name: profileData.name || '',
-          email: profileData.email || '',
-          mobile: profileData.mobile || '',
-          userType: profileData.userType || '',
-          profilePic: profileData.profilePic,
-          companyName: profileData.companyName || '',
-        }));
-        setPreviewImage(profileData.profilePic);
-      } catch (error) {
-        toast.error('Failed to fetch user profile');
-        console.error('Error fetching profile:', error);
-      }
+    // Simulate loading static data
+    const loadStaticData = () => {
+      setTimeout(() => {
+        setFormData({
+          name: STATIC_USER_DATA.name,
+          email: STATIC_USER_DATA.email,
+          mobile: STATIC_USER_DATA.mobile,
+          userType: STATIC_USER_DATA.userType,
+          profilePic: STATIC_USER_DATA.profilePic,
+          companyName: STATIC_USER_DATA.companyName || '',
+        });
+        setPreviewImage(STATIC_USER_DATA.profilePic);
+      }, 500); // Small delay to simulate loading
     };
 
-    fetchUserProfile();
+    loadStaticData();
   }, [params.id]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,9 +90,15 @@ export default function UserSettingsPage({ params }: { params: { id: string } })
 
     try {
       setUploadingPic(true);
-      const response = await uploadProfilePic(file);
-      setPreviewImage(response.data.profilePic);
-      setFormData(prev => ({ ...prev, profilePic: response.data.profilePic }));
+      
+      // Simulate upload delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Create preview URL for the uploaded file
+      const previewUrl = URL.createObjectURL(file);
+      setPreviewImage(previewUrl);
+      setFormData(prev => ({ ...prev, profilePic: previewUrl }));
+      
       toast.success('Profile picture updated successfully');
     } catch (error) {
       toast.error('Failed to upload profile picture');
@@ -98,14 +111,19 @@ export default function UserSettingsPage({ params }: { params: { id: string } })
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    
     try {
-      const updateData = {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Update static data (in real app, this would be an API call)
+      console.log('Updated profile data:', {
         name: formData.name,
         email: formData.email,
         mobile: formData.mobile,
         companyName: formData.companyName,
-      };
-      await updateProfile(params.id, updateData);
+      });
+      
       toast.success('Profile updated successfully');
     } catch (error) {
       toast.error('Failed to update profile');
@@ -130,7 +148,7 @@ export default function UserSettingsPage({ params }: { params: { id: string } })
                 />
               ) : (
                 <span className="text-5xl font-bold text-indigo-500">
-                  {formData.name ? formData.name.charAt(0).toUpperCase() : 'X'}
+                  {formData.name ? formData.name.charAt(0).toUpperCase() : 'U'}
                 </span>
               )}
               {uploadingPic && (
@@ -221,6 +239,19 @@ export default function UserSettingsPage({ params }: { params: { id: string } })
                 />
               </div>
               <div className="space-y-2">
+                <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">
+                  Company Name
+                </label>
+                <input
+                  id="companyName"
+                  name="companyName"
+                  value={formData.companyName}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent bg-indigo-50"
+                  placeholder="Enter your company name"
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
                 <label htmlFor="userType" className="block text-sm font-medium text-gray-700">
                   User Type
                 </label>

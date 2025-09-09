@@ -179,6 +179,39 @@ const taskApi = {
     } catch (error) {
       throw error;
     }
+  },
+
+  getAllCloseTasks: async (leadId: string, companyId: string): Promise<TaskResponse> => {
+    try {
+      const response = await axios.get<TaskResponse>(
+        `/task/getAllCloseTasks/${leadId}/${companyId}`
+      );
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  completedTask: async (taskId: string) => {
+    try {
+      console.log('Marking task as completed with ID:', taskId);
+      const response = await axios.patch(`/task/completedTask/${taskId}`);
+      console.log('Complete task response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Complete task error:', error);
+      console.error('Error response:', error.response);
+      
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      } else if (error.response?.status === 500) {
+        throw new Error('Server error occurred while completing task. Please try again.');
+      } else if (error.response?.status === 404) {
+        throw new Error('Task not found or may have already been completed.');
+      } else {
+        throw new Error('Failed to complete task. Please check your connection and try again.');
+      }
+    }
   }
 };
 

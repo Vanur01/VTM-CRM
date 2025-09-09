@@ -261,7 +261,7 @@ export default function MainSidebar({
       {
         href:
           user?.role === "admin"
-            ? "/sales-crm/settings/email"
+            ? "/settings/email"
             : "/sales-crm/user/settings/email",
         icon: <Mail className="w-4 h-4 stroke-[1.5]" />,
         label: "Email",
@@ -604,8 +604,8 @@ export default function MainSidebar({
           </div>
 
           {/* Sales Module */}
-          <div className="mt-5 pt-6 border-t border-gray-200">
-            {/* <Tooltip title={collapsed ? "Sales" : ""} placement="right">
+          {/* <div className="mt-5 pt-6 border-t border-gray-200">
+            <Tooltip title={collapsed ? "Sales" : ""} placement="right">
               <button
                 onClick={toggleSales}
                 className={`
@@ -634,10 +634,9 @@ export default function MainSidebar({
                   </span>
                 )}
               </button>
-            </Tooltip> */}
+            </Tooltip> 
 
-            {/* Sales Items - Expanded */}
-            {/* {!collapsed && (
+            {!collapsed && (
               <div
                 className={`
                   mt-2 ml-6 space-y-1
@@ -682,10 +681,9 @@ export default function MainSidebar({
                     </Tooltip>
                   ))}
               </div>
-            )} */}
+            )} 
 
-            {/* Sales Items - Collapsed */}
-            {/* {collapsed && (
+            {collapsed && (
               <div
                 className={`
                   flex flex-col items-center space-y-1 mt-2
@@ -721,8 +719,8 @@ export default function MainSidebar({
                     </Tooltip>
                   ))}
               </div>
-            )} */}
-          </div>
+            )}
+          </div> */}
 
           {/* Purchases Module */}
           {/* <div className="mt-2">
@@ -844,8 +842,8 @@ export default function MainSidebar({
           </div> */}
 
           {/* Inventory Module */}
-          <div className="mt-2">
-            {/* <Tooltip title={collapsed ? "Inventory" : ""} placement="right">
+          {/* <div className="mt-2">
+            <Tooltip title={collapsed ? "Inventory" : ""} placement="right">
               <button
                 onClick={toggleInventory}
                 className={`
@@ -874,9 +872,9 @@ export default function MainSidebar({
                   </span>
                 )}
               </button>
-            </Tooltip> */}
+            </Tooltip> 
 
-            {/* {!collapsed && (
+            {!collapsed && (
               <div
                 className={`
                   mt-2 ml-6 space-y-1
@@ -921,9 +919,9 @@ export default function MainSidebar({
                     </Tooltip>
                   ))}
               </div>
-            )} */}
+            )} 
 
-            {/* {collapsed && (
+            {collapsed && (
               <div
                 className={`
                   flex flex-col items-center space-y-1 mt-2
@@ -959,8 +957,8 @@ export default function MainSidebar({
                     </Tooltip>
                   ))}
               </div>
-            )} */}
-          </div>
+            )} 
+          </div> */}
 
           {/* Reports Module */}
           {/* <div className="mt-2">
@@ -1082,7 +1080,7 @@ export default function MainSidebar({
           </div> */}
 
           {/* Settings Section */}
-          {/* <div className="mt-5 pt-6 border-t border-gray-200">
+          <div className="mt-5 pt-6 border-t border-gray-200">
             <Tooltip title={collapsed ? "Settings" : ""} placement="right">
               <button
                 onClick={toggleSettings}
@@ -1200,7 +1198,7 @@ export default function MainSidebar({
                   ))}
               </div>
             )}
-          </div> */}
+          </div> 
         </div>
       </nav>
 

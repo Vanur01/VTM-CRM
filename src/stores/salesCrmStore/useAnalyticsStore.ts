@@ -71,7 +71,7 @@ const useAnalyticsStore = create<AnalyticsStore>((set, get) => ({
           dateRange && { from: dateRange.from, to: dateRange.to })
       };
       
-      const { data } = await getallanalytics(queryParams);
+      const data = await getallanalytics(queryParams);
       set({ analytics: data, isLoading: false });
     } catch (error) {
       set({ 
