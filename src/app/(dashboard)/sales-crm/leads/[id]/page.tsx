@@ -190,9 +190,9 @@ const DetailsPage = () => {
       <AssignLeadsDialog
         isOpen={isAssignDialogOpen}
         onClose={() => setIsAssignDialogOpen(false)}
-        onAssign={async (email) => {
+        onAssign={async (userId) => {
           try {
-            await assignLead(id as string, email);
+            await assignLead(id as string, userId);
             setIsAssignDialogOpen(false);
 
             // Refresh lead data with companyId
@@ -202,7 +202,7 @@ const DetailsPage = () => {
 
             setSuccessMessage({
               title: "Success",
-              message: `Lead has been successfully assigned to ${email}.`,
+              message: `Lead has been successfully assigned.`,
             });
             setShowSuccessDialog(true);
 
@@ -335,10 +335,10 @@ const DetailsPage = () => {
               ref={(el) => setSectionRef("invited-meetings-section", el)}
               className="scroll-mt-16"
             >
-              <InvitedMeetings
+              {/* <InvitedMeetings
                 meetings={currentLead.openMeetings || []}
                 leadId={currentLead._id}
-              />
+              /> */}
             </div>
           </div>
         </div>

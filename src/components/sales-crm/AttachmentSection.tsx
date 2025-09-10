@@ -14,6 +14,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import { FormControl, InputLabel, Select, MenuItem, LinearProgress, IconButton, Tooltip } from "@mui/material";
 import { motion } from "framer-motion";
 import { useLeadsStore } from "@/stores/salesCrmStore/useLeadsStore";
+import { useAuthStore } from "@/stores/salesCrmStore/useAuthStore";
 
 interface Attachment {
   _id: string;
@@ -55,7 +56,8 @@ const AttachmentSection: React.FC<AttachmentSectionProps> = ({
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [deletingAttachment, setDeletingAttachment] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const { uploadFile, deleteAttachment } = useLeadsStore();
+  const { uploadFile, deleteAttachment, fetchLeadById } = useLeadsStore();
+  const { user } = useAuthStore();
 
   // Helper function to normalize attachments
   const normalizeAttachments = (): Attachment[] => {
@@ -153,8 +155,10 @@ const AttachmentSection: React.FC<AttachmentSectionProps> = ({
         // Actually upload the file
         await uploadFile(leadId, file);
         
-        // Don't reload the page, the store will update automatically
-        // window.location.reload();
+        // Refresh the lead data to get updated attachments
+        if (user?.companyId) {
+          await fetchLeadById(leadId, user.companyId);
+        }
 
       } catch (error) {
         console.error("Failed to upload file:", error);
@@ -183,6 +187,11 @@ const AttachmentSection: React.FC<AttachmentSectionProps> = ({
     try {
       setDeletingAttachment(attachment._id);
       await deleteAttachment(leadId, attachment._id);
+      
+      // Refresh the lead data to get updated attachments
+      if (user?.companyId) {
+        await fetchLeadById(leadId, user.companyId);
+      }
     } catch (error) {
       console.error("Failed to delete attachment:", error);
     } finally {

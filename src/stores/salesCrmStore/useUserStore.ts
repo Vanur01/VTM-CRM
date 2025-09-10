@@ -1,5 +1,18 @@
 import { create } from 'zustand';
-import { User, AddUserOrManagerRequest, addUserOrManager, getUsersByManager, managerAddUser, getAllUsers, GetAllUsersResponse } from '@/api/userApi';
+import { 
+  User, 
+  AddUserOrManagerRequest, 
+  UpdateUserRequest,
+  addUserOrManager, 
+  getUsersByManager, 
+  managerAddUser, 
+  getAllUsers, 
+  getUserById,
+  updateUser,
+  toggleUserActive,
+  deleteUser,
+  GetAllUsersResponse 
+} from '@/api/userApi';
 
 interface UserState {
   users: User[];
@@ -9,8 +22,12 @@ interface UserState {
   error: string | null;
   fetchUsersByManager: (managerId: string) => Promise<void>;
   fetchAllUsers: (companyId: string) => Promise<void>;
+  getUserById: (userId: string, companyId: string) => Promise<User>;
   addUserOrManagerByAdmin: (companyId: string, userData: AddUserOrManagerRequest) => Promise<void>;
   addUserByManager: (companyId: string, userData: AddUserOrManagerRequest) => Promise<void>;
+  updateUser: (userId: string, companyId: string, userData: UpdateUserRequest) => Promise<void>;
+  toggleUserActive: (userId: string, companyId: string) => Promise<void>;
+  deleteUser: (userId: string, companyId: string) => Promise<void>;
   setCurrentUser: (user: User | null) => void;
   clearError: () => void;
 }
@@ -59,6 +76,84 @@ const useUserStore = create<UserState>((set, get) => ({
       set((state) => ({ users: [...state.users, newUser], loading: false }));
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
+    }
+  },
+
+  getUserById: async (userId: string, companyId: string) => {
+    try {
+      set({ loading: true, error: null });
+      const user = await getUserById(userId, companyId);
+      set({ currentUser: user, loading: false });
+      return user;
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+      throw error;
+    }
+  },
+
+  updateUser: async (userId: string, companyId: string, userData: UpdateUserRequest) => {
+    try {
+      set({ loading: true, error: null });
+      const updatedUser = await updateUser(userId, companyId, userData);
+      
+      // Update in users array
+      set((state) => ({
+        users: state.users.map(user => 
+          user._id === userId ? updatedUser : user
+        ),
+        allUsers: state.allUsers.map(user => 
+          user._id === userId 
+            ? { ...user, ...userData, _id: userId }
+            : user
+        ),
+        currentUser: state.currentUser?._id === userId ? updatedUser : state.currentUser,
+        loading: false
+      }));
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+      throw error;
+    }
+  },
+
+  toggleUserActive: async (userId: string, companyId: string) => {
+    try {
+      set({ loading: true, error: null });
+      const updatedUser = await toggleUserActive(userId, companyId);
+      
+      // Update in users array
+      set((state) => ({
+        users: state.users.map(user => 
+          user._id === userId ? updatedUser : user
+        ),
+        allUsers: state.allUsers.map(user => 
+          user._id === userId 
+            ? { ...user, isActive: updatedUser.isActive }
+            : user
+        ),
+        currentUser: state.currentUser?._id === userId ? updatedUser : state.currentUser,
+        loading: false
+      }));
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+      throw error;
+    }
+  },
+
+  deleteUser: async (userId: string, companyId: string) => {
+    try {
+      set({ loading: true, error: null });
+      await deleteUser(userId, companyId);
+      
+      // Remove from users array
+      set((state) => ({
+        users: state.users.filter(user => user._id !== userId),
+        allUsers: state.allUsers.filter(user => user._id !== userId),
+        currentUser: state.currentUser?._id === userId ? null : state.currentUser,
+        loading: false
+      }));
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+      throw error;
     }
   },
 

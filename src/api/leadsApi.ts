@@ -64,6 +64,7 @@ export interface Lead {
   temperature: string; // Added temperature field
   lostReason?: string; // Added lostReason
   leadOwner?: string;
+  isAssign?: boolean; 
   expectedCloseDate: string | null;
   actualCloseDate: string | null;
   followUpDate: string | null;
@@ -133,7 +134,7 @@ interface AssignLeadResponse extends BaseResponse {
 
 interface BulkAssignLeadRequest {
   leadIds: string[];
-  email: string;
+  newOwnerId: string; // Changed from email to newOwnerId
 }
 
 interface BulkDeleteLeadRequest {
@@ -255,6 +256,64 @@ export const getAllLeads = async (
   };
 };
 
+export const getAllLeadsByUser = async (
+  companyId: string,
+  filters?: LeadFilters
+): Promise<{
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    response: Array<Lead>;
+  };
+}> => {
+  const queryParams = new URLSearchParams();
+
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        // Handle array values (like tags)
+        if (Array.isArray(value)) {
+          value.forEach((item) => {
+            if (item !== undefined && item !== null && item !== '') {
+              queryParams.append(key, String(item));
+            }
+          });
+        } else {
+          queryParams.append(key, String(value));
+        }
+      }
+    });
+  }
+
+  const url = `/lead/getAllLeadsByUser/${companyId}${
+    queryParams.toString() ? `?${queryParams.toString()}` : ""
+  }`;
+
+  const response = await axiosInstance.get(url);
+
+  // Map API response to our expected format
+  return {
+    success: response.data.success,
+    statusCode: response.data.statusCode,
+    message: response.data.message,
+    data: {
+      total: response.data.result.total,
+      page: response.data.result.page,
+      limit: response.data.result.limit,
+      totalPages: response.data.result.totalPages,
+      response: response.data.result.leads.map((lead: any) => ({
+        ...lead,
+        leadId: lead.leadId || lead._id // Ensure leadId is available
+      })),
+    },
+  };
+};
+
 export const getAllDeleteLeads = async (): Promise<any> => {
   const response = await axiosInstance.get<any>("/lead/getAllDeleteLeads");
   return response.data;
@@ -290,10 +349,10 @@ export const updateLead = async (
 
 export const assignSingleLead = async (
   leadId: string,
-  email: string
+  newOwnerId: string
 ): Promise<AssignLeadResponse> => {
-  const response = await axiosInstance.get<AssignLeadResponse>(
-    `/lead/assignSingleLead/${leadId}/status/${email}`
+  const response = await axiosInstance.post<AssignLeadResponse>(
+    `/lead/assign/${leadId}/${newOwnerId}`
   );
   return response.data;
 };
@@ -302,7 +361,7 @@ export const bulkLeadAssign = async (
   data: BulkAssignLeadRequest
 ): Promise<BaseResponse> => {
   const response = await axiosInstance.post<BaseResponse>(
-    "/lead/bulkLeadAssign",
+    "/lead/assign/bulk",
     data
   );
   return response.data;
@@ -551,10 +610,10 @@ export const uploadFile = async (
   file: File
 ): Promise<GetLeadResponse> => {
   const formData = new FormData();
-  formData.append("files", file); // Changed from "file" to "files" to match backend
+  formData.append("attachments", file); // Use "attachments" key to match backend array expectation
 
   const response = await axiosInstance.post<GetLeadResponse>(
-    `/lead/uploadAttachment/${leadId}`, // Updated endpoint
+    `/lead/uploadAttachment/${leadId}`,
     formData,
     {
       headers: {

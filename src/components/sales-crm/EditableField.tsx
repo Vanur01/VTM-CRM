@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ClearRoundedIcon from '@mui/icons-material/ClearRounded';
+import { updateLead } from '@/api/leadsApi';
+import { useAuthStore } from '@/stores/salesCrmStore/useAuthStore';
+import { toast } from 'sonner';
 
 interface EditableFieldProps {
   label: string;
@@ -23,6 +26,7 @@ const EditableField: React.FC<EditableFieldProps> = ({
   const [tempValue, setTempValue] = useState(value || '');
   const [showButtons, setShowButtons] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { user } = useAuthStore();
 
   // Reset temp value when the prop value changes
   useEffect(() => {
@@ -37,13 +41,38 @@ const EditableField: React.FC<EditableFieldProps> = ({
   }, [tempValue, value, isEditing]);
 
   const handleSave = async () => {
+    if (!entityId || !fieldName || !user?.companyId) {
+      console.error('Missing required data for updating lead:', { entityId, fieldName, companyId: user?.companyId });
+      toast.error('Unable to update field. Missing required information.');
+      return;
+    }
+
     setIsSaving(true);
     try {
-      await onSave(tempValue);
-      setIsEditing(false);
-      setShowButtons(false);
-    } catch (error) {
-      console.error('Error updating field:', error);
+      // Prepare the update data with the specific field
+      const updateData = {
+        [fieldName]: tempValue
+      };
+
+      // Call the updateLead API
+      const response = await updateLead(entityId, updateData, user.companyId);
+      
+      if (response.success) {
+        // Call the parent onSave function to update local state
+        await onSave(tempValue);
+        setIsEditing(false);
+        setShowButtons(false);
+        toast.success(`${label} updated successfully`);
+      } else {
+        throw new Error(response.message || 'Failed to update lead');
+      }
+    } catch (error: any) {
+      console.error('Error updating lead field:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to update field';
+      toast.error(errorMessage);
+      
+      // Reset to original value on error
+      setTempValue(value || '');
     } finally {
       setIsSaving(false);
     }

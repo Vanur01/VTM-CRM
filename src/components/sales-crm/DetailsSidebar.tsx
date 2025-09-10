@@ -64,15 +64,15 @@ const sidebarItems: SidebarItem[] = [
     ),
     sectionId: "closed-activities-section",
   },
-  {
-    label: "Invited Meetings",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-      </svg>
-    ),
-    sectionId: "invited-meetings-section",
-  },
+  // {
+  //   label: "Invited Meetings",
+  //   icon: (
+  //     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  //       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+  //     </svg>
+  //   ),
+  //   sectionId: "invited-meetings-section",
+  // },
 ];
 
 interface SidebarProps {
@@ -217,7 +217,7 @@ const DetailsSidebar: React.FC<SidebarProps> = ({
               {/* Tooltip for collapsed state */}
               {collapsed && isHovered && (
                 <div className="absolute left-full ml-3 top-1/2 transform -translate-y-1/2 z-50">
-                  <div className="bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg">
+                  <div className="bg-gray-900 text-white px-3 py-2 rounded-lg text-xs font-medium shadow-lg">
                     {item.label}
                     <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-0 h-0 border-r-4 border-r-gray-900 border-y-4 border-y-transparent" />
                   </div>

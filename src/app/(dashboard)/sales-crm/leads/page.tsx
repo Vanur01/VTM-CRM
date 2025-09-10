@@ -65,8 +65,6 @@ const LeadPage = () => {
     }
   }, [fetchLeads, currentPage, itemsPerPage, user?.companyId]);
 
-
-
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -178,11 +176,10 @@ const LeadPage = () => {
       fullName: item.fullName,
       companyId: item.companyId,
       email: item.email,
-      complete: item // Log the complete item for debugging
+      complete: item, // Log the complete item for debugging
     });
     router.push(`/sales-crm/leads/${leadId}`);
   };
-
 
   const handleDeleteConfirm = async () => {
     if (!leadToDelete || isDeleting) return;
@@ -231,14 +228,14 @@ const LeadPage = () => {
     setLeadToDelete(null);
   };
 
-  const handleAssign = async (email: string) => {
+  const handleAssign = async (userId: string) => {
     if (!leadToAssign) return;
 
     try {
-      await assignLead(leadToAssign.id, email);
+      await assignLead(leadToAssign.id, userId);
       setSuccessMessage({
         title: "Success",
-        message: `Lead "${leadToAssign.name}" has been successfully assigned to ${email}.`,
+        message: `Lead "${leadToAssign.name}" has been successfully assigned.`,
       });
       setShowSuccessDialog(true);
       setShowAssignDialog(false);
@@ -297,6 +294,12 @@ const LeadPage = () => {
   };
 
   const renderRow = (item: Lead, index: number) => {
+    // Safety check to ensure item exists and has required properties
+    if (!item || !item._id) {
+      console.warn("Invalid lead item at index:", index, item);
+      return null;
+    }
+
     const isMenuOpen = Boolean(menuAnchorEls[index]);
     const isSelected = selectedRows.includes(index);
 
@@ -367,20 +370,23 @@ const LeadPage = () => {
         </td>
 
         {/* <td className="py-4 px-4">{item.leadId || item._id}</td> */}
-        <td className="py-4 px-4">{item.fullName}</td>
+        <td className="py-4 px-4">{item?.fullName}</td>
         <td className="py-4 px-4 group-hover:text-blue-600 group-hover:underline">
-          <a href={`mailto:${item.email}`} onClick={(e) => e.stopPropagation()}>
-            {item.email}
+          <a
+            href={`mailto:${item?.email}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {item?.email}
           </a>
         </td>
-        <td className="py-4 px-4">{item.phone}</td>
-        <td className="py-4 px-4">{item.status}</td>
+        <td className="py-4 px-4">{item?.phone}</td>
+        <td className="py-4 px-4">{item?.status}</td>
         <td className="py-4 px-4">
           <span
             className={`px-2 py-1 rounded-full text-xs font-medium ${
-              item.priority === "High"
+              item?.priority === "High"
                 ? "bg-red-100 text-red-800"
-                : item.priority === "Medium"
+                : item?.priority === "Medium"
                 ? "bg-yellow-100 text-yellow-800"
                 : "bg-green-100 text-green-800"
             }`}
@@ -393,17 +399,20 @@ const LeadPage = () => {
         <td className="py-4 px-4">
           <span
             className={`px-2 py-1 rounded-full text-xs font-medium ${
-              item.isConverted
+              item?.isAssign
                 ? "bg-green-100 text-green-800"
                 : "bg-gray-100 text-gray-800"
             }`}
           >
-            {item.isConverted ? "Converted" : "Not Converted"}
+            {item?.isAssign ? "Converted" : "Not Converted"}
           </span>
         </td>
       </tr>
     );
   };
+
+
+
 
   const updatedColumns = [
     { header: "", accessor: "actions", className: "py-2 px-2 w-10" },
@@ -441,7 +450,11 @@ const LeadPage = () => {
     <div className="h-full overflow-y-auto px-4 py-4 rounded-xl custom-scrollbar space-y-6">
       <div className="overflow-auto max-h-full shadow bg-white rounded-lg border border-gray-200">
         <SelectedHeaderData total={totalLeads} selected={selectedRows.length} />
-        <Table columns={updatedColumns} data={leads} renderRow={renderRow} />
+        <Table
+          columns={updatedColumns}
+          data={leads.filter((lead) => lead && lead._id)}
+          renderRow={renderRow}
+        />
 
         {/* Pagination */}
         <div className="mt-4 mb-2">
@@ -511,7 +524,9 @@ const LeadPage = () => {
         }}
         onSend={handleSendEmail}
         recipientEmail={leadToEmail?.email || ""}
-        recipientName={leadToEmail ? `${leadToEmail.firstName} ${leadToEmail.lastName}` : ""}
+        recipientName={
+          leadToEmail ? `${leadToEmail.firstName} ${leadToEmail.lastName}` : ""
+        }
         lead={leadToEmail}
       />
     </div>

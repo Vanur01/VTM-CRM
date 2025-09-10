@@ -111,22 +111,26 @@ export default function MainSidebar({
         path: `${basePath}/reports`,
         icon: <FileText className="w-5 h-5 stroke-[1.5]" />,
       },
-      {
-        label: "Analytics",
-        path: `${basePath}/analytics`,
-        icon: <BarChart3 className="w-5 h-5 stroke-[1.5]" />,
-      },
+      ...(user?.role !== "user"
+        ? [
+            {
+              label: "Analytics",
+              path: `${basePath}/analytics`,
+              icon: <BarChart3 className="w-5 h-5 stroke-[1.5]" />,
+            },
+          ]
+        : []),
       {
         label: "Support",
         path: "/sales-crm/support",
         icon: <Headphones className="w-5 h-5 stroke-[1.5]" />,
       },
     ],
-    [basePath]
+    [basePath, user?.role]
   );
 
   // Finance base path for finance modules
-  const financeBasePath = user?.role==="admin"? "/finance":"/user/finance";
+  const financeBasePath = user?.role === "admin" ? "/finance" : "/user/finance";
 
   // Sales module items
   const salesItems = useMemo<NavigationItem[]>(
@@ -134,42 +138,42 @@ export default function MainSidebar({
       {
         label: "Clients",
         path: `${financeBasePath}/clients`,
-        icon: <Users className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <Users className="w-4 h-4 stroke-[1.5]" />,
       },
       {
         label: "Quotations",
         path: `${financeBasePath}/quotations`,
-        icon: <FileText className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <FileText className="w-4 h-4 stroke-[1.5]" />,
       },
       {
         label: "Performa Invoices",
         path: `${financeBasePath}/performa-invoices`,
-        icon: <FileText className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <FileText className="w-4 h-4 stroke-[1.5]" />,
       },
       {
         label: "Invoices",
         path: `${financeBasePath}/invoices`,
-        icon: <FileText className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <FileText className="w-4 h-4 stroke-[1.5]" />,
       },
       {
         label: "Sales Orders",
         path: `${financeBasePath}/sales-orders`,
-        icon: <ShoppingCart className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <ShoppingCart className="w-4 h-4 stroke-[1.5]" />,
       },
       {
         label: "Payment Received",
         path: `${financeBasePath}/payment-received`,
-        icon: <ClipboardList className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <ClipboardList className="w-4 h-4 stroke-[1.5]" />,
       },
       {
         label: "Delivery Challans",
         path: `${financeBasePath}/delivery-challans`,
-        icon: <Package className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <Package className="w-4 h-4 stroke-[1.5]" />,
       },
       {
         label: "Credit Notes",
         path: `${financeBasePath}/credit-notes`,
-        icon: <FileText className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <FileText className="w-4 h-4 stroke-[1.5]" />,
       },
     ],
     []
@@ -181,27 +185,27 @@ export default function MainSidebar({
       {
         label: "Purchases & Expenses",
         path: `${financeBasePath}/expenses`,
-        icon: <ArrowDownCircle className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <ArrowDownCircle className="w-4 h-4 stroke-[1.5]" />,
       },
       {
         label: "Purchase Orders",
         path: `${financeBasePath}/purchase-orders`,
-        icon: <ShoppingCart className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <ShoppingCart className="w-4 h-4 stroke-[1.5]" />,
       },
       {
         label: "Payments Made",
         path: `${financeBasePath}/payments-made`,
-        icon: <ClipboardList className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <ClipboardList className="w-4 h-4 stroke-[1.5]" />,
       },
       {
         label: "Vendors",
         path: `${financeBasePath}/vendors`,
-        icon: <Users className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <Users className="w-4 h-4 stroke-[1.5]" />,
       },
       {
         label: "Debit Notes",
         path: `${financeBasePath}/debit-notes`,
-        icon: <FileText className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <FileText className="w-4 h-4 stroke-[1.5]" />,
       },
     ],
     []
@@ -213,12 +217,12 @@ export default function MainSidebar({
       {
         label: "Category",
         path: `${financeBasePath}/inventory/category`,
-        icon: <LayoutDashboard className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <LayoutDashboard className="w-4 h-4 stroke-[1.5]" />,
       },
       {
         label: "Items",
         path: `${financeBasePath}/inventory/items`,
-        icon: <Package className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <Package className="w-4 h-4 stroke-[1.5]" />,
       },
     ],
     []
@@ -230,22 +234,21 @@ export default function MainSidebar({
       {
         label: "All Reports",
         path: `${financeBasePath}/reports`,
-        icon: <FileText className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <FileText className="w-4 h-4 stroke-[1.5]" />,
       },
       {
         label: "GSTR1",
         path: `${financeBasePath}/reports/gstr1summary`,
-        icon: <BarChart3 className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <BarChart3 className="w-4 h-4 stroke-[1.5]" />,
       },
       {
         label: "GSTR2",
         path: `${financeBasePath}/reports/gstr2summary`,
-        icon: <BarChart3 className="w-4 h-4 stroke-[1.5]" />, 
+        icon: <BarChart3 className="w-4 h-4 stroke-[1.5]" />,
       },
     ],
     []
   );
-
 
   // Settings items with consistent icon styling
   const settingsMenuItems = useMemo<SettingsItem[]>(
@@ -295,7 +298,8 @@ export default function MainSidebar({
     );
 
     // Check if current path is in finance module (both admin and user routes)
-    const isFinanceRoute = pathname.startsWith("/finance/") || pathname.startsWith("/user/finance/");
+    const isFinanceRoute =
+      pathname.startsWith("/finance/") || pathname.startsWith("/user/finance/");
 
     if (matchedSetting) {
       setActiveTab("");
@@ -310,25 +314,29 @@ export default function MainSidebar({
       setActiveTab("");
       setSettingsExpanded(false);
       setSalesCrmExpanded(false);
-      
+
       // Determine which finance module to expand based on the route
-      if (pathname.includes("/clients") || 
-          pathname.includes("/quotations") || 
-          pathname.includes("/performa-invoices") || 
-          pathname.includes("/invoices") || 
-          pathname.includes("/sales-orders") || 
-          pathname.includes("/payment-received") || 
-          pathname.includes("/delivery-challans") || 
-          pathname.includes("/credit-notes")) {
+      if (
+        pathname.includes("/clients") ||
+        pathname.includes("/quotations") ||
+        pathname.includes("/performa-invoices") ||
+        pathname.includes("/invoices") ||
+        pathname.includes("/sales-orders") ||
+        pathname.includes("/payment-received") ||
+        pathname.includes("/delivery-challans") ||
+        pathname.includes("/credit-notes")
+      ) {
         setSalesExpanded(true);
         setPurchasesExpanded(false);
         setInventoryExpanded(false);
         setReportsExpanded(false);
-      } else if (pathname.includes("/expenses") || 
-                 pathname.includes("/purchase-orders") || 
-                 pathname.includes("/payments-made") || 
-                 pathname.includes("/vendors") || 
-                 pathname.includes("/debit-notes")) {
+      } else if (
+        pathname.includes("/expenses") ||
+        pathname.includes("/purchase-orders") ||
+        pathname.includes("/payments-made") ||
+        pathname.includes("/vendors") ||
+        pathname.includes("/debit-notes")
+      ) {
         setSalesExpanded(false);
         setPurchasesExpanded(true);
         setInventoryExpanded(false);
@@ -420,20 +428,23 @@ export default function MainSidebar({
     setReportsExpanded((prev) => !prev);
   }, []);
 
-  const handleFinanceNavigation = useCallback((path: string) => {
-    // Clear Sales CRM active state when navigating to finance routes
-    setActiveTab("");
-    setSalesCrmExpanded(false);
-    setSettingsExpanded(false);
-    router.push(path);
-  }, [router]);
+  const handleFinanceNavigation = useCallback(
+    (path: string) => {
+      // Clear Sales CRM active state when navigating to finance routes
+      setActiveTab("");
+      setSalesCrmExpanded(false);
+      setSettingsExpanded(false);
+      router.push(path);
+    },
+    [router]
+  );
 
   const handleLogout = useCallback(async () => {
     try {
       await logoutUser(fcmToken);
       router.push("/auth/login");
     } catch (error) {
-      router.push("/auth/login")
+      router.push("/auth/login");
       console.error("Logout failed:", error);
     }
   }, [logoutUser, fcmToken, router]);
@@ -1080,125 +1091,129 @@ export default function MainSidebar({
           </div> */}
 
           {/* Settings Section */}
-          <div className="mt-5 pt-6 border-t border-gray-200">
-            <Tooltip title={collapsed ? "Settings" : ""} placement="right">
-              <button
-                onClick={toggleSettings}
-                className={`
-                  flex items-center gap-3 px-3 py-3 w-full rounded-lg text-sm font-medium
-                  text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200
-                  ${collapsed ? "justify-center" : "justify-between"}
-                  ${settingsExpanded ? "bg-gray-50 text-gray-900" : ""}
-                `}
-              >
-                <div className="flex items-center gap-3">
-                  <LucideSettings
-                    className={`
+          {user?.role !== "user" && (
+            <div className="mt-5 pt-6 border-t border-gray-200">
+              <Tooltip title={collapsed ? "Settings" : ""} placement="right">
+                <button
+                  onClick={toggleSettings}
+                  className={`
+                    flex items-center gap-3 px-3 py-3 w-full rounded-lg text-sm font-medium
+                    text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200
+                    ${collapsed ? "justify-center" : "justify-between"}
+                    ${settingsExpanded ? "bg-gray-50 text-gray-900" : ""}
+                  `}
+                >
+                  <div className="flex items-center gap-3">
+                    <LucideSettings
+                      className={`
                       w-5 h-5 stroke-[1.5] transition-colors duration-200
                       ${settingsExpanded ? "text-gray-700" : "text-gray-500"}
                     `}
-                  />
-                  {!collapsed && <span className="font-medium">Settings</span>}
-                </div>
-                {!collapsed && (
-                  <span className="text-gray-400 transition-transform duration-200">
-                    {settingsExpanded ? (
-                      <ChevronUp className="w-5 h-5" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5" />
+                    />
+                    {!collapsed && (
+                      <span className="font-medium">Settings</span>
                     )}
-                  </span>
-                )}
-              </button>
-            </Tooltip>
+                  </div>
+                  {!collapsed && (
+                    <span className="text-gray-400 transition-transform duration-200">
+                      {settingsExpanded ? (
+                        <ChevronUp className="w-5 h-5" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5" />
+                      )}
+                    </span>
+                  )}
+                </button>
+              </Tooltip>
 
-            {!collapsed && (
-              <div
-                className={`
-                  mt-2 ml-6 space-y-1
-                  transition-all duration-300 ease-in-out
-                  ${
-                    settingsExpanded
-                      ? "opacity-100 translate-y-0 scale-100"
-                      : "opacity-0 -translate-y-2 scale-95 pointer-events-none"
-                  }
-                `}
-              >
-                {settingsExpanded &&
-                  settingsMenuItems.map((item) => (
-                    <Tooltip
-                      key={item.href}
-                      title={item.label}
-                      placement="right"
-                    >
-                      <Link href={item.href}>
-                        <button
-                          className={`
-                          flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm
-                          transition-all duration-200 font-medium
-                          ${
-                            isCurrentPath(item.href)
-                              ? "bg-indigo-50 text-indigo-700"
-                              : "text-gray-600 hover:bg-gray-50 hover:text-gray-800"
-                          }
-                        `}
-                        >
-                          <span
-                            className={`${
-                              isCurrentPath(item.href)
-                                ? "text-indigo-600"
-                                : "text-gray-500"
-                            }`}
+              {!collapsed && (
+                <div
+                  className={`
+                    mt-2 ml-6 space-y-1
+                    transition-all duration-300 ease-in-out
+                    ${
+                      settingsExpanded
+                        ? "opacity-100 translate-y-0 scale-100"
+                        : "opacity-0 -translate-y-2 scale-95 pointer-events-none"
+                    }
+                  `}
+                >
+                  {settingsExpanded &&
+                    settingsMenuItems.map((item) => (
+                      <Tooltip
+                        key={item.href}
+                        title={item.label}
+                        placement="right"
+                      >
+                        <Link href={item.href}>
+                          <button
+                            className={`
+                        flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm
+                        transition-all duration-200 font-medium
+                        ${
+                          isCurrentPath(item.href)
+                            ? "bg-indigo-50 text-indigo-700"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-800"
+                        }
+                      `}
+                          >
+                            <span
+                              className={`${
+                                isCurrentPath(item.href)
+                                  ? "text-indigo-600"
+                                  : "text-gray-500"
+                              }`}
+                            >
+                              {item.icon}
+                            </span>
+                            <span className="truncate">{item.label}</span>
+                          </button>
+                        </Link>
+                      </Tooltip>
+                    ))}
+                </div>
+              )}
+
+              {collapsed && (
+                <div
+                  className={`
+                    flex flex-col items-center
+                    transition-all duration-300 ease-in-out
+                    ${
+                      settingsExpanded
+                        ? "opacity-100 translate-y-0 scale-100"
+                        : "opacity-0 -translate-y-2 scale-95 pointer-events-none"
+                    }
+                  `}
+                >
+                  {settingsExpanded &&
+                    settingsMenuItems.map((item) => (
+                      <Tooltip
+                        key={item.href}
+                        title={item.label}
+                        placement="right"
+                      >
+                        <Link href={item.href}>
+                          <button
+                            className={`
+                        flex items-center justify-center w-12 h-12 rounded-lg
+                        transition-all duration-200
+                        ${
+                          isCurrentPath(item.href)
+                            ? "bg-indigo-50 text-indigo-600 shadow-sm"
+                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                        }
+                      `}
                           >
                             {item.icon}
-                          </span>
-                          <span className="truncate">{item.label}</span>
-                        </button>
-                      </Link>
-                    </Tooltip>
-                  ))}
-              </div>
-            )}
-
-            {collapsed && (
-              <div
-                className={`
-                  flex flex-col items-center
-                  transition-all duration-300 ease-in-out
-                  ${
-                    settingsExpanded
-                      ? "opacity-100 translate-y-0 scale-100"
-                      : "opacity-0 -translate-y-2 scale-95 pointer-events-none"
-                  }
-                `}
-              >
-                {settingsExpanded &&
-                  settingsMenuItems.map((item) => (
-                    <Tooltip
-                      key={item.href}
-                      title={item.label}
-                      placement="right"
-                    >
-                      <Link href={item.href}>
-                        <button
-                          className={`
-                          flex items-center justify-center w-12 h-12 rounded-lg
-                          transition-all duration-200
-                          ${
-                            isCurrentPath(item.href)
-                              ? "bg-indigo-50 text-indigo-600 shadow-sm"
-                              : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-                          }
-                        `}
-                        >
-                          {item.icon}
-                        </button>
-                      </Link>
-                    </Tooltip>
-                  ))}
-              </div>
-            )}
-          </div> 
+                          </button>
+                        </Link>
+                      </Tooltip>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </nav>
 

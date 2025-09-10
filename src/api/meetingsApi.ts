@@ -273,23 +273,25 @@ export const bulkDeleteMeetings = async (meetingIds: string[]): Promise<BaseResp
 };
 
 export const getUserMeetings = async (filters?: MeetingFilters): Promise<GetAllMeetingsResponse> => {
-  if (!filters?.leadId || !filters?.companyId) {
-    throw new Error('Lead ID and Company ID are required');
+  if (!filters?.companyId) {
+    throw new Error('Company ID is required');
   }
   
   const queryParams = new URLSearchParams();
   
   if (filters) {
-    // Handle other filters (excluding pagination)
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && 
-          key !== 'leadId' && key !== 'companyId') {
-        queryParams.append(key, String(value));
-      }
-    });
+    if (filters.page) queryParams.append('page', filters.page.toString());
+    if (filters.limit) queryParams.append('limit', filters.limit.toString());
+    if (filters.meetingVenue) queryParams.append('meetingVenue', filters.meetingVenue);
+    if (filters.location) queryParams.append('location', filters.location);
+    if (filters.host) queryParams.append('host', filters.host);
+    if (filters.fromDate) queryParams.append('fromDate', filters.fromDate);
+    if (filters.toDate) queryParams.append('toDate', filters.toDate);
+    if (filters.status) queryParams.append('status', filters.status);
+    if (filters.search) queryParams.append('search', filters.search);
   }
 
-  const url = `/meeting/getLeadforMeetings/${filters.leadId}/${filters.companyId}${
+  const url = `/meeting/getUserMeetings/${filters.companyId}${
     queryParams.toString() ? `?${queryParams.toString()}` : ''
   }`;
   

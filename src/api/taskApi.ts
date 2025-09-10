@@ -106,6 +106,25 @@ const taskApi = {
     }
   },
 
+  getUserAllTasks: async (companyId: string, filters?: TaskFilters): Promise<TaskResponse> => {
+    try {
+      const queryParams = new URLSearchParams();
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            queryParams.append(key, String(value));
+          }
+        });
+      }
+      const response = await axios.get<TaskResponse>(
+        `/task/getUserAllTasks/${companyId}?${queryParams.toString()}`
+      );
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   createTask: async (leadId: string, companyId: string, taskData: CreateTaskPayload) => {
     try {
       const response = await axios.post(

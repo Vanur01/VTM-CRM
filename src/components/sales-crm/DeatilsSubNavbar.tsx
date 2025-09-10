@@ -220,58 +220,32 @@ const DetailsSubNavbar = ({
           </span>
         )}
 
-        {/* Create Deal Button */}
-        <Button
-          variant="contained"
-          size="small"
-          disabled={isLoading || !currentLead}
-          onClick={() => {
-            if (currentLead) {
-              router.push(`/deals/add?leadId=${currentLead._id}`);
-            }
-          }}
-          sx={{
-            textTransform: "none",
-            borderRadius: "8px",
-            px: 2,
-            minWidth: "0",
-            backgroundColor: "white",
-            color: "#4a6bff",
-            border: "1px solid rgba(74, 107, 255, 0.3)",
-            boxShadow: "0 2px 5px rgba(74, 107, 255, 0.1)",
-            "&:hover": {
-              backgroundColor: "rgba(74, 107, 255, 0.05)",
-              boxShadow: "0 3px 8px rgba(74, 107, 255, 0.2)",
-            },
-          }}
-        >
-          <span className="hidden md:inline">Create Deal</span>
-        </Button>
-
         {/* Convert Button */}
-        <Button
-          variant="contained"
-          startIcon={<ConvertIcon sx={{ color: "#9b59b6" }} />}
-          size="small"
-          disabled={isLoading || !currentLead}
-          onClick={onConvertClick}
-          sx={{
-            textTransform: "none",
-            borderRadius: "8px",
-            px: 2,
-            minWidth: "0",
-            backgroundColor: "white",
-            color: "#9b59b6",
-            border: "1px solid rgba(155, 89, 182, 0.3)",
-            boxShadow: "0 2px 5px rgba(155, 89, 182, 0.1)",
-            "&:hover": {
-              backgroundColor: "rgba(155, 89, 182, 0.05)",
-              boxShadow: "0 3px 8px rgba(155, 89, 182, 0.2)",
-            },
-          }}
-        >
-          <span className="hidden md:inline">Convert</span>
-        </Button>
+        {user?.role !== 'user' && (
+          <Button
+            variant="contained"
+            startIcon={<ConvertIcon sx={{ color: "#9b59b6" }} />}
+            size="small"
+            disabled={isLoading || !currentLead}
+            onClick={onConvertClick}
+            sx={{
+              textTransform: "none",
+              borderRadius: "8px",
+              px: 2,
+              minWidth: "0",
+              backgroundColor: "white",
+              color: "#9b59b6",
+              border: "1px solid rgba(155, 89, 182, 0.3)",
+              boxShadow: "0 2px 5px rgba(155, 89, 182, 0.1)",
+              "&:hover": {
+                backgroundColor: "rgba(155, 89, 182, 0.05)",
+                boxShadow: "0 3px 8px rgba(155, 89, 182, 0.2)",
+              },
+            }}
+          >
+            <span className="hidden md:inline">Convert</span>
+          </Button>
+        )}
 
         <IconButton
           size="small"

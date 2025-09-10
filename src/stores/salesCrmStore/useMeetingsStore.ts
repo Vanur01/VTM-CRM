@@ -138,9 +138,9 @@ export const useMeetingsStore = create<MeetingsStore>((set, get) => ({
   fetchUserMeetings: async (filters?: MeetingFilters) => {
     set({ isLoading: true, error: null });
     try {
-      // Validate required parameters
-      if (!filters?.leadId || !filters?.companyId) {
-        throw new Error('Lead ID and Company ID are required for fetching user meetings');
+      // Validate required parameters - only companyId is required for getUserMeetings
+      if (!filters?.companyId) {
+        throw new Error('Company ID is required for fetching user meetings');
       }
       
       const response = await getUserMeetings(filters);

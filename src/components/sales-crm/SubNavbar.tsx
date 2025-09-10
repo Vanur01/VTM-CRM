@@ -489,8 +489,8 @@ const handleCreateClick = () => {
     }
   };
 
-  const handleBulkAssign = async (email: string) => {
-    if (!selectedItems.length || !email || isProcessing) return;
+  const handleBulkAssign = async (userId: string) => {
+    if (!selectedItems.length || !userId || isProcessing) return;
 
     setIsProcessing(true);
     try {
@@ -500,11 +500,11 @@ const handleCreateClick = () => {
       // Clear selections first to prevent UI glitches
       clearSelectedItems();
 
-      await bulkAssignLeads(itemsToAssign, email);
+      await bulkAssignLeads(itemsToAssign, userId);
 
       setSuccessMessage({
         title: "Success",
-        message: `${itemsToAssign.length} leads have been successfully assigned to ${email}.`,
+        message: `${itemsToAssign.length} leads have been successfully assigned.`,
         type: "success",
       });
     } catch (error) {

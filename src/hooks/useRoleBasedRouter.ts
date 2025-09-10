@@ -7,7 +7,7 @@ export function useRoleBasedRouter() {
   const { user } = useAuthStore();
 
   const pushToRolePath = (path: string) => {
-    const prefix = user?.role === 'admin' ? '' : '/user';
+    const prefix = user?.role === 'admin' ? '' : '';
     router.push(`${prefix}${path}`);
   };
 

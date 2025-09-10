@@ -11,6 +11,7 @@ import {
   UpdateCallRequest,
   AddNoteRequest,
   getAllCalls,
+  getUserCalls,
   getCalls,
   getCallById,
   createCall,
@@ -41,6 +42,7 @@ interface CallsState {
 interface CallsActions {
   fetchCalls: (filters?: CallFilters) => Promise<void>;
   fetchAllCalls: (filters?: CallFilters) => Promise<void>;
+  fetchUserCalls: (filters?: CallFilters) => Promise<void>;
   fetchCallById: (id: string) => Promise<void>;
   addCall: (leadId: string, call: CreateCallRequest) => Promise<void>;
   updateCall: (id: string, data: UpdateCallRequest) => Promise<void>;
@@ -133,6 +135,39 @@ export const useCallsStore = create<CallsStore>((set, get) => ({
       set({ 
         isLoading: false, 
         error: error instanceof Error ? error.message : 'Failed to fetch all calls' 
+      });
+    }
+  },
+
+  fetchUserCalls: async (filters?: CallFilters) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { user } = useAuthStore.getState();
+      const companyId = user?.companyId;
+      
+      if (!companyId) {
+        throw new Error('Company ID not found');
+      }
+      
+      const response = await getUserCalls(companyId, filters);
+      const callsWithIds = response.result.calls.map(call => ({
+        ...call,
+        callId: call._id
+      }));
+      
+      set({
+        calls: callsWithIds,
+        totalCalls: response.result.total,
+        currentPage: response.result.currentPage,
+        totalPages: response.result.totalPages,
+        limit: filters?.limit || 20,
+        isLoading: false,
+        filters: filters || {},
+      });
+    } catch (error) {
+      set({ 
+        isLoading: false, 
+        error: error instanceof Error ? error.message : 'Failed to fetch user calls' 
       });
     }
   },

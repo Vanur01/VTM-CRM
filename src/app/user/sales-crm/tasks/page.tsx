@@ -82,7 +82,7 @@ const TasksPipeline = () => {
     tasks,
     isLoading,
     error,
-    fetchTasks,
+    fetchUserAllTasks,
     updateTask,
     deleteTask,
     bulkDeleteTasks,
@@ -128,12 +128,12 @@ const TasksPipeline = () => {
 
   useEffect(() => {
     if (user?.companyId) {
-      fetchTasks(user.companyId, {
+      fetchUserAllTasks(user.companyId, {
         page: currentPage,
         limit: itemsPerPage
       });
     }
-  }, [fetchTasks, currentPage, itemsPerPage, user?.companyId]);
+  }, [fetchUserAllTasks, currentPage, itemsPerPage, user?.companyId]);
 
 
   const formatDate = (dateString: string) => {
@@ -273,7 +273,7 @@ const TasksPipeline = () => {
       
       // Refresh task list after update
       if (user?.companyId) {
-        await fetchTasks(user.companyId);
+        await fetchUserAllTasks(user.companyId);
       }
     } catch (error) {
       console.error("Failed to update task status:", error);
@@ -347,7 +347,7 @@ const TasksPipeline = () => {
         });
       }
       if (user?.companyId) {
-        await fetchTasks(user.companyId);
+        await fetchUserAllTasks(user.companyId);
       }
       setShowDeleteModal(false);
       setTaskToDelete(null);
@@ -498,7 +498,7 @@ const TasksPipeline = () => {
           <button
             onClick={() => {
               if (user?.companyId) {
-                fetchTasks(user.companyId);
+                fetchUserAllTasks(user.companyId);
               }
             }}
             className="text-blue-500 hover:text-blue-600"
@@ -555,11 +555,6 @@ const TasksPipeline = () => {
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {/* {overdueCount > 0 && (
-                        <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
-                          {overdueCount} overdue
-                        </span>
-                      )} */}
                       {expandedStage !== null &&
                         (isExpanded ? (
                           <ArrowUpIcon className="text-gray-500" />

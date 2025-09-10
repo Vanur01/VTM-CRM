@@ -9,11 +9,28 @@ import { toast } from 'sonner';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 export default function UsersPage() {
-  const { users, allUsers, loading, error, fetchUsersByManager, fetchAllUsers, addUserOrManagerByAdmin, addUserByManager } = useUserStore();
+  const { 
+    users, 
+    allUsers, 
+    loading, 
+    error, 
+    fetchUsersByManager, 
+    fetchAllUsers, 
+    addUserOrManagerByAdmin, 
+    addUserByManager,
+    getUserById,
+    updateUser,
+    toggleUserActive,
+    deleteUser
+  } = useUserStore();
   const { user: currentUser, company } = useAuthStore();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [userToEdit, setUserToEdit] = useState<any | null>(null);
+  const [userToView, setUserToView] = useState<any | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [newUser, setNewUser] = useState({
@@ -22,6 +39,12 @@ export default function UsersPage() {
     mobile: '',
     password: '',
     role: 'user' as 'manager' | 'user',
+  });
+  const [editUser, setEditUser] = useState({
+    name: '',
+    email: '',
+    mobile: '',
+    role: 'user' as 'manager' | 'user' | 'admin',
   });
   const [actionDropdownOpen, setActionDropdownOpen] = useState<string | null>(null);
   const actionPopoverRef = useRef<HTMLDivElement | null>(null);
@@ -103,20 +126,133 @@ export default function UsersPage() {
 
 
 
-  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
-    // For now, we'll remove this functionality since it's not in the new API
-    toast.info('Status toggle functionality will be available soon');
+  const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
+    // Close the dropdown first
+    setActionDropdownOpen(null);
+    
+    try {
+      if (!currentUser?.companyId) {
+        toast.error('Company ID not found');
+        return;
+      }
+      
+      await toggleUserActive(userId, currentUser.companyId);
+      toast.success(`User ${currentStatus ? 'deactivated' : 'activated'} successfully`);
+      
+      // Refresh users list
+      if (currentUser?.role === 'admin') {
+        await fetchAllUsers(currentUser.companyId);
+      } else if (currentUser?.role === 'manager') {
+        await fetchUsersByManager(currentUser.companyId);
+      }
+    } catch (error) {
+      toast.error('Failed to toggle user status');
+    }
   };
 
   const handleDeleteClick = (userId: string) => {
-    // For now, we'll remove this functionality since it's not in the new API
-    toast.info('Delete functionality will be available soon');
+    // Close the dropdown first
+    setActionDropdownOpen(null);
+    
+    setUserToDelete(userId);
+    setIsDeleteDialogOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
-    // For now, we'll remove this functionality since it's not in the new API
-    setIsDeleteDialogOpen(false);
-    setUserToDelete(null);
+    if (!userToDelete || !currentUser?.companyId) {
+      toast.error('Missing required information');
+      return;
+    }
+
+    try {
+      await deleteUser(userToDelete, currentUser.companyId);
+      toast.success('User deleted successfully');
+      
+      // Refresh users list
+      if (currentUser?.role === 'admin') {
+        await fetchAllUsers(currentUser.companyId);
+      } else if (currentUser?.role === 'manager') {
+        await fetchUsersByManager(currentUser.companyId);
+      }
+    } catch (error) {
+      toast.error('Failed to delete user');
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
+    }
+  };
+
+  const handleViewClick = async (user: any) => {
+    if (!currentUser?.companyId) {
+      toast.error('Company ID not found');
+      return;
+    }
+    
+    // Close the dropdown first
+    setActionDropdownOpen(null);
+    
+    try {
+      const fullUserData = await getUserById(user._id, currentUser.companyId);
+      setUserToView(fullUserData);
+      setIsViewDialogOpen(true);
+    } catch (error) {
+      toast.error('Failed to fetch user details');
+    }
+  };
+
+  const handleEditClick = async (user: any) => {
+    if (!currentUser?.companyId) {
+      toast.error('Company ID not found');
+      return;
+    }
+    
+    // Close the dropdown first
+    setActionDropdownOpen(null);
+    
+    try {
+      // Fetch the latest user data
+      const fullUserData = await getUserById(user._id, currentUser.companyId); 
+      setUserToEdit(fullUserData);
+      setEditUser({
+        name: fullUserData.name,
+        email: fullUserData.email,
+        mobile: fullUserData.mobile || '',
+        role: fullUserData.role as 'user' | 'manager' | 'admin',
+      });
+      setIsEditDialogOpen(true);
+    } catch (error) {
+      toast.error('Failed to fetch user details');
+    }
+  };
+
+  const handleEditUser = async () => {
+    if (!userToEdit || !currentUser?.companyId) {
+      toast.error('Missing required information');
+      return;
+    }
+
+    try {
+      await updateUser(userToEdit._id, currentUser.companyId, editUser);
+      toast.success('User updated successfully');
+      
+      // Refresh users list
+      if (currentUser?.role === 'admin') {
+        await fetchAllUsers(currentUser.companyId);
+      } else if (currentUser?.role === 'manager') {
+        await fetchUsersByManager(currentUser.companyId);
+      }
+      
+      setIsEditDialogOpen(false);
+      setUserToEdit(null);
+      setEditUser({
+        name: '',
+        email: '',
+        mobile: '',
+        role: 'user',
+      });
+    } catch (error) {
+      toast.error('Failed to update user');
+    }
   };
 
   const handlePageChange = (newPage: number) => {
@@ -298,6 +434,18 @@ export default function UsersPage() {
           <PopoverContent className="w-40 p-0" align="end">
             <button
               className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              onClick={() => handleViewClick(user)}
+            >
+              View
+            </button>
+            <button
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              onClick={() => handleEditClick(user)}
+            >
+              Edit
+            </button>
+            <button
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
               onClick={() => handleToggleStatus(user._id, user.isActive)}
             >
               {user.isActive ? 'Deactivate' : 'Activate'}
@@ -472,6 +620,163 @@ export default function UsersPage() {
               >
                 Create User
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View User Dialog */}
+      {isViewDialogOpen && userToView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 ">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">User Details</h3>
+              <button
+                onClick={() => {
+                  setIsViewDialogOpen(false);
+                  setUserToView(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer "
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{userToView.name}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{userToView.email}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
+                <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{userToView.mobile || 'Not provided'}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                  {userToView.role?.charAt(0).toUpperCase() + userToView.role?.slice(1) || 'User'}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <p className={`text-sm px-3 py-2 rounded-lg ${
+                  userToView.isActive 
+                    ? 'text-green-800 bg-green-50' 
+                    : 'text-red-800 bg-red-50'
+                }`}>
+                  {userToView.isActive ? 'Active' : 'Inactive'}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Created At</label>
+                <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                  {userToView.createdAt ? new Date(userToView.createdAt).toLocaleDateString() : 'Not available'}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setIsViewDialogOpen(false);
+                  setUserToView(null);
+                }}
+                className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Dialog */}
+      {isEditDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 ">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Edit User</h3>
+              <button
+                onClick={() => {
+                  setIsEditDialogOpen(false);
+                  setUserToEdit(null);
+                  setEditUser({
+                    name: '',
+                    email: '',
+                    mobile: '',
+                    role: 'user',
+                  });
+                }}
+                className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input
+                  type="text"
+                  value={editUser.name}
+                  onChange={(e) => setEditUser({ ...editUser, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="Enter name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={editUser.email}
+                  onChange={(e) => setEditUser({ ...editUser, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="Enter email"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
+                <input
+                  type="tel"
+                  value={editUser.mobile}
+                  onChange={(e) => setEditUser({ ...editUser, mobile: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="Enter mobile number"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <select
+                  value={editUser.role}
+                  onChange={(e) => setEditUser({ ...editUser, role: e.target.value as 'user' | 'manager' | 'admin' })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="user">User</option>
+                  {currentUser?.role === 'admin' && <option value="manager">Manager</option>}
+                </select>
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    setIsEditDialogOpen(false);
+                    setUserToEdit(null);
+                    setEditUser({
+                      name: '',
+                      email: '',
+                      mobile: '',
+                      role: 'user',
+                    });
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleEditUser}
+                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+                >
+                  Update User
+                </button>
+              </div>
             </div>
           </div>
         </div>

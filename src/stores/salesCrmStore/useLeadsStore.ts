@@ -5,6 +5,7 @@ import {
   LeadFilters,
   createLead,
   getAllLeads,
+  getAllLeadsByUser,
   getLeadById,
   assignSingleLead,
   bulkLeadAssign,
@@ -31,14 +32,15 @@ interface LeadsState {
 
 interface LeadsActions {
   fetchLeads: (companyId: string, filters?: LeadFilters) => Promise<void>;
+  fetchLeadsByUser: (companyId: string, filters?: LeadFilters) => Promise<void>;
   fetchUserLeads: (userId: string, filters?: LeadFilters) => Promise<void>;
   fetchLeadById: (id: string, companyId?: string) => Promise<void>;
   addLead: (lead: CreateLeadRequest) => Promise<void>;
   updateLead: (id: string, data: Partial<CreateLeadRequest>, companyId?: string) => Promise<void>;
   setCurrentLead: (lead: Lead | null) => void;
   resetError: () => void;
-  assignLead: (leadId: string, email: string) => Promise<void>;
-  bulkAssignLeads: (leadIds: string[], email: string) => Promise<void>;
+  assignLead: (leadId: string, newOwnerId: string) => Promise<void>;
+  bulkAssignLeads: (leadIds: string[], newOwnerId: string) => Promise<void>;
   deleteLead: (leadId: string, companyId: string) => Promise<boolean>;
   bulkDeleteLeads: (leadIds: string[], companyId: string) => Promise<void>;
   addNote: (leadId: string, note: string) => Promise<void>;
@@ -67,7 +69,9 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
       const response = await getAllLeads(companyId, filters);
       console.log(response);
       // Convert response data to Lead type
-      const leads = response.data.response.map((item: any) => ({
+      const leads = response.data.response
+        .filter((item: any) => item && item._id) // Filter out invalid items
+        .map((item: any) => ({
         _id: item._id, // Use _id from response
         leadId: item.leadId || item._id, // Add leadId mapping from API response
         ownerId: {
@@ -86,6 +90,7 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
         phone: item.phone,
         mobile: item.mobile || null,
         website: item.website,
+        isAssign: item.isAssign || false,
         title: item.title,
         industry: item.industry,
         leadSource: item.leadSource || item.source, // Support both field names
@@ -163,13 +168,110 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
     }
   },
 
+  fetchLeadsByUser: async (companyId: string, filters?: LeadFilters) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await getAllLeadsByUser(companyId, filters);
+      console.log(response);
+      // Convert response data to Lead type
+      const leads = response.data.response
+        .filter((item: any) => item && item._id) // Filter out items without _id
+        .map((item: any) => ({
+        _id: item._id || "",
+        id: item.id || item._id,
+        leadId: item.leadId || item._id,
+        ownerId: typeof item.ownerId === "string" 
+          ? { _id: item.ownerId, email: "", name: item.ownerName || "" }
+          : {
+          _id: item.ownerId?._id || "",
+          email: item.ownerId?.email || "",
+          name: item.ownerName || item.leadOwner || "",
+        },
+        assignedTo: item.assignedTo || null,
+        companyName: item.companyName,
+        companyId: item.companyId || "",
+        firstName: item.firstName,
+        lastName: item.lastName,
+        fullName: item.fullName,
+        leadOwner: item.leadOwner || "",
+        isAssign: item.isAssign || false,
+        email: item.email,
+        phone: item.phone,
+        mobile: item.mobile || null,
+        website: item.website,
+        title: item.title,
+        industry: item.industry,
+        leadSource: item.leadSource || item.source, // Support both field names
+        leadStatus: item.leadStatus || item.status, // Support both field names
+        priority: item.priority,
+        status: item.status,
+        followUpDate: item.followUpDate,
+        lastStatusChange: item.lastStatusChange,
+        convertedDate: item.convertedDate,
+        address: {
+          street: item.street || "",
+          city: item.city || "",
+          state: item.state || "",
+          postalCode: item.postalCode || "",
+          country: item.country || "",
+          full: `${item.street || ""}, ${item.city || ""}, ${
+            item.state || ""
+          } ${item.postalCode || ""}, ${item.country || ""}`,
+        },
+        attachments: item.attachments || null,
+        attachment: item.attachment || [],
+        inviteMeeting: item.inviteMeeting || null,
+        notes: item.notes || null,
+        socialMedia: {
+          facebook: item.facebook || null,
+          instagram: item.instagram || null,
+          linkedIn: item.linkedIn || null,
+          twitter: item.twitter || null,
+        },
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        temperature: item.temperature || "",
+        source: item.source || item.leadSource,
+        lostReason: item.lostReason || "",
+        expectedCloseDate: item.expectedCloseDate || null,
+        actualCloseDate: item.actualCloseDate || null,
+        isDeleted: item.isDeleted || false,
+        isConverted: item.isConverted || false,
+        openTasks: item.openTasks || [],
+        closeTasks: item.closeTasks || [],
+        openMeetings: item.openMeetings || [],
+        closeMeetings: item.closeMeetings || [],
+        openCalls: item.openCalls || [],
+        closeCalls: item.closeCalls || [],
+        // Add missing Lead properties
+        socialProfiles: item.socialProfiles || {},
+        emailCount: item.emailCount ?? 0,
+        lastEmailSentAt: item.lastEmailSentAt || null,
+      }));
+
+      set({
+        leads,
+        totalLeads: response.data.total,
+        currentPage: response.data.page,
+        totalPages: response.data.totalPages,
+        filters: filters || {},
+      });
+    } catch (error: any) {
+      set({ error: error?.message || "Failed to fetch leads by user" });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
   fetchUserLeads: async (userId: string, filters?: LeadFilters) => {
     set({ isLoading: true, error: null });
     try {
       const response = await getUserLeads(userId, filters);
       console.log(response);
       // Convert response data to Lead type
-      const leads = response.data.data.map((item: any) => ({
+      const leads = response.data.data
+        .filter((item: any) => item && (item._id || item.id)) // Filter out invalid items
+        .map((item: any) => ({
         _id: item.id,
         ownerId: { _id: "", email: "", name: "" }, // Set default or get from response
         assignedTo: null,
@@ -289,10 +391,10 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
     set({ error: null });
   },
 
-  assignLead: async (leadId: string, email: string) => {
+  assignLead: async (leadId: string, newOwnerId: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await assignSingleLead(leadId, email);
+      const response = await assignSingleLead(leadId, newOwnerId);
       // Update the lead in both leads array and currentLead if it matches
       set((state) => {
         const updatedLeads = state.leads.map((lead) =>
@@ -315,7 +417,7 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
     }
   },
 
-  bulkAssignLeads: async (leadIds: string[], email: string) => {
+  bulkAssignLeads: async (leadIds: string[], newOwnerId: string) => {
     set({ isLoading: true, error: null });
     try {
       // Validate leads exist
@@ -328,15 +430,18 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
         );
       }
 
-      // Update state optimistically
+      // Make API call
+      await bulkLeadAssign({ leadIds, newOwnerId });
+
+      // Update state optimistically after successful API call
       set((state) => ({
         leads: state.leads.map((lead) => {
           if (leadIds.includes(lead._id)) {
             return {
               ...lead,
               ownerId: typeof lead.ownerId === 'string' 
-                ? { _id: lead.ownerId, email: email, name: '' }
-                : { ...lead.ownerId, email: email },
+                ? { _id: newOwnerId, email: '', name: '' }
+                : { ...lead.ownerId, _id: newOwnerId },
             };
           }
           return lead;
@@ -344,9 +449,6 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
         isLoading: false,
         error: null,
       }));
-
-      // Make API call
-      await bulkLeadAssign({ leadIds, email });
 
       // Fetch fresh data in background
       setTimeout(() => {

@@ -22,7 +22,7 @@ import { useAuthStore } from "@/stores/salesCrmStore/useAuthStore";
 
 const LeadPage = () => {
   const router = useRouter();
-  const { leads, totalLeads, isLoading, fetchLeads, deleteLead, assignLead } =
+  const { leads, totalLeads, isLoading, fetchLeadsByUser, deleteLead, assignLead } =
     useLeadsStore();
   const { setSelectedItems, clearSelectedItems } = useSelectedItemsStore();
   const { user } = useAuthStore();
@@ -58,12 +58,12 @@ const LeadPage = () => {
 
   useEffect(() => {
     if (user && user?.companyId) {
-      fetchLeads(user?.companyId, {
+      fetchLeadsByUser(user?.companyId, {
         page: currentPage,
         limit: itemsPerPage,
       });
     }
-  }, [fetchLeads, currentPage, itemsPerPage, user?.companyId]);
+  }, [fetchLeadsByUser, currentPage, itemsPerPage, user?.companyId]);
 
 
 
@@ -231,14 +231,14 @@ const LeadPage = () => {
     setLeadToDelete(null);
   };
 
-  const handleAssign = async (email: string) => {
+  const handleAssign = async (userId: string) => {
     if (!leadToAssign) return;
 
     try {
-      await assignLead(leadToAssign.id, email);
+      await assignLead(leadToAssign.id, userId);
       setSuccessMessage({
         title: "Success",
-        message: `Lead "${leadToAssign.name}" has been successfully assigned to ${email}.`,
+        message: `Lead "${leadToAssign.name}" has been successfully assigned.`,
       });
       setShowSuccessDialog(true);
       setShowAssignDialog(false);
@@ -246,7 +246,7 @@ const LeadPage = () => {
 
       // Refresh leads list
       if (user && user.companyId) {
-        await fetchLeads(user.companyId);
+        await fetchLeadsByUser(user.companyId);
       }
 
       // Auto hide success message after 3 seconds
@@ -344,9 +344,9 @@ const LeadPage = () => {
               <MenuItem onClick={() => handleOptionClick("Delete", index)}>
                 Delete
               </MenuItem>
-              <MenuItem onClick={() => handleOptionClick("Assign Lead", index)}>
+              {/* <MenuItem onClick={() => handleOptionClick("Assign Lead", index)}>
                 Assign Lead
-              </MenuItem>
+              </MenuItem> */}
               <MenuItem onClick={() => handleOptionClick("Send Email", index)}>
                 Send Email
               </MenuItem>
@@ -393,12 +393,12 @@ const LeadPage = () => {
         <td className="py-4 px-4">
           <span
             className={`px-2 py-1 rounded-full text-xs font-medium ${
-              item.isConverted
+              item.isAssign
                 ? "bg-green-100 text-green-800"
                 : "bg-gray-100 text-gray-800"
             }`}
           >
-            {item.isConverted ? "Converted" : "Not Converted"}
+            {item.isAssign ? "Converted" : "Not Converted"}
           </span>
         </td>
       </tr>

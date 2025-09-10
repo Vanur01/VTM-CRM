@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/salesCrmStore/useAuthStore';
 interface AssignLeadsDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onAssign: (email: string) => Promise<void>;
+  onAssign: (userId: string) => Promise<void>;
   selectedCount: number;
 }
 
@@ -49,7 +49,7 @@ export default function AssignLeadsDialog({ isOpen, onClose, onAssign, selectedC
     
     try {
       setAssigning(true);
-      await onAssign(selectedUser.email);
+      await onAssign(selectedUser._id);
       onClose();
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to assign leads');

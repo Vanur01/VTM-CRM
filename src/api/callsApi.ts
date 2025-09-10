@@ -186,6 +186,20 @@ export const getAllCalls = async (companyId: string, filters?: CallFilters): Pro
   return response.data;
 };
 
+export const getUserCalls = async (companyId: string, filters?: CallFilters): Promise<CallsResponse> => {
+  const params = new URLSearchParams();
+  if (filters?.page) params.append('page', filters.page.toString());
+  if (filters?.limit) params.append('limit', filters.limit.toString());
+  if (filters?.search) params.append('search', filters.search);
+  if (filters?.callType) params.append('callType', filters.callType);
+  
+  const queryString = params.toString();
+  const url = `/call/getUserCalls/${companyId}${queryString ? `?${queryString}` : ''}`;
+  
+  const response = await axiosInstance.get(url);
+  return response.data;
+};
+
 export const getCalls = async (companyId: string, filters?: CallFilters): Promise<CallsResponse> => {
   const params = new URLSearchParams();
   if (filters?.page) params.append('page', filters.page.toString());
