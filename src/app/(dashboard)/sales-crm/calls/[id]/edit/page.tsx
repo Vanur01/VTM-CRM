@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useCallsStore } from "@/stores/salesCrmStore/useCallsStore";
+import { useAuthStore } from "@/stores/salesCrmStore/useAuthStore";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
@@ -33,6 +34,7 @@ const EditCallPage = () => {
 
   const { currentCall, currentCallDetails, updateCall, fetchCallById } =
     useCallsStore();
+  const { user } = useAuthStore();
 
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState<{
@@ -110,6 +112,13 @@ const EditCallPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent managers from saving changes
+    if (user?.role === 'manager') {
+      setError('You do not have permission to edit this call.');
+      return;
+    }
+    
     setError(null);
     setIsSubmitting(true);
 
@@ -224,11 +233,14 @@ const EditCallPage = () => {
                     Call Type <span className="text-red-500">*</span>
                   </label>
                   <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      user?.role === 'manager' ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
+                    }`}
                     value={formData.callType}
                     onChange={(e) =>
                       handleInputChange("callType", e.target.value)
                     }
+                    disabled={user?.role === 'manager'}
                     required
                   >
                     <option value="inbound">Inbound</option>
@@ -241,11 +253,14 @@ const EditCallPage = () => {
                     Status <span className="text-red-500">*</span>
                   </label>
                   <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      user?.role === 'manager' ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
+                    }`}
                     value={formData.outgoingCallStatus}
                     onChange={(e) =>
                       handleInputChange("outgoingCallStatus", e.target.value)
                     }
+                    disabled={user?.role === 'manager'}
                     required
                   >
                     <option value="scheduled">Scheduled</option>
@@ -301,11 +316,14 @@ const EditCallPage = () => {
                     Purpose <span className="text-red-500">*</span>
                   </label>
                   <textarea
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 min-h-[100px]"
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 min-h-[100px] ${
+                      user?.role === 'manager' ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
+                    }`}
                     value={formData.callPurpose}
                     onChange={(e) =>
                       handleInputChange("callPurpose", e.target.value)
                     }
+                    disabled={user?.role === 'manager'}
                     required
                   />
                 </div>
@@ -315,11 +333,14 @@ const EditCallPage = () => {
                     Agenda <span className="text-red-500">*</span>
                   </label>
                   <textarea
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 min-h-[80px] whitespace-pre-wrap"
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 min-h-[80px] whitespace-pre-wrap ${
+                      user?.role === 'manager' ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
+                    }`}
                     value={formData.callAgenda}
                     onChange={(e) =>
                       handleInputChange("callAgenda", e.target.value)
                     }
+                    disabled={user?.role === 'manager'}
                   />
                 </div>
               </div>
@@ -464,8 +485,13 @@ const EditCallPage = () => {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isSubmitting || user?.role === 'manager'}
+              className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                user?.role === 'manager'
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-indigo-600 hover:bg-indigo-700'
+              }`}
+              title={user?.role === 'manager' ? 'Save disabled for managers' : ''}
             >
               {isSubmitting ? (
                 <>

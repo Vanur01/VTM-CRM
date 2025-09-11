@@ -6,6 +6,7 @@ import {
   createLead,
   getAllLeads,
   getAllLeadsByUser,
+  getAllManagerLeads,
   getLeadById,
   assignSingleLead,
   bulkLeadAssign,
@@ -33,10 +34,18 @@ interface LeadsState {
 interface LeadsActions {
   fetchLeads: (companyId: string, filters?: LeadFilters) => Promise<void>;
   fetchLeadsByUser: (companyId: string, filters?: LeadFilters) => Promise<void>;
+  fetchManagerLeads: (
+    companyId: string,
+    filters?: LeadFilters
+  ) => Promise<void>;
   fetchUserLeads: (userId: string, filters?: LeadFilters) => Promise<void>;
   fetchLeadById: (id: string, companyId?: string) => Promise<void>;
   addLead: (lead: CreateLeadRequest) => Promise<void>;
-  updateLead: (id: string, data: Partial<CreateLeadRequest>, companyId?: string) => Promise<void>;
+  updateLead: (
+    id: string,
+    data: Partial<CreateLeadRequest>,
+    companyId?: string
+  ) => Promise<void>;
   setCurrentLead: (lead: Lead | null) => void;
   resetError: () => void;
   assignLead: (leadId: string, newOwnerId: string) => Promise<void>;
@@ -44,7 +53,11 @@ interface LeadsActions {
   deleteLead: (leadId: string, companyId: string) => Promise<boolean>;
   bulkDeleteLeads: (leadIds: string[], companyId: string) => Promise<void>;
   addNote: (leadId: string, note: string) => Promise<void>;
-  updateNote: (leadId: string, noteId: string, content: string) => Promise<void>;
+  updateNote: (
+    leadId: string,
+    noteId: string,
+    content: string
+  ) => Promise<void>;
   uploadFile: (leadId: string, file: File) => Promise<void>;
   deleteAttachment: (leadId: string, attachmentId: string) => Promise<void>;
 }
@@ -72,87 +85,87 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
       const leads = response.data.response
         .filter((item: any) => item && item._id) // Filter out invalid items
         .map((item: any) => ({
-        _id: item._id, // Use _id from response
-        leadId: item.leadId || item._id, // Add leadId mapping from API response
-        ownerId: {
-          _id: item.ownerId || "",
-          email: item.ownerEmail || item.leadOwner || "",
-          name: item.ownerName || item.leadOwner || "",
-        },
-        assignedTo: item.assignedTo || null,
-        companyName: item.companyName,
-        companyId: item.companyId || "",
-        firstName: item.firstName,
-        lastName: item.lastName,
-        fullName: item.fullName,
-        leadOwner: item.leadOwner || "",
-        email: item.email,
-        phone: item.phone,
-        mobile: item.mobile || null,
-        website: item.website,
-        isAssign: item.isAssign || false,
-        title: item.title,
-        industry: item.industry,
-        leadSource: item.leadSource || item.source, // Support both field names
-        leadStatus: item.leadStatus || item.status, // Support both field names
-        priority: item.priority,
-        status: item.status,
-        followUpDate: item.followUpDate,
-        lastStatusChange: item.lastStatusChange,
-        convertedDate: item.convertedDate,
-        address: {
-          street: item.street || "",
-          city: item.city || "",
-          state: item.state || "",
-          postalCode: item.postalCode || "",
-          country: item.country || "",
-          full: `${item.street || ""}, ${item.city || ""}, ${
-            item.state || ""
-          } ${item.postalCode || ""}, ${item.country || ""}`,
-        },
-        attachments: item.attachments || null,
-        attachment: item.attachment || [],
-        inviteMeeting: item.inviteMeeting || null,
-        notes: item.notes || null,
-        socialMedia: {
-          facebook: item.facebook || null,
-          instagram: item.instagram || null,
-          linkedIn: item.linkedIn || null,
-          twitter: item.twitter || null,
-        },
-        createdBy: item.createdBy || null,
-        updatedBy: item.updatedBy || null,
-        isDeleted: item.isDeleted ?? false,
-        isConverted: !!item.convertedDate,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-        source: item.source || "",
-        temperature: item.temperature || "",
-        expectedCloseDate: item.expectedCloseDate || "",
-        annualRevenue: item.annualRevenue || 0,
-        numberOfEmployees: item.numberOfEmployees || 0,
-        description: item.description || "",
-        tags: item.tags || [],
-        rating: item.rating || 0,
-        websiteDomain: item.websiteDomain || "",
-        ownerName: item.ownerName || "",
-        // Add missing Lead properties with default values if not present
-        actualCloseDate: item.actualCloseDate || null,
-        openTasks: item.openTasks || [],
-        closeTasks: item.closeTasks || [],
-        openMeetings: item.openMeetings || [],
-        closeMeetings: item.closeMeetings || [],
-        openCalls: item.openCalls || [],
-        closeCalls: item.closeCalls || [],
-        openNotes: item.openNotes || [],
-        closeNotes: item.closeNotes || [],
-        openEmails: item.openEmails || [],
-        closeEmails: item.closeEmails || [],
-        // Add missing Lead properties
-        socialProfiles: item.socialProfiles || {},
-        emailCount: item.emailCount ?? 0,
-        lastEmailSentAt: item.lastEmailSentAt || null,
-      }));
+          _id: item._id, // Use _id from response
+          leadId: item.leadId || item._id, // Add leadId mapping from API response
+          ownerId: {
+            _id: item.ownerId || "",
+            email: item.ownerEmail || item.leadOwner || "",
+            name: item.ownerName || item.leadOwner || "",
+          },
+          assignedTo: item.assignedTo || null,
+          companyName: item.companyName,
+          companyId: item.companyId || "",
+          firstName: item.firstName,
+          lastName: item.lastName,
+          fullName: item.fullName,
+          leadOwner: item.leadOwner || "",
+          email: item.email,
+          phone: item.phone,
+          mobile: item.mobile || null,
+          website: item.website,
+          isAssign: item.isAssign || false,
+          title: item.title,
+          industry: item.industry,
+          leadSource: item.leadSource || item.source, // Support both field names
+          leadStatus: item.leadStatus || item.status, // Support both field names
+          priority: item.priority,
+          status: item.status,
+          followUpDate: item.followUpDate,
+          lastStatusChange: item.lastStatusChange,
+          convertedDate: item.convertedDate,
+          address: {
+            street: item.street || "",
+            city: item.city || "",
+            state: item.state || "",
+            postalCode: item.postalCode || "",
+            country: item.country || "",
+            full: `${item.street || ""}, ${item.city || ""}, ${
+              item.state || ""
+            } ${item.postalCode || ""}, ${item.country || ""}`,
+          },
+          attachments: item.attachments || null,
+          attachment: item.attachment || [],
+          inviteMeeting: item.inviteMeeting || null,
+          notes: item.notes || null,
+          socialMedia: {
+            facebook: item.facebook || null,
+            instagram: item.instagram || null,
+            linkedIn: item.linkedIn || null,
+            twitter: item.twitter || null,
+          },
+          createdBy: item.createdBy || null,
+          updatedBy: item.updatedBy || null,
+          isDeleted: item.isDeleted ?? false,
+          isConverted: !!item.convertedDate,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          source: item.source || "",
+          temperature: item.temperature || "",
+          expectedCloseDate: item.expectedCloseDate || "",
+          annualRevenue: item.annualRevenue || 0,
+          numberOfEmployees: item.numberOfEmployees || 0,
+          description: item.description || "",
+          tags: item.tags || [],
+          rating: item.rating || 0,
+          websiteDomain: item.websiteDomain || "",
+          ownerName: item.ownerName || "",
+          // Add missing Lead properties with default values if not present
+          actualCloseDate: item.actualCloseDate || null,
+          openTasks: item.openTasks || [],
+          closeTasks: item.closeTasks || [],
+          openMeetings: item.openMeetings || [],
+          closeMeetings: item.closeMeetings || [],
+          openCalls: item.openCalls || [],
+          closeCalls: item.closeCalls || [],
+          openNotes: item.openNotes || [],
+          closeNotes: item.closeNotes || [],
+          openEmails: item.openEmails || [],
+          closeEmails: item.closeEmails || [],
+          // Add missing Lead properties
+          socialProfiles: item.socialProfiles || {},
+          emailCount: item.emailCount ?? 0,
+          lastEmailSentAt: item.lastEmailSentAt || null,
+        }));
 
       set({
         leads,
@@ -177,77 +190,78 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
       const leads = response.data.response
         .filter((item: any) => item && item._id) // Filter out items without _id
         .map((item: any) => ({
-        _id: item._id || "",
-        id: item.id || item._id,
-        leadId: item.leadId || item._id,
-        ownerId: typeof item.ownerId === "string" 
-          ? { _id: item.ownerId, email: "", name: item.ownerName || "" }
-          : {
-          _id: item.ownerId?._id || "",
-          email: item.ownerId?.email || "",
-          name: item.ownerName || item.leadOwner || "",
-        },
-        assignedTo: item.assignedTo || null,
-        companyName: item.companyName,
-        companyId: item.companyId || "",
-        firstName: item.firstName,
-        lastName: item.lastName,
-        fullName: item.fullName,
-        leadOwner: item.leadOwner || "",
-        isAssign: item.isAssign || false,
-        email: item.email,
-        phone: item.phone,
-        mobile: item.mobile || null,
-        website: item.website,
-        title: item.title,
-        industry: item.industry,
-        leadSource: item.leadSource || item.source, // Support both field names
-        leadStatus: item.leadStatus || item.status, // Support both field names
-        priority: item.priority,
-        status: item.status,
-        followUpDate: item.followUpDate,
-        lastStatusChange: item.lastStatusChange,
-        convertedDate: item.convertedDate,
-        address: {
-          street: item.street || "",
-          city: item.city || "",
-          state: item.state || "",
-          postalCode: item.postalCode || "",
-          country: item.country || "",
-          full: `${item.street || ""}, ${item.city || ""}, ${
-            item.state || ""
-          } ${item.postalCode || ""}, ${item.country || ""}`,
-        },
-        attachments: item.attachments || null,
-        attachment: item.attachment || [],
-        inviteMeeting: item.inviteMeeting || null,
-        notes: item.notes || null,
-        socialMedia: {
-          facebook: item.facebook || null,
-          instagram: item.instagram || null,
-          linkedIn: item.linkedIn || null,
-          twitter: item.twitter || null,
-        },
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-        temperature: item.temperature || "",
-        source: item.source || item.leadSource,
-        lostReason: item.lostReason || "",
-        expectedCloseDate: item.expectedCloseDate || null,
-        actualCloseDate: item.actualCloseDate || null,
-        isDeleted: item.isDeleted || false,
-        isConverted: item.isConverted || false,
-        openTasks: item.openTasks || [],
-        closeTasks: item.closeTasks || [],
-        openMeetings: item.openMeetings || [],
-        closeMeetings: item.closeMeetings || [],
-        openCalls: item.openCalls || [],
-        closeCalls: item.closeCalls || [],
-        // Add missing Lead properties
-        socialProfiles: item.socialProfiles || {},
-        emailCount: item.emailCount ?? 0,
-        lastEmailSentAt: item.lastEmailSentAt || null,
-      }));
+          _id: item._id || "",
+          id: item.id || item._id,
+          leadId: item.leadId || item._id,
+          ownerId:
+            typeof item.ownerId === "string"
+              ? { _id: item.ownerId, email: "", name: item.ownerName || "" }
+              : {
+                  _id: item.ownerId?._id || "",
+                  email: item.ownerId?.email || "",
+                  name: item.ownerName || item.leadOwner || "",
+                },
+          assignedTo: item.assignedTo || null,
+          companyName: item.companyName,
+          companyId: item.companyId || "",
+          firstName: item.firstName,
+          lastName: item.lastName,
+          fullName: item.fullName,
+          leadOwner: item.leadOwner || "",
+          isAssign: item.isAssign || false,
+          email: item.email,
+          phone: item.phone,
+          mobile: item.mobile || null,
+          website: item.website,
+          title: item.title,
+          industry: item.industry,
+          leadSource: item.leadSource || item.source, // Support both field names
+          leadStatus: item.leadStatus || item.status, // Support both field names
+          priority: item.priority,
+          status: item.status,
+          followUpDate: item.followUpDate,
+          lastStatusChange: item.lastStatusChange,
+          convertedDate: item.convertedDate,
+          address: {
+            street: item.street || "",
+            city: item.city || "",
+            state: item.state || "",
+            postalCode: item.postalCode || "",
+            country: item.country || "",
+            full: `${item.street || ""}, ${item.city || ""}, ${
+              item.state || ""
+            } ${item.postalCode || ""}, ${item.country || ""}`,
+          },
+          attachments: item.attachments || null,
+          attachment: item.attachment || [],
+          inviteMeeting: item.inviteMeeting || null,
+          notes: item.notes || null,
+          socialMedia: {
+            facebook: item.facebook || null,
+            instagram: item.instagram || null,
+            linkedIn: item.linkedIn || null,
+            twitter: item.twitter || null,
+          },
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          temperature: item.temperature || "",
+          source: item.source || item.leadSource,
+          lostReason: item.lostReason || "",
+          expectedCloseDate: item.expectedCloseDate || null,
+          actualCloseDate: item.actualCloseDate || null,
+          isDeleted: item.isDeleted || false,
+          isConverted: item.isConverted || false,
+          openTasks: item.openTasks || [],
+          closeTasks: item.closeTasks || [],
+          openMeetings: item.openMeetings || [],
+          closeMeetings: item.closeMeetings || [],
+          openCalls: item.openCalls || [],
+          closeCalls: item.closeCalls || [],
+          // Add missing Lead properties
+          socialProfiles: item.socialProfiles || {},
+          emailCount: item.emailCount ?? 0,
+          lastEmailSentAt: item.lastEmailSentAt || null,
+        }));
 
       set({
         leads,
@@ -263,6 +277,111 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
     }
   },
 
+  fetchManagerLeads: async (companyId: string, filters?: LeadFilters) => {
+    set({ isLoading: true, error: null });
+    try {
+      console.log(
+        "Store: fetchManagerLeads called with companyId:",
+        companyId,
+        "filters:",
+        filters
+      );
+      const response = await getAllManagerLeads(companyId, filters);
+      console.log("Store: getAllManagerLeads response:", response);
+
+      // Convert response data to Lead type
+      const leads = response.data.response
+        .filter((item: any) => item && (item._id || item.id))
+        .map((item: any) => ({
+          _id: item._id || item.id || "",
+          id: item.id || item._id,
+          leadId: item.leadId || item._id,
+          ownerId:
+            typeof item.ownerId === "string"
+              ? { _id: item.ownerId, email: "", name: item.ownerName || "" }
+              : {
+                  _id: item.ownerId?._id || "",
+                  email: item.ownerId?.email || "",
+                  name: item.ownerName || item.leadOwner || "",
+                },
+          assignedTo: item.assignedTo || null,
+          companyName: item.companyName,
+          companyId: item.companyId || "",
+          firstName: item.firstName,
+          lastName: item.lastName,
+          fullName: item.fullName,
+          leadOwner: item.leadOwner || "",
+          isAssign: item.isAssign || false,
+          email: item.email,
+          phone: item.phone,
+          mobile: item.mobile || null,
+          website: item.website,
+          title: item.title,
+          industry: item.industry,
+          leadSource: item.leadSource || item.source,
+          leadStatus: item.leadStatus || item.status,
+          priority: item.priority,
+          status: item.status,
+          followUpDate: item.followUpDate,
+          lastStatusChange: item.lastStatusChange,
+          convertedDate: item.convertedDate,
+          address: {
+            street: item.street || "",
+            city: item.city || "",
+            state: item.state || "",
+            postalCode: item.postalCode || "",
+            country: item.country || "",
+            full: `${item.street || ""}, ${item.city || ""}, ${
+              item.state || ""
+            } ${item.postalCode || ""}, ${item.country || ""}`,
+          },
+          attachments: item.attachments || null,
+          attachment: item.attachment || [],
+          inviteMeeting: item.inviteMeeting || null,
+          notes: item.notes || null,
+          socialMedia: {
+            facebook: item.facebook || null,
+            instagram: item.instagram || null,
+            linkedIn: item.linkedIn || null,
+            twitter: item.twitter || null,
+          },
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          temperature: item.temperature || "",
+          source: item.source || item.leadSource,
+          lostReason: item.lostReason || "",
+          expectedCloseDate: item.expectedCloseDate || null,
+          actualCloseDate: item.actualCloseDate || null,
+          isDeleted: item.isDeleted || false,
+          isConverted: item.isConverted || false,
+          openTasks: item.openTasks || [],
+          closeTasks: item.closeTasks || [],
+          openMeetings: item.openMeetings || [],
+          closeMeetings: item.closeMeetings || [],
+          openCalls: item.openCalls || [],
+          closeCalls: item.closeCalls || [],
+          socialProfiles: item.socialProfiles || {},
+          emailCount: item.emailCount ?? 0,
+          lastEmailSentAt: item.lastEmailSentAt || null,
+        }));
+
+      console.log("Store: Processed leads for manager:", leads);
+
+      set({
+        leads,
+        totalLeads: response.data.total,
+        currentPage: response.data.page,
+        totalPages: response.data.totalPages,
+        filters: filters || {},
+      });
+    } catch (error: any) {
+      console.error("Store: fetchManagerLeads error:", error);
+      set({ error: error?.message || "Failed to fetch manager leads" });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
   fetchUserLeads: async (userId: string, filters?: LeadFilters) => {
     set({ isLoading: true, error: null });
     try {
@@ -272,48 +391,50 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
       const leads = response.data.data
         .filter((item: any) => item && (item._id || item.id)) // Filter out invalid items
         .map((item: any) => ({
-        _id: item.id,
-        ownerId: { _id: "", email: "", name: "" }, // Set default or get from response
-        assignedTo: null,
-        companyName: item.companyName,
-        firstName: item.firstName,
-        lastName: item.lastName,
-        fullName: item.fullName,
-        email: item.email,
-        phone: item.phone,
-        mobile: null,
-        website: item.website,
-        title: item.title,
-        industry: item.industry,
-        leadSource: item.leadSource,
-        leadStatus: item.leadStatus,
-        priority: item.priority,
-        status: item.status,
-        followUpDate: item.followUpDate,
-        lastStatusChange: item.lastStatusChange,
-        convertedDate: null,
-        ownerName: item.ownerName || "",
-        isConverted: !!item.convertedDate,
+          _id: item.id,
+          ownerId: { _id: "", email: "", name: "" }, // Set default or get from response
+          assignedTo: null,
+          companyName: item.companyName,
+          firstName: item.firstName,
+          lastName: item.lastName,
+          fullName: item.fullName,
+          email: item.email,
+          isAssign: item.isAssign || false,
 
-        address: {
-          ...item.address,
-          full: item.address?.full || "",
-        },
-        attachments: null,
-        inviteMeeting: null,
-        notes: null,
-        socialMedia: {
-          facebook: null,
-          instagram: null,
-          linkedIn: null,
-          twitter: null,
-        },
-        createdBy: null,
-        updatedBy: null,
-        isDeleted: false,
-        createdAt: "",
-        updatedAt: "",
-      }));
+          phone: item.phone,
+          mobile: null,
+          website: item.website,
+          title: item.title,
+          industry: item.industry,
+          leadSource: item.leadSource,
+          leadStatus: item.leadStatus,
+          priority: item.priority,
+          status: item.status,
+          followUpDate: item.followUpDate,
+          lastStatusChange: item.lastStatusChange,
+          convertedDate: null,
+          ownerName: item.ownerName || "",
+          isConverted: !!item.convertedDate,
+
+          address: {
+            ...item.address,
+            full: item.address?.full || "",
+          },
+          attachments: null,
+          inviteMeeting: null,
+          notes: null,
+          socialMedia: {
+            facebook: null,
+            instagram: null,
+            linkedIn: null,
+            twitter: null,
+          },
+          createdBy: null,
+          updatedBy: null,
+          isDeleted: false,
+          createdAt: "",
+          updatedAt: "",
+        }));
 
       set({
         leads,
@@ -363,9 +484,13 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
     }
   },
 
-  updateLead: async (id: string, data: Partial<CreateLeadRequest>, companyId?: string) => {
+  updateLead: async (
+    id: string,
+    data: Partial<CreateLeadRequest>,
+    companyId?: string
+  ) => {
     set({ isLoading: true, error: null });
-    try {      
+    try {
       const response = await updateLead(id, data, companyId);
       if (response.result) {
         set((state) => ({
@@ -439,9 +564,10 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
           if (leadIds.includes(lead._id)) {
             return {
               ...lead,
-              ownerId: typeof lead.ownerId === 'string' 
-                ? { _id: newOwnerId, email: '', name: '' }
-                : { ...lead.ownerId, _id: newOwnerId },
+              ownerId:
+                typeof lead.ownerId === "string"
+                  ? { _id: newOwnerId, email: "", name: "" }
+                  : { ...lead.ownerId, _id: newOwnerId },
             };
           }
           return lead;
@@ -558,13 +684,14 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
       await addNote(leadId, { content: note }); // Changed from 'note' to 'content'
       // Refresh the lead data after adding the note
       const state = get();
-      const companyId = state.leads.find(lead => lead._id === leadId)?.companyId || 
-                        state.currentLead?.companyId;
-      
+      const companyId =
+        state.leads.find((lead) => lead._id === leadId)?.companyId ||
+        state.currentLead?.companyId;
+
       if (!companyId) {
         throw new Error("Company ID is required to get lead details");
       }
-      
+
       const response = await getLeadById(leadId, companyId);
       set({ currentLead: response.result });
     } catch (error) {
@@ -579,13 +706,14 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
       await updateNote(leadId, noteId, { content });
       // Refresh the lead data after updating the note
       const state = get();
-      const companyId = state.leads.find(lead => lead._id === leadId)?.companyId || 
-                        state.currentLead?.companyId;
-      
+      const companyId =
+        state.leads.find((lead) => lead._id === leadId)?.companyId ||
+        state.currentLead?.companyId;
+
       if (!companyId) {
         throw new Error("Company ID is required to get lead details");
       }
-      
+
       const response = await getLeadById(leadId, companyId);
       set({ currentLead: response.result });
     } catch (error) {
@@ -601,13 +729,14 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
       await uploadFile(leadId, file);
       // Refresh the lead data after uploading the file
       const state = get();
-      const companyId = state.leads.find(lead => lead._id === leadId)?.companyId || 
-                        state.currentLead?.companyId;
-      
+      const companyId =
+        state.leads.find((lead) => lead._id === leadId)?.companyId ||
+        state.currentLead?.companyId;
+
       if (!companyId) {
         throw new Error("Company ID is required to get lead details");
       }
-      
+
       const response = await getLeadById(leadId, companyId);
       set({ currentLead: response.result });
     } catch (error) {
@@ -624,18 +753,22 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
       await deleteAttachment(leadId, attachmentId);
       // Refresh the lead data after deleting the attachment
       const state = get();
-      const companyId = state.leads.find(lead => lead._id === leadId)?.companyId || 
-                        state.currentLead?.companyId;
-      
+      const companyId =
+        state.leads.find((lead) => lead._id === leadId)?.companyId ||
+        state.currentLead?.companyId;
+
       if (!companyId) {
         throw new Error("Company ID is required to get lead details");
       }
-      
+
       const response = await getLeadById(leadId, companyId);
       set({ currentLead: response.result, isLoading: false });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : "Failed to delete attachment",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete attachment",
         isLoading: false,
       });
     }

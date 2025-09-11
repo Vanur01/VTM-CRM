@@ -71,7 +71,7 @@ export default function MainSidebar({
   const [reportsExpanded, setReportsExpanded] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
-  const basePath = user?.role === "admin" ? "/sales-crm" : "/user/sales-crm";
+  const basePath = user?.role === "admin" ? "/sales-crm" : user?.role === "manager" ? "/manager/sales-crm" : "/user/sales-crm";
 
   // Navigation items with consistent icon styling
   const navigationItems = useMemo<NavigationItem[]>(
@@ -111,7 +111,7 @@ export default function MainSidebar({
         path: `${basePath}/reports`,
         icon: <FileText className="w-5 h-5 stroke-[1.5]" />,
       },
-      ...(user?.role !== "user"
+      ...(user?.role === "admin"
         ? [
             {
               label: "Analytics",
@@ -130,7 +130,7 @@ export default function MainSidebar({
   );
 
   // Finance base path for finance modules
-  const financeBasePath = user?.role === "admin" ? "/finance" : "/user/finance";
+  const financeBasePath = user?.role === "admin" ? "/finance" : user?.role === "manager" ? "/manager/finance" : "/user/finance";
 
   // Sales module items
   const salesItems = useMemo<NavigationItem[]>(
@@ -257,6 +257,8 @@ export default function MainSidebar({
         href:
           user?.role === "admin"
             ? `/settings/user/${user?._id}`
+            : user?.role === "manager"
+            ? `/manager/settings/user/${user?._id}`
             : `/user/settings/user/${user?._id}`,
         icon: <UserCircle className="w-4 h-4 stroke-[1.5]" />,
         label: "Personal Settings",
@@ -265,17 +267,23 @@ export default function MainSidebar({
         href:
           user?.role === "admin"
             ? "/settings/email"
-            : "/sales-crm/user/settings/email",
+            : user?.role === "manager"
+            ? "/manager/settings/email"
+            : "/user/settings/email",
         icon: <Mail className="w-4 h-4 stroke-[1.5]" />,
         label: "Email",
       },
-      ...(user?.role === "admin"
+      ...(user?.role === "admin" || user?.role === "manager"
         ? [
             {
-              href: "/settings/users",
+              href: user?.role === "admin" ? "/settings/users" : "/manager/settings/users",
               icon: <LucideSettings className="w-4 h-4 stroke-[1.5]" />,
               label: "User Management",
             },
+          ]
+        : []),
+      ...(user?.role === "admin"
+        ? [
             {
               href: "/settings/recyclebin",
               icon: <Recycle className="w-4 h-4 stroke-[1.5]" />,
@@ -297,9 +305,9 @@ export default function MainSidebar({
       (item) => pathname === item.href || pathname.startsWith(item.href + "/")
     );
 
-    // Check if current path is in finance module (both admin and user routes)
+    // Check if current path is in finance module (admin, manager, and user routes)
     const isFinanceRoute =
-      pathname.startsWith("/finance/") || pathname.startsWith("/user/finance/");
+      pathname.startsWith("/finance/") || pathname.startsWith("/user/finance/") || pathname.startsWith("/manager/finance/");
 
     if (matchedSetting) {
       setActiveTab("");

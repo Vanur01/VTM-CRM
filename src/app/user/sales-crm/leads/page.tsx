@@ -366,21 +366,20 @@ const LeadPage = () => {
           />
         </td>
 
-        <td className="py-4 px-4">{item.leadId || item._id}</td>
-        <td className="py-4 px-4">{item.fullName}</td>
+        <td className="py-4 px-4">{item?.fullName}</td>
         <td className="py-4 px-4 group-hover:text-blue-600 group-hover:underline">
           <a href={`mailto:${item.email}`} onClick={(e) => e.stopPropagation()}>
-            {item.email}
+            {item?.email}
           </a>
         </td>
-        <td className="py-4 px-4">{item.phone}</td>
-        <td className="py-4 px-4">{item.status}</td>
+        <td className="py-4 px-4">{item?.phone}</td>
+        <td className="py-4 px-4">{item?.status}</td>
         <td className="py-4 px-4">
           <span
             className={`px-2 py-1 rounded-full text-xs font-medium ${
-              item.priority === "High"
+              item?.priority === "High"
                 ? "bg-red-100 text-red-800"
-                : item.priority === "Medium"
+                : item?.priority === "Medium"
                 ? "bg-yellow-100 text-yellow-800"
                 : "bg-green-100 text-green-800"
             }`}
@@ -393,12 +392,12 @@ const LeadPage = () => {
         <td className="py-4 px-4">
           <span
             className={`px-2 py-1 rounded-full text-xs font-medium ${
-              item.isAssign
+              item?.isAssign
                 ? "bg-green-100 text-green-800"
                 : "bg-gray-100 text-gray-800"
             }`}
           >
-            {item.isAssign ? "Converted" : "Not Converted"}
+            {item?.isAssign ? "Assigned" : "Not Assigned"}
           </span>
         </td>
       </tr>
@@ -419,7 +418,6 @@ const LeadPage = () => {
       accessor: "select",
       className: "py-2 px-4 w-10 text-center",
     },
-    { header: "Lead ID", accessor: "leadId", className: "py-2 px-4" },
     { header: "Lead Name", accessor: "name", className: "py-2 px-4" },
     { header: "Email", accessor: "email", className: "py-2 px-4" },
     { header: "Phone", accessor: "phone", className: "py-2 px-4" },

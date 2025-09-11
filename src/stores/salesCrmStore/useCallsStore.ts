@@ -23,6 +23,7 @@ import {
   getLeadForAllCloseCalls,
   rescheduleCall,
   completeOrCancelCall,
+  getManagerUsersCalls,
 } from "@/api/callsApi";
 import { useAuthStore } from "./useAuthStore";
 
@@ -43,6 +44,7 @@ interface CallsActions {
   fetchCalls: (filters?: CallFilters) => Promise<void>;
   fetchAllCalls: (filters?: CallFilters) => Promise<void>;
   fetchUserCalls: (filters?: CallFilters) => Promise<void>;
+  fetchManagerUsersCalls: (filters?: CallFilters) => Promise<void>;
   fetchCallById: (id: string) => Promise<void>;
   addCall: (leadId: string, call: CreateCallRequest) => Promise<void>;
   updateCall: (id: string, data: UpdateCallRequest) => Promise<void>;
@@ -172,6 +174,39 @@ export const useCallsStore = create<CallsStore>((set, get) => ({
     }
   },
 
+  fetchManagerUsersCalls: async (filters?: CallFilters) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { user } = useAuthStore.getState();
+      const companyId = user?.companyId;
+      
+      if (!companyId) {
+        throw new Error('Company ID not found');
+      }
+      
+      const response = await getManagerUsersCalls(companyId, filters);
+      const callsWithIds = response.result.calls.map(call => ({
+        ...call,
+        callId: call._id
+      }));
+      
+      set({
+        calls: callsWithIds,
+        totalCalls: response.result.total,
+        currentPage: response.result.currentPage,
+        totalPages: response.result.totalPages,
+        limit: filters?.limit || 20,
+        isLoading: false,
+        filters: filters || {},
+      });
+    } catch (error) {
+      set({ 
+        isLoading: false, 
+        error: error instanceof Error ? error.message : 'Failed to fetch manager users calls' 
+      });
+    }
+  },
+
   fetchCallById: async (id: string) => {
     set({ isLoading: true, error: null });
     try {
@@ -204,9 +239,15 @@ export const useCallsStore = create<CallsStore>((set, get) => ({
       }
       
       await createCall(leadId, companyId, callData);
-      // Refresh calls list after adding
+      // Refresh calls list after adding based on user role
       const filters = get().filters;
-      await get().fetchCalls(filters);
+      if (user.role === 'admin') {
+        await get().fetchAllCalls(filters);
+      } else if (user.role === 'manager') {
+        await get().fetchManagerUsersCalls(filters);
+      } else if (user.role === 'user') {
+        await get().fetchUserCalls(filters);
+      }
       set({ isLoading: false });
     } catch (error) {
       set({ 
@@ -317,7 +358,14 @@ export const useCallsStore = create<CallsStore>((set, get) => ({
       // }, 1000);
     } catch (error) {
       // Revert optimistic update
-      get().fetchCalls();
+      const { user } = useAuthStore.getState();
+      if (user?.role === 'admin') {
+        get().fetchAllCalls();
+      } else if (user?.role === 'manager') {
+        get().fetchManagerUsersCalls();
+      } else if (user?.role === 'user') {
+        get().fetchUserCalls();
+      }
 
       const errorMessage =
         error instanceof Error ? error.message : "Failed to bulk delete calls";

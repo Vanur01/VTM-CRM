@@ -29,7 +29,7 @@ const CreateMeetingPage = () => {
   const { pushToRolePath } = useRoleBasedRouter();
   const { addMeeting, isLoading } = useMeetingsStore();
   const { user } = useAuthStore();
-  const { leads, fetchLeads, isLoading: leadsLoading } = useLeadsStore();
+  const { leads, fetchLeads, fetchLeadsByUser, isLoading: leadsLoading } = useLeadsStore();
   const [error, setError] = useState<string | null>(null);
   const [participants, setParticipants] = useState<string[]>([]);
   const [participantInput, setParticipantInput] = useState<string>('');
@@ -54,9 +54,13 @@ const CreateMeetingPage = () => {
   // Fetch leads when component mounts
   useEffect(() => {
     if (user?.companyId) {
-      fetchLeads(user.companyId);
+      if (user.role === 'admin') {
+        fetchLeads(user.companyId);
+      } else if (user.role === 'user') {
+        fetchLeadsByUser(user.companyId);
+      }
     }
-  }, [user?.companyId, fetchLeads]);
+  }, [user?.companyId, user?.role, fetchLeads, fetchLeadsByUser]);
 
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({

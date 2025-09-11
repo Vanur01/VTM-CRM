@@ -173,6 +173,13 @@ const EditMeetingPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent managers from saving changes
+    if (user?.role === 'manager') {
+      setError('You do not have permission to edit this meeting.');
+      return;
+    }
+    
     setError(null);
     setUpdateSuccess(false);
 
@@ -417,9 +424,12 @@ const EditMeetingPage = () => {
                     Meeting Title <span className="text-red-500">*</span>
                   </label>
                   <input
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      user?.role === 'manager' ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
+                    }`}
                     value={formData.title || ""}
                     onChange={(e) => handleChange("title", e.target.value)}
+                    disabled={user?.role === 'manager'}
                     placeholder="e.g., Product Demo, Initial Consultation"
                     required
                   />
@@ -430,9 +440,12 @@ const EditMeetingPage = () => {
                     Status <span className="text-red-500">*</span>
                   </label>
                   <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      user?.role === 'manager' ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
+                    }`}
                     value={formData.status || "scheduled"}
                     onChange={(e) => handleChange("status", e.target.value)}
+                    disabled={user?.role === 'manager'}
                     required
                   >
                     <option value="scheduled">Scheduled</option>
@@ -448,11 +461,14 @@ const EditMeetingPage = () => {
                     Meeting Venue <span className="text-red-500">*</span>
                   </label>
                   <input
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      user?.role === 'manager' ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
+                    }`}
                     value={formData.meetingVenue}
                     onChange={(e) =>
                       handleChange("meetingVenue", e.target.value)
                     }
+                    disabled={user?.role === 'manager'}
                     placeholder="e.g., Conference Room, Zoom Call"
                     required
                   />
@@ -463,9 +479,12 @@ const EditMeetingPage = () => {
                     Location <span className="text-red-500">*</span>
                   </label>
                   <input
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      user?.role === 'manager' ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
+                    }`}
                     value={formData.location}
                     onChange={(e) => handleChange("location", e.target.value)}
+                    disabled={user?.role === 'manager'}
                     placeholder="e.g., Office Address, Meeting Link"
                     required
                   />
@@ -653,9 +672,12 @@ const EditMeetingPage = () => {
                     Meeting Notes
                   </label>
                   <textarea
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 min-h-[120px]"
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 min-h-[120px] ${
+                      user?.role === 'manager' ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
+                    }`}
                     value={formData.notes || ""}
                     onChange={(e) => handleChange("notes", e.target.value)}
+                    disabled={user?.role === 'manager'}
                     placeholder="Add any notes about the meeting..."
                   />
                 </div>
@@ -726,8 +748,13 @@ const EditMeetingPage = () => {
             </button>
             <button
               type="submit"
-              disabled={isLoading}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading || user?.role === 'manager'}
+              className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                user?.role === 'manager'
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-indigo-600 hover:bg-indigo-700'
+              }`}
+              title={user?.role === 'manager' ? 'Save disabled for managers' : ''}
             >
               {isLoading ? (
                 <>

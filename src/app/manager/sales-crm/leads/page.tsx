@@ -22,7 +22,8 @@ import { useAuthStore } from "@/stores/salesCrmStore/useAuthStore";
 
 const LeadPage = () => {
   const router = useRouter();
-  const { leads, totalLeads, isLoading, fetchLeads, deleteLead, assignLead } =
+  // Using fetchManagerLeads for manager-specific lead access instead of fetchLeadsByUser
+  const { leads, totalLeads, isLoading, fetchManagerLeads, deleteLead, assignLead } =
     useLeadsStore();
   const { setSelectedItems, clearSelectedItems } = useSelectedItemsStore();
   const { user } = useAuthStore();
@@ -58,12 +59,16 @@ const LeadPage = () => {
 
   useEffect(() => {
     if (user && user?.companyId) {
-      fetchLeads(user?.companyId, {
+      console.log('LeadPage: User role:', user.role, 'Company ID:', user.companyId);
+      console.log('LeadPage: Fetching manager leads for companyId:', user.companyId);
+      fetchManagerLeads(user?.companyId, {
         page: currentPage,
         limit: itemsPerPage,
       });
     }
-  }, [fetchLeads, currentPage, itemsPerPage, user?.companyId]);
+  }, [fetchManagerLeads, currentPage, itemsPerPage, user?.companyId]);
+
+
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -176,10 +181,11 @@ const LeadPage = () => {
       fullName: item.fullName,
       companyId: item.companyId,
       email: item.email,
-      complete: item, // Log the complete item for debugging
+      complete: item // Log the complete item for debugging
     });
     router.push(`/sales-crm/leads/${leadId}`);
   };
+
 
   const handleDeleteConfirm = async () => {
     if (!leadToDelete || isDeleting) return;
@@ -243,7 +249,7 @@ const LeadPage = () => {
 
       // Refresh leads list
       if (user && user.companyId) {
-        await fetchLeads(user.companyId);
+        await fetchManagerLeads(user.companyId);
       }
 
       // Auto hide success message after 3 seconds
@@ -294,12 +300,6 @@ const LeadPage = () => {
   };
 
   const renderRow = (item: Lead, index: number) => {
-    // Safety check to ensure item exists and has required properties
-    if (!item || !item._id) {
-      console.warn("Invalid lead item at index:", index, item);
-      return null;
-    }
-
     const isMenuOpen = Boolean(menuAnchorEls[index]);
     const isSelected = selectedRows.includes(index);
 
@@ -311,51 +311,6 @@ const LeadPage = () => {
         }`}
         onClick={() => handleRowClick(item)}
       >
-        <td
-          className="py-4 px-2 text-center w-10"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div
-            className={`transition-opacity duration-200 ${
-              isMenuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-            }`}
-          >
-            <Tooltip title="More Options">
-              <IconButton
-                onClick={(e) => handleMoreClick(index, e)}
-                size="small"
-              >
-                <MoreVertIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              anchorEl={menuAnchorEls[index]}
-              open={isMenuOpen}
-              onClose={() => handleMoreClose(index)}
-              anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-              transformOrigin={{ vertical: "top", horizontal: "left" }}
-              PaperProps={{
-                style: {
-                  minWidth: "160px",
-                  boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.15)",
-                },
-              }}
-            >
-              <MenuItem onClick={() => handleOptionClick("Edit", index)}>
-                Edit
-              </MenuItem>
-              <MenuItem onClick={() => handleOptionClick("Delete", index)}>
-                Delete
-              </MenuItem>
-              <MenuItem onClick={() => handleOptionClick("Assign Lead", index)}>
-                Assign Lead
-              </MenuItem>
-              <MenuItem onClick={() => handleOptionClick("Send Email", index)}>
-                Send Email
-              </MenuItem>
-            </Menu>
-          </div>
-        </td>
 
         <td
           className="py-4 px-4 text-center"
@@ -369,24 +324,20 @@ const LeadPage = () => {
           />
         </td>
 
-        {/* <td className="py-4 px-4">{item.leadId || item._id}</td> */}
-        <td className="py-4 px-4">{item?.fullName}</td>
+        <td className="py-4 px-4">{item.fullName}</td>
         <td className="py-4 px-4 group-hover:text-blue-600 group-hover:underline">
-          <a
-            href={`mailto:${item?.email}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {item?.email}
+          <a href={`mailto:${item.email}`} onClick={(e) => e.stopPropagation()}>
+            {item.email}
           </a>
         </td>
-        <td className="py-4 px-4">{item?.phone}</td>
-        <td className="py-4 px-4">{item?.status}</td>
+        <td className="py-4 px-4">{item.phone}</td>
+        <td className="py-4 px-4">{item.status}</td>
         <td className="py-4 px-4">
           <span
             className={`px-2 py-1 rounded-full text-xs font-medium ${
-              item?.priority === "High"
+              item.priority === "High"
                 ? "bg-red-100 text-red-800"
-                : item?.priority === "Medium"
+                : item.priority === "Medium"
                 ? "bg-yellow-100 text-yellow-800"
                 : "bg-green-100 text-green-800"
             }`}
@@ -399,7 +350,7 @@ const LeadPage = () => {
         <td className="py-4 px-4">
           <span
             className={`px-2 py-1 rounded-full text-xs font-medium ${
-              item?.isAssign
+              item.isAssign
                 ? "bg-green-100 text-green-800"
                 : "bg-gray-100 text-gray-800"
             }`}
@@ -411,11 +362,7 @@ const LeadPage = () => {
     );
   };
 
-
-
-
   const updatedColumns = [
-    { header: "", accessor: "actions", className: "py-2 px-2 w-10" },
     {
       header: (
         <input
@@ -428,7 +375,6 @@ const LeadPage = () => {
       accessor: "select",
       className: "py-2 px-4 w-10 text-center",
     },
-    // { header: "Lead ID", accessor: "leadId", className: "py-2 px-4" },
     { header: "Lead Name", accessor: "name", className: "py-2 px-4" },
     { header: "Email", accessor: "email", className: "py-2 px-4" },
     { header: "Phone", accessor: "phone", className: "py-2 px-4" },
@@ -450,11 +396,7 @@ const LeadPage = () => {
     <div className="h-full overflow-y-auto px-4 py-4 rounded-xl custom-scrollbar space-y-6">
       <div className="overflow-auto max-h-full shadow bg-white rounded-lg border border-gray-200">
         <SelectedHeaderData total={totalLeads} selected={selectedRows.length} />
-        <Table
-          columns={updatedColumns}
-          data={leads.filter((lead) => lead && lead._id)}
-          renderRow={renderRow}
-        />
+        <Table columns={updatedColumns} data={leads} renderRow={renderRow} />
 
         {/* Pagination */}
         <div className="mt-4 mb-2">
@@ -524,9 +466,7 @@ const LeadPage = () => {
         }}
         onSend={handleSendEmail}
         recipientEmail={leadToEmail?.email || ""}
-        recipientName={
-          leadToEmail ? `${leadToEmail.firstName} ${leadToEmail.lastName}` : ""
-        }
+        recipientName={leadToEmail ? `${leadToEmail.firstName} ${leadToEmail.lastName}` : ""}
         lead={leadToEmail}
       />
     </div>

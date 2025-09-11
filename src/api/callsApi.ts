@@ -314,4 +314,18 @@ export const completeOrCancelCall = async (callId: string, status: 'completed' |
   }
 };
 
+export const getManagerUsersCalls = async (companyId: string, filters?: CallFilters): Promise<CallsResponse> => {
+  const params = new URLSearchParams();
+  if (filters?.page) params.append('page', filters.page.toString());
+  if (filters?.limit) params.append('limit', filters.limit.toString());
+  if (filters?.search) params.append('search', filters.search);
+  if (filters?.callType) params.append('callType', filters.callType);
+  
+  const queryString = params.toString();
+  const url = `/call/getManagerUsersCalls/${companyId}${queryString ? `?${queryString}` : ''}`;
+  
+  const response = await axiosInstance.get(url);
+  return response.data;
+};
+
 

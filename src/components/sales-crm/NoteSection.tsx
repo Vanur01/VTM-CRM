@@ -9,6 +9,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useLeadsStore } from "@/stores/salesCrmStore/useLeadsStore";
+import { useAuthStore } from "@/stores/salesCrmStore/useAuthStore";
 
 interface Note {
   _id: string;
@@ -30,6 +31,7 @@ const NoteSection: React.FC<NoteSectionProps> = ({ notes, leadId }) => {
   const [editingContent, setEditingContent] = useState("");
   
   const { addNote, updateNote } = useLeadsStore();
+  const { user } = useAuthStore();
 
   const handleAddNote = async () => {
     if (newNote.trim()) {
@@ -131,10 +133,10 @@ const NoteSection: React.FC<NoteSectionProps> = ({ notes, leadId }) => {
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white/90 to-white/30 p-3 flex justify-end items-center">
             <button
               onClick={handleAddNote}
-              disabled={!newNote.trim() || isLoading}
+              disabled={!newNote.trim() || isLoading || user?.role === 'manager'}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
-                newNote.trim() && !isLoading
-                  ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md"
+                newNote.trim() && !isLoading && user?.role !== 'manager'
+                  ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md cursor-pointer"
                   : "bg-gray-100 text-gray-400 cursor-not-allowed"
               }`}
             >
@@ -170,22 +172,26 @@ const NoteSection: React.FC<NoteSectionProps> = ({ notes, leadId }) => {
                         autoFocus
                       />
                       <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleUpdateNote(note._id)}
-                          disabled={!editingContent.trim() || isLoading}
-                          className="flex items-center space-x-1 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <SaveIcon fontSize="small" />
-                          <span>Save</span>
-                        </button>
-                        <button
-                          onClick={handleCancelEdit}
-                          disabled={isLoading}
-                          className="flex items-center space-x-1 px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50"
-                        >
-                          <CancelIcon fontSize="small" />
-                          <span>Cancel</span>
-                        </button>
+                        {user?.role !== 'manager' && (
+                          <>
+                            <button
+                              onClick={() => handleUpdateNote(note._id)}
+                              disabled={!editingContent.trim() || isLoading}
+                              className="flex items-center space-x-1 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <SaveIcon fontSize="small" />
+                              <span>Save</span>
+                            </button>
+                            <button
+                              onClick={handleCancelEdit}
+                              disabled={isLoading}
+                              className="flex items-center space-x-1 px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50"
+                            >
+                              <CancelIcon fontSize="small" />
+                              <span>Cancel</span>
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   ) : (
@@ -199,13 +205,15 @@ const NoteSection: React.FC<NoteSectionProps> = ({ notes, leadId }) => {
                           )}
                         </div>
                         <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleEditNote(note)}
-                            className="p-1 text-gray-500 hover:text-indigo-600 transition-colors"
-                            title="Edit note"
-                          >
-                            <EditIcon fontSize="small" />
-                          </button>
+                          {user?.role !== 'manager' && (
+                            <button
+                              onClick={() => handleEditNote(note)}
+                              className="p-1 text-gray-500 hover:text-indigo-600 transition-colors"
+                              title="Edit note"
+                            >
+                              <EditIcon fontSize="small" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

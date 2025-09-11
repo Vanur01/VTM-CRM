@@ -390,3 +390,16 @@ export const completedMeeting = async (meetingId: string): Promise<BaseResponse>
     }
   }
 };
+
+export const getManagerUsersMeetings = async (companyId: string, filters?: MeetingFilters): Promise<GetAllMeetingsResponse> => {
+  const params = new URLSearchParams();
+  if (filters?.page) params.append('page', filters.page.toString());
+  if (filters?.limit) params.append('limit', filters.limit.toString());
+  if (filters?.search) params.append('search', filters.search);
+  
+  const queryString = params.toString();
+  const url = `/meeting/getManagerUsersMeetings/${companyId}${queryString ? `?${queryString}` : ''}`;
+  
+  const response = await axiosInstance.get(url);
+  return response.data;
+};

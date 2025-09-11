@@ -20,6 +20,7 @@ export default function AssignLeadsDialog({ isOpen, onClose, onAssign, selectedC
 
   useEffect(() => {
     if (isOpen) {
+      console.log('AssignLeadsDialog: Dialog opened, current user:', currentUser);
       fetchUsers();
     }
   }, [isOpen]);
@@ -28,41 +29,76 @@ export default function AssignLeadsDialog({ isOpen, onClose, onAssign, selectedC
     try {
       setLoading(true);
       setError(null);
+      console.log('AssignLeadsDialog: Fetching users for role:', currentUser?.role);
+      
       if (currentUser?.companyId) {
-        let users;
+        let usersData: any[] = [];
+        
         if (currentUser?.role === 'admin') {
-          users = await getAllUsers(currentUser.companyId);
-        } else if (currentUser?.role === 'manager') {
-          users = await getUsersByManager(currentUser.companyId);
+          console.log('AssignLeadsDialog: Fetching all users for admin with companyId:', currentUser.companyId);
+          const allUsersData = await getAllUsers(currentUser.companyId);
+          // Filter to exclude managers and only include active users
+          usersData = allUsersData.filter(user => user.role !== 'manager' && user.isActive === true);
+          console.log('AssignLeadsDialog: getAllUsers returned:', allUsersData.length, 'total users,', usersData.length, 'filtered users (excluding managers)');
+        } else if (currentUser?.role === 'manager' && currentUser?._id) {
+          console.log('AssignLeadsDialog: Fetching users by manager with managerId:', currentUser._id);
+          const allUsersData = await getUsersByManager(currentUser._id);
+          // Filter to only include users with role 'user' and active status
+          usersData = allUsersData.filter(user => user.role === 'user' && user.isActive === true);
+          console.log('AssignLeadsDialog: getUsersByManager returned:', allUsersData.length, 'total users,', usersData.length, 'users with role "user"');
         }
-        setUsers(users || []);
+        
+        console.log('AssignLeadsDialog: Received users data:', usersData);
+        
+        // Ensure usersData is an array
+        if (Array.isArray(usersData)) {
+          console.log('AssignLeadsDialog: Setting users array with', usersData.length, 'users');
+          console.log('AssignLeadsDialog: Users details:', usersData.map(u => ({ id: u._id, name: u.name, email: u.email, role: u.role, isActive: u.isActive })));
+          setUsers(usersData);
+        } else {
+          console.warn('AssignLeadsDialog: Users data is not an array:', usersData);
+          setUsers([]);
+        }
+      } else {
+        console.warn('AssignLeadsDialog: No companyId found for user');
+        setUsers([]);
       }
     } catch (error) {
+      console.error('AssignLeadsDialog: Error fetching users:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch users');
+      setUsers([]); // Set to empty array on error
     } finally {
       setLoading(false);
     }
   };
 
   const handleAssign = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || !selectedUser._id) {
+      setError('No user selected or user ID missing');
+      return;
+    }
     
     try {
       setAssigning(true);
+      setError(null); // Clear any previous errors
+      console.log('AssignLeadsDialog: Assigning to user ID:', selectedUser._id);
       await onAssign(selectedUser._id);
       onClose();
     } catch (error) {
+      console.error('AssignLeadsDialog: Error assigning leads:', error);
       setError(error instanceof Error ? error.message : 'Failed to assign leads');
     } finally {
       setAssigning(false);
     }
   };
 
-  const filteredUsers = users.filter(user => 
-    user.isActive && 
+  const filteredUsers = Array.isArray(users) ? users.filter(user => 
+    user && 
+    user.name &&
+    user.email &&
     (user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  ) : [];
 
   if (!isOpen) return null;
 
@@ -85,7 +121,7 @@ export default function AssignLeadsDialog({ isOpen, onClose, onAssign, selectedC
           <div className="relative mb-4">
             <input
               type="text"
-              placeholder="Search active users..."
+              placeholder="Search users..."
               className="w-full p-3 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -104,7 +140,12 @@ export default function AssignLeadsDialog({ isOpen, onClose, onAssign, selectedC
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
-            <p className="mt-1 text-xs text-gray-500">Only active users are shown</p>
+            <p className="mt-1 text-xs text-gray-500">
+              {currentUser?.role === 'manager' 
+                ? 'Only active users with "user" role are available for assignment (managers excluded)'
+                : 'Only active users are available for assignment (managers excluded)'
+              }
+            </p>
           </div>
 
           {loading ? (
@@ -116,7 +157,7 @@ export default function AssignLeadsDialog({ isOpen, onClose, onAssign, selectedC
               {filteredUsers.length > 0 ? (
                 filteredUsers.map((user) => (
                   <div
-                    key={user._id}
+                    key={user._id || user.id || 'unknown'}
                     className={`p-4 border-b border-gray-200 last:border-b-0 cursor-pointer transition-colors ${
                       selectedUser?._id === user._id
                         ? 'bg-blue-50'
@@ -129,16 +170,31 @@ export default function AssignLeadsDialog({ isOpen, onClose, onAssign, selectedC
                         {user.profilePic ? (
                           <img
                             src={user.profilePic}
-                            alt={user.name}
+                            alt={user.name || 'User'}
                             className="h-full w-full rounded-full object-cover"
                           />
                         ) : (
-                          user.name[0].toUpperCase()
+                          (user.name && user.name[0] ? user.name[0].toUpperCase() : '?')
                         )}
                       </div>
-                      <div className="ml-4">
-                        <h3 className="text-sm font-medium text-gray-800">{user.name}</h3>
-                        <p className="text-sm text-gray-500">{user.email}</p>
+                      <div className="ml-4 flex-1">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-medium text-gray-800">{user.name || 'Unknown User'}</h3>
+                          {user.role && (
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
+                              user.role === 'manager' ? 'bg-blue-100 text-blue-800' :
+                              user.role === 'user' ? 'bg-green-100 text-green-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500">{user.email || 'No email'}</p>
+                        {user.isActive === false && (
+                          <p className="text-xs text-red-500">Inactive</p>
+                        )}
                       </div>
                       {selectedUser?._id === user._id && (
                         <div className="ml-auto">
@@ -179,6 +235,8 @@ export default function AssignLeadsDialog({ isOpen, onClose, onAssign, selectedC
                   <p className="mt-1 text-sm text-gray-500">
                     {searchQuery
                       ? "Try a different search term"
+                      : currentUser?.role === 'manager'
+                      ? "No active users with 'user' role available for lead assignment"
                       : "No active users available for lead assignment"}
                   </p>
                 </div>

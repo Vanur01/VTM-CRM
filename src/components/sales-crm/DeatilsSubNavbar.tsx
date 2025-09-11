@@ -221,7 +221,7 @@ const DetailsSubNavbar = ({
         )}
 
         {/* Convert Button */}
-        {user?.role !== 'user' && (
+        {user?.role !== 'user' && user?.role !== 'manager' && (
           <Button
             variant="contained"
             startIcon={<ConvertIcon sx={{ color: "#9b59b6" }} />}
@@ -247,69 +247,74 @@ const DetailsSubNavbar = ({
           </Button>
         )}
 
-        <IconButton
-          size="small"
-          disabled={isLoading || !currentLead}
-          onClick={handleMoreClick}
-          className="!bg-white !border !border-gray-200 !rounded-lg w-9 h-9 hover:!bg-gray-100 hover:scale-105 transition-transform"
-        >
-          <MoreIcon className="text-gray-500" />
-        </IconButton>
+        {/* Dropdown Menu - Hidden for managers */}
+        {user?.role !== 'manager' && (
+          <>
+            <IconButton
+              size="small"
+              disabled={isLoading || !currentLead}
+              onClick={handleMoreClick}
+              className="!bg-white !border !border-gray-200 !rounded-lg w-9 h-9 hover:!bg-gray-100 hover:scale-105 transition-transform"
+            >
+              <MoreIcon className="text-gray-500" />
+            </IconButton>
 
-        {/* Dropdown Menu */}
-        <Menu
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-          transformOrigin={{ vertical: "top", horizontal: "right" }}
-          PaperProps={{
-            sx: {
-              mt: 1,
-              minWidth: 220,
-              boxShadow: "0 5px 15px rgba(0, 0, 0, 0.1)",
-              borderRadius: "12px",
-              "& .MuiMenuItem-root": {
-                px: 2,
-                py: 1.2,
-                fontSize: "0.9rem",
-                "&:hover": {
-                  backgroundColor: "rgba(74, 107, 255, 0.08)",
+            {/* Dropdown Menu */}
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleClose}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+              PaperProps={{
+                sx: {
+                  mt: 1,
+                  minWidth: 220,
+                  boxShadow: "0 5px 15px rgba(0, 0, 0, 0.1)",
+                  borderRadius: "12px",
+                  "& .MuiMenuItem-root": {
+                    px: 2,
+                    py: 1.2,
+                    fontSize: "0.9rem",
+                    "&:hover": {
+                      backgroundColor: "rgba(74, 107, 255, 0.08)",
+                    },
+                  },
+                  "& .MuiSvgIcon-root": {
+                    fontSize: "1.1rem",
+                    marginRight: "12px",
+                  },
                 },
-              },
-              "& .MuiSvgIcon-root": {
-                fontSize: "1.1rem",
-                marginRight: "12px",
-              },
-            },
-          }}
-        >
-          <MenuItem
-            onClick={() => {
-              handleClose();
-              router.push(`/sales-crm/leads/${leadId}/edit`);
-            }}
-          >
-            <EditIcon sx={{ color: "#4a6bff" }} />
-            Edit Profile
-          </MenuItem>
+              }}
+            >
+              <MenuItem
+                onClick={() => {
+                  handleClose();
+                  router.push(`/sales-crm/leads/${leadId}/edit`);
+                }}
+              >
+                <EditIcon sx={{ color: "#4a6bff" }} />
+                Edit Profile
+              </MenuItem>
 
-          <MenuItem
-            onClick={() => {
-              handleClose();
-              if (currentLead) {
-                onDeleteClick?.(
-                  currentLead._id,
-                  `${currentLead.firstName} ${currentLead.lastName}`
-                );
-              }
-            }}
-            sx={{ color: "#e74c3c" }}
-          >
-            <DeleteIcon sx={{ color: "#e74c3c" }} />
-            Delete Lead
-          </MenuItem>
-        </Menu>
+              <MenuItem
+                onClick={() => {
+                  handleClose();
+                  if (currentLead) {
+                    onDeleteClick?.(
+                      currentLead._id,
+                      `${currentLead.firstName} ${currentLead.lastName}`
+                    );
+                  }
+                }}
+                sx={{ color: "#e74c3c" }}
+              >
+                <DeleteIcon sx={{ color: "#e74c3c" }} />
+                Delete Lead
+              </MenuItem>
+            </Menu>
+          </>
+        )}
       </div>
     </div>
   );

@@ -68,7 +68,7 @@ export default function MobileSidebar(props: MobileSidebarProps) {
   const [reportsExpanded, setReportsExpanded] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
-  const basePath = user?.role === "admin" ? "/sales-crm" : "/user/sales-crm";
+  const basePath = user?.role === "admin" ? "/sales-crm" : user?.role === "manager" ? "/manager/sales-crm" : "/user/sales-crm";
   // console.log("Base Path:", basePath);
   // console.log("User Role:---", user?.role);
 
@@ -83,22 +83,26 @@ export default function MobileSidebar(props: MobileSidebarProps) {
     }
   }, [user?.companyId]);
 
-  const financeBasePath = user?.role === "admin" ? "/finance" : "/user/finance";
+  const financeBasePath = user?.role === "admin" ? "/finance" : user?.role === "manager" ? "/manager/finance" : "/user/finance";
 
   // Navigation items (Sales CRM)
   const navigationItems = useMemo<NavigationItem[]>(
     () => [
       { label: "Dashboard", path: `${basePath}/home`, icon: <LayoutDashboard className="w-5 h-5" /> },
       { label: "Leads", path: `${basePath}/leads`, icon: <Target className="w-5 h-5" /> },
-      { label: "Deals", path: `${basePath}/deals`, icon: <Store className="w-5 h-5" /> },
+      // { label: "Deals", path: `${basePath}/deals`, icon: <Store className="w-5 h-5" /> },
       { label: "Tasks", path: `${basePath}/tasks`, icon: <ClipboardList className="w-5 h-5" /> },
       { label: "Calls", path: `${basePath}/calls`, icon: <Phone className="w-5 h-5" /> },
       { label: "Meetings", path: `${basePath}/meetings`, icon: <Calendar className="w-5 h-5" /> },
       { label: "Reports", path: `${basePath}/reports`, icon: <FileText className="w-5 h-5" /> },
-      { label: "Analytics", path: `${basePath}/analytics`, icon: <BarChart3 className="w-5 h-5" /> },
+      ...(user?.role === "admin"
+        ? [
+            { label: "Analytics", path: `${basePath}/analytics`, icon: <BarChart3 className="w-5 h-5" /> },
+          ]
+        : []),
       { label: "Support", path: `/sales-crm/support`, icon: <Headphones className="w-5 h-5" /> },
     ],
-    [basePath]
+    [basePath, user?.role]
   );
 
   // Sales module items
@@ -151,18 +155,34 @@ export default function MobileSidebar(props: MobileSidebarProps) {
   const settingsMenuItems = useMemo<SettingsItem[]>(
     () => [
       {
-        href: user?.role === "admin" ? `/settings/user/${user?._id}` : `/user/settings/user/${user?._id}`,
+        href: user?.role === "admin" 
+          ? `/settings/user/${user?._id}` 
+          : user?.role === "manager"
+          ? `/manager/settings/user/${user?._id}`
+          : `/user/settings/user/${user?._id}`,
         icon: <UserCircle className="w-4 h-4" />,
         label: "Personal Settings",
       },
       {
-        href: user?.role === "admin" ? "/settings/email" : "/user/settings/email",
+        href: user?.role === "admin" 
+          ? "/settings/email" 
+          : user?.role === "manager"
+          ? "/manager/settings/email"
+          : "/user/settings/email",
         icon: <Mail className="w-4 h-4" />,
         label: "Email",
       },
+      ...(user?.role === "admin" || user?.role === "manager"
+        ? [
+            { 
+              href: user?.role === "admin" ? "/settings/users" : "/manager/settings/users", 
+              icon: <LucideSettings className="w-4 h-4" />, 
+              label: "User Management" 
+            },
+          ]
+        : []),
       ...(user?.role === "admin"
         ? [
-            { href: "/settings/users", icon: <LucideSettings className="w-4 h-4" />, label: "User Management" },
             { href: "/settings/recyclebin", icon: <Recycle className="w-4 h-4" />, label: "Recycle Bin" },
           ]
         : []),
@@ -174,7 +194,7 @@ export default function MobileSidebar(props: MobileSidebarProps) {
   useEffect(() => {
     const matchedTab = navigationItems.find(tab => pathname === tab.path || pathname.startsWith(tab.path + "/"));
     const matchedSetting = settingsMenuItems.find(item => pathname === item.href || pathname.startsWith(item.href + "/"));
-    const isFinanceRoute = pathname.startsWith("/finance/") || pathname.startsWith("/user/finance/");
+    const isFinanceRoute = pathname.startsWith("/finance/") || pathname.startsWith("/user/finance/") || pathname.startsWith("/manager/finance/");
 
     if (matchedSetting) {
       setActiveTab && setActiveTab("");

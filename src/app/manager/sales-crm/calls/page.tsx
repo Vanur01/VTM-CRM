@@ -22,11 +22,8 @@ const CallsPage = () => {
   const {
     calls,
     totalCalls,
-    fetchAllCalls,
     fetchManagerUsersCalls,
-    fetchUserCalls,
     isLoading,
-    error,
     removeCall,
     bulkDeleteCalls,
   } = useCallsStore();
@@ -58,21 +55,13 @@ const CallsPage = () => {
   // Fetch calls on component mount
   useEffect(() => {
     if (user?.companyId) {
-      const fetchOptions = {
+      fetchManagerUsersCalls({
         page: currentPage,
         limit: itemsPerPage
-      };
-
-      if (user.role === 'admin') {
-        fetchAllCalls(fetchOptions);
-      } else if (user.role === 'manager') {
-        fetchManagerUsersCalls(fetchOptions);
-      } else if (user.role === 'user') {
-        fetchUserCalls(fetchOptions);
-      }
+      });
     }
     clearSelectedItems();
-  }, [fetchAllCalls, fetchManagerUsersCalls, fetchUserCalls, clearSelectedItems, currentPage, itemsPerPage, user?.companyId, user?.role]);
+  }, [fetchManagerUsersCalls, clearSelectedItems, currentPage, itemsPerPage, user?.companyId]);
 
   // Update menu anchors when calls data changes
   useEffect(() => {
@@ -191,7 +180,7 @@ const CallsPage = () => {
       setShowSuccessDialog(true);
 
       // Refresh the calls list
-      await fetchAllCalls({
+      await fetchManagerUsersCalls({
         page: currentPage,
         limit: itemsPerPage
       });
@@ -229,7 +218,7 @@ const CallsPage = () => {
       
 
       // Refresh the calls list
-      await fetchAllCalls({
+      await fetchManagerUsersCalls({
         page: currentPage,
         limit: itemsPerPage
       });
@@ -280,46 +269,6 @@ const CallsPage = () => {
         }`}
         onClick={() => handleRowClick(item)}
       >
-        <td
-          className="py-4 px-2 text-center w-10"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div
-            className={`transition-opacity duration-200 ${
-              isMenuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-            }`}
-          >
-            <Tooltip title="More Options">
-              <IconButton
-                onClick={(e) => handleMoreClick(index, e)}
-                size="small"
-              >
-                <MoreVertIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              anchorEl={menuAnchorEls[index]}
-              open={isMenuOpen}
-              onClose={() => handleMoreClose(index)}
-              anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-              transformOrigin={{ vertical: "top", horizontal: "left" }}
-                            PaperProps={{
-                style: {
-                  minWidth: "160px",
-                  boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.15)",
-                },
-              }}
-            >
-              <MenuItem onClick={() => handleOptionClick("Edit", index)}>
-                Edit
-              </MenuItem>
-              <MenuItem onClick={() => handleOptionClick("Delete", index)}>
-                Delete
-              </MenuItem>
-            
-            </Menu>
-          </div>
-        </td>
 
         <td
           className="py-4 px-4 text-center"
@@ -348,7 +297,6 @@ const CallsPage = () => {
   };
 
   const updatedColumns = [
-    { header: "", accessor: "actions", className: "py-2 px-2 w-10" },
     {
       header: (
         <input

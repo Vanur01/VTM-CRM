@@ -13,6 +13,7 @@ interface TasksState {
   // Actions
   fetchTasks: (companyId: string, filters?: TaskFilters) => Promise<void>;
   fetchUserAllTasks: (companyId: string, filters?: TaskFilters) => Promise<void>;
+  fetchManagerUsersTasks: (companyId: string, filters?: TaskFilters) => Promise<void>;
   getTaskById: (taskId: string, companyId: string) => Promise<void>;
   addTask: (leadId: string, companyId: string, task: CreateTaskPayload) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
@@ -80,6 +81,25 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     } catch (error) {
       set({ 
         error: error instanceof Error ? error.message : 'Failed to fetch user tasks', 
+        isLoading: false 
+      });
+    }
+  },
+
+  fetchManagerUsersTasks: async (companyId: string, filters?: TaskFilters) => {
+    try {
+      set({ isLoading: true, error: null });
+      const response = await taskApi.getManagerUsersTasks(companyId, filters);
+      set({ 
+        tasks: response.result.tasks, 
+        isLoading: false,
+        totalTasks: response.result.total,
+        currentPage: response.result.currentPage,
+        totalPages: response.result.totalPages
+      });
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to fetch manager users tasks', 
         isLoading: false 
       });
     }

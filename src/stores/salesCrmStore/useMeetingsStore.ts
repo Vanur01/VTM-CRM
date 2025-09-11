@@ -15,6 +15,7 @@ import {
   addNote,
   uploadFile,
   completedMeeting,
+  getManagerUsersMeetings,
 } from "@/api/meetingsApi";
 
 // API response types
@@ -75,6 +76,7 @@ interface MeetingsState {
 interface MeetingsActions {
   fetchMeetings: (filters?: MeetingFilters) => Promise<void>;
   fetchUserMeetings: (filters?: MeetingFilters) => Promise<void>;
+  fetchManagerUsersMeetings: (filters?: MeetingFilters) => Promise<void>;
   fetchMeetingById: (id: string) => Promise<void>;
   addMeeting: (meeting: CreateMeetingRequest) => Promise<void>;
   updateMeeting: (id: string, data: CreateMeetingRequest) => Promise<void>;
@@ -167,6 +169,46 @@ export const useMeetingsStore = create<MeetingsStore>((set, get) => ({
       console.error("Error fetching user meetings:", error);
       set({
         error: error?.message || "Failed to fetch user meetings",
+        isLoading: false,
+      });
+    }
+  },
+
+  fetchManagerUsersMeetings: async (filters?: MeetingFilters) => {
+    set({ isLoading: true, error: null });
+    try {
+      // Get user from auth store for companyId
+      const { user } = await import('./useAuthStore').then(module => module.useAuthStore.getState());
+      const companyId = user?.companyId;
+      
+      if (!companyId) {
+        throw new Error('Company ID not found');
+      }
+      
+      const response = await getManagerUsersMeetings(companyId, filters);
+      console.log("Manager meetings API response:", response);
+
+      if (response && response.result && Array.isArray(response.result.meetings)) {
+        console.log("Setting manager meetings from response.result.meetings");
+        set({
+          meetings: response.result.meetings,
+          totalMeetings: response.result.total,
+          currentPage: response.result.currentPage,
+          totalPages: response.result.totalPages,
+          filters: filters || {},
+          isLoading: false,
+        });
+      } else {
+        console.error("Unexpected API response structure:", response);
+        set({
+          error: "Invalid API response structure",
+          isLoading: false,
+        });
+      }
+    } catch (error: any) {
+      console.error("Error fetching manager users meetings:", error);
+      set({
+        error: error?.message || "Failed to fetch manager users meetings",
         isLoading: false,
       });
     }

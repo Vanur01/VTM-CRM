@@ -66,17 +66,19 @@ const getStatusColor = (status: string) => {
 
 const CallsSidebar = ({ collapsed }: { collapsed: boolean }) => {
   const router = useRouter();
-  const { calls, isLoading, error, fetchAllCalls, fetchCalls, setCurrentCall } =
+  const { calls, isLoading, error, fetchAllCalls, fetchManagerUsersCalls, fetchUserCalls, setCurrentCall } =
     useCallsStore();
   const { user } = useAuthStore();
 
  useEffect(() => {
     if (user?.role === "admin") {
       fetchAllCalls();
-    } else {
-      fetchCalls();
+    } else if (user?.role === "manager") {
+      fetchManagerUsersCalls();
+    } else if (user?.role === "user") {
+      fetchUserCalls();
     }
-  }, [fetchAllCalls, fetchCalls, user?.role]);
+  }, [fetchAllCalls, fetchManagerUsersCalls, fetchUserCalls, user?.role]);
 
   // Use useCallback to memoize the function and prevent unnecessary re-renders
   const handleCallClick = useCallback(

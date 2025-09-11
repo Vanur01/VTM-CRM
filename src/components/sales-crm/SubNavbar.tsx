@@ -152,21 +152,45 @@ export default function SubNav({
     type: "success" as "success" | "danger" | "warning" | "info",
   });
   const [isProcessing, setIsProcessing] = useState(false);
-  // Remove getSearchableFields, searchField, searchValue, setSearchField, setSearchValue from SubNavbar
 
-function getCurrentSection() {
-  if (!pathname) return "leads"; // Default fallback
-  
-  const pathParts = pathname.split("/");
-  
-  // New route structure: /sales-crm/section
-  if (pathParts[1] === "sales-crm") {
-    return pathParts[2] || "leads"; // Default to leads if no section specified
+  // Updated function to handle both /sales-crm/section and /user/sales-crm/section patterns
+  function getCurrentSection() {
+    if (!pathname) return "leads"; // Default fallback
+    
+    const pathParts = pathname.split("/").filter(part => part !== ""); // Remove empty parts
+    
+    // Handle /user/sales-crm/section pattern
+    if (pathParts.length >= 3 && pathParts[0] === "user" && pathParts[1] === "sales-crm") {
+      return pathParts[2] || "leads"; // Get section from third position
+    }
+    
+    // Handle /sales-crm/section pattern
+    if (pathParts.length >= 2 && pathParts[0] === "sales-crm") {
+      return pathParts[1] || "leads"; // Get section from second position
+    }
+    
+    // Legacy fallback - if first part matches a section
+    if (pathParts.length >= 1 && sectionConfigs[pathParts[0]]) {
+      return pathParts[0];
+    }
+    
+    return "leads"; // Default to leads if no match
   }
-  
-  // Fallback to old structure if needed
-  return pathParts[1] || "leads"; // Default to leads if no section specified
-};
+
+  // Helper function to get the correct base route
+  function getBaseRoute() {
+    if (!pathname) return "/sales-crm";
+    
+    const pathParts = pathname.split("/").filter(part => part !== "");
+    
+    // If route starts with /user/sales-crm, maintain that pattern
+    // if (pathParts.length >= 2 && pathParts[0] === "user" && pathParts[1] === "sales-crm") {
+    //   return "/user/sales-crm";
+    // }
+    
+    // Default to /sales-crm pattern
+    return "/sales-crm";
+  }
 
   // Update selected option when section changes
   useEffect(() => {
@@ -185,13 +209,17 @@ function getCurrentSection() {
     setIsFilterActive((prev) => !prev);
   };
 
-const handleCreateClick = () => {
-  const route = `/sales-crm/${currentSection}/add`;
-  router.push(route);
-};
+  // Updated to use dynamic base route
+  const handleCreateClick = () => {
+    const baseRoute = getBaseRoute();
+    const route = `${baseRoute}/${currentSection}/add`;
+    router.push(route);
+  };
 
   useEffect(() => {
-    console.log(pathname)
+    console.log("Current pathname:", pathname);
+    console.log("Current section:", currentSection);
+    console.log("Base route:", getBaseRoute());
     setIsFilterActive(false);
   }, [pathname])
   

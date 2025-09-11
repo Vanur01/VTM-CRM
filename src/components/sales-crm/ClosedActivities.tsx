@@ -133,15 +133,13 @@ const ClosedActivities: React.FC<ClosedActivitiesProps> = ({ leadId }) => {
   };
 
   const handleTaskClick = (taskId: string) => {
-    router.push(`/leads/${leadId}/task/${taskId}?type=close`);
+    router.push(`/sales-crm/tasks/${taskId}`);
   };
-
   const handleMeetingClick = (meetingId: string) => {
-    router.push(`/leads/${leadId}/meeting/${meetingId}?type=close`);
+    router.push(`/sales-crm/meetings/${meetingId}`);
   };
-
   const handleCallClick = (callId: string) => {
-    router.push(`/leads/${leadId}/call/${callId}?type=close`);
+    router.push(`/sales-crm/calls/${callId}`);
   };
 
   return (

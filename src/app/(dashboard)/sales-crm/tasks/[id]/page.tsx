@@ -64,6 +64,11 @@ const TaskDetailsPage = () => {
   };
 
   const handleSave = async () => {
+    // Prevent managers from saving changes
+    if (user?.role === 'manager') {
+      return;
+    }
+
     if (currentTask && user?.companyId) {
       try {
         await updateTask(currentTask.id, editedTask);
@@ -198,8 +203,11 @@ const TaskDetailsPage = () => {
                     name="title"
                     value={editedTask.title}
                     onChange={handleInputChange}
+                    disabled={user?.role === 'manager'}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      user?.role === 'manager' ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
+                    }`}
                     placeholder="Task title"
                   />
                 </div>
@@ -213,7 +221,10 @@ const TaskDetailsPage = () => {
                     rows={4}
                     value={editedTask.description}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    disabled={user?.role === 'manager'}
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      user?.role === 'manager' ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
+                    }`}
                     placeholder="Enter task description"
                   />
                 </div>
@@ -226,7 +237,10 @@ const TaskDetailsPage = () => {
                     name="priority"
                     value={editedTask.priority}
                     onChange={handleSelectChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    disabled={user?.role === 'manager'}
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      user?.role === 'manager' ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
+                    }`}
                     required
                   >
                     {PRIORITIES.map((priority) => (
@@ -245,7 +259,10 @@ const TaskDetailsPage = () => {
                     name="status"
                     value={editedTask.status}
                     onChange={handleSelectChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    disabled={user?.role === 'manager'}
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      user?.role === 'manager' ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
+                    }`}
                     required
                   >
                     {STATUSES.map((status) => (
@@ -379,9 +396,15 @@ const TaskDetailsPage = () => {
             </button>
             <button
               onClick={handleSave}
-              className="px-8 py-3 bg-indigo-600 text-white rounded-md font-medium shadow hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              disabled={user?.role === 'manager'}
+              className={`px-8 py-3 rounded-md font-medium shadow hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                user?.role === 'manager'
+                  ? 'bg-gray-400 cursor-not-allowed text-gray-200'
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
+              }`}
+              title={user?.role === 'manager' ? 'Save disabled for managers' : 'Save changes'}
             >
-              Save Changes
+              {user?.role === 'manager' ? 'Save Disabled' : 'Save Changes'}
             </button>
           </div>
         </div>

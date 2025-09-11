@@ -25,7 +25,7 @@ export default function AddCallPage() {
   const router = useRouter();
   const { addCall, isLoading: storeIsLoading } = useCallsStore();
   const { user } = useAuthStore();
-  const { leads, fetchLeads, isLoading: leadsLoading } = useLeadsStore();
+  const { leads, fetchLeads, fetchLeadsByUser, isLoading: leadsLoading } = useLeadsStore();
   
   const [formData, setFormData] = useState<CreateCallRequest>({
     callType: "outbound",
@@ -45,9 +45,13 @@ export default function AddCallPage() {
   // Fetch leads when component mounts
   useEffect(() => {
     if (user?.companyId) {
-      fetchLeads(user.companyId);
+      if (user.role === 'admin') {
+        fetchLeads(user.companyId);
+      } else if (user.role === 'user') {
+        fetchLeadsByUser(user.companyId);
+      }
     }
-  }, [user?.companyId, fetchLeads]);
+  }, [user?.companyId, user?.role, fetchLeads, fetchLeadsByUser]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>

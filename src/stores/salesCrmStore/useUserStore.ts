@@ -3,6 +3,7 @@ import {
   User, 
   AddUserOrManagerRequest, 
   UpdateUserRequest,
+  AssignUserToManagerRequest,
   addUserOrManager, 
   getUsersByManager, 
   managerAddUser, 
@@ -11,12 +12,13 @@ import {
   updateUser,
   toggleUserActive,
   deleteUser,
+  assignUserToManager,
   GetAllUsersResponse 
 } from '@/api/userApi';
 
 interface UserState {
   users: User[];
-  allUsers: GetAllUsersResponse['result'];
+  allUsers: User[];
   currentUser: User | null;
   loading: boolean;
   error: string | null;
@@ -28,6 +30,7 @@ interface UserState {
   updateUser: (userId: string, companyId: string, userData: UpdateUserRequest) => Promise<void>;
   toggleUserActive: (userId: string, companyId: string) => Promise<void>;
   deleteUser: (userId: string, companyId: string) => Promise<void>;
+  assignUserToManager: (data: AssignUserToManagerRequest) => Promise<void>;
   setCurrentUser: (user: User | null) => void;
   clearError: () => void;
 }
@@ -42,10 +45,24 @@ const useUserStore = create<UserState>((set, get) => ({
   fetchUsersByManager: async (managerId: string) => {
     try {
       set({ loading: true, error: null });
+      console.log('Store: Starting fetchUsersByManager for managerId:', managerId);
+      
       const users = await getUsersByManager(managerId);
-      set({ users, loading: false });
+      console.log('Store: Received users from API:', users);
+      console.log('Store: Users array length:', users.length);
+      
+      // Ensure users is an array
+      const validUsers = Array.isArray(users) ? users : [];
+      console.log('Store: Setting users to:', validUsers);
+      console.log('Store: Valid users length:', validUsers.length);
+      
+      set({ users: validUsers, loading: false });
+      
+      // Log final state
+      console.log('Store: Final state set with users count:', validUsers.length);
     } catch (error) {
-      set({ error: (error as Error).message, loading: false });
+      console.error('Store: Error fetching users by manager:', error);
+      set({ error: (error as Error).message || 'Unknown error occurred', loading: false });
     }
   },
 
@@ -151,6 +168,17 @@ const useUserStore = create<UserState>((set, get) => ({
         currentUser: state.currentUser?._id === userId ? null : state.currentUser,
         loading: false
       }));
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+      throw error;
+    }
+  },
+
+  assignUserToManager: async (data: AssignUserToManagerRequest) => {
+    try {
+      set({ loading: true, error: null });
+      await assignUserToManager(data);
+      set({ loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
       throw error;

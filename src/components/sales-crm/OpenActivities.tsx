@@ -31,7 +31,7 @@ import ConfirmationDialog from "./ConfirmationDialog";
 import leadsApi, { Task } from "@/api/leadsApi";
 import { Call } from "@/api/callsApi";
 import { Task as TaskType } from "@/api/taskApi";
-import { getUserMeetings, Meeting } from "@/api/meetingsApi";
+import { getAllMeetings, Meeting } from "@/api/meetingsApi";
 import { useTasksStore } from "@/stores/salesCrmStore/useTasksStore";
 import { useCallsStore } from "@/stores/salesCrmStore/useCallsStore";
 import { useAuthStore } from "@/stores/salesCrmStore/useAuthStore";
@@ -136,7 +136,7 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
     }
     
     try {
-      const response = await getUserMeetings({
+      const response = await getAllMeetings({
         leadId,
         companyId: user.companyId
       });
@@ -299,7 +299,7 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
       setShowCompleteMeetingModal(false);
       setMeetingToComplete(null);
 
-      // window.location.reload();
+      window.location.reload();
     } catch (err) {
       console.error("Error completing meeting:", err);
     } finally {
@@ -538,16 +538,23 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
           <p className="text-gray-500">Track and manage all lead activities</p>
         </div>
         <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={{ scale: user?.role === 'manager' ? 1 : 1.02 }}
+          whileTap={{ scale: user?.role === 'manager' ? 1 : 0.98 }}
           onClick={handleClick}
-          className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-sm hover:from-indigo-600 hover:to-indigo-700 transition-all shadow-sm flex items-center group cursor-pointer"
+          disabled={user?.role === 'manager'}
+          className={`px-5 py-2.5 ${
+            user?.role === 'manager'
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 cursor-pointer'
+          } text-white rounded-sm transition-all shadow-sm flex items-center group`}
         >
           <AddIcon
             fontSize="small"
-            className="mr-2 group-hover:rotate-90 transition-transform"
+            className={`mr-2 ${user?.role === 'manager' ? '' : 'group-hover:rotate-90'} transition-transform`}
           />
-          <span className="font-medium">Create Activity</span>
+          <span className="font-medium">
+            {user?.role === 'manager' ? 'Create Disabled' : 'Create Activity'}
+          </span>
         </motion.button>
 
         <Menu
@@ -565,11 +572,12 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
           }}
         >
           <MenuItem
-            onClick={() => handleCloseMenu("Task")}
-            className="hover:bg-indigo-50 transition-colors group"
+            onClick={() => user?.role !== 'manager' && handleCloseMenu("Task")}
+            disabled={user?.role === 'manager'}
+            className={`hover:bg-indigo-50 transition-colors group ${user?.role === 'manager' ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center mr-3">
-              <TaskAltRoundedIcon className="text-indigo-500 group-hover:scale-110 transition-transform" />
+              <TaskAltRoundedIcon className={`text-indigo-500 group-hover:scale-110 transition-transform ${user?.role === 'manager' ? 'opacity-50' : ''}`} />
             </div>
             <div>
               <span className="font-medium block">New Task</span>
@@ -577,11 +585,12 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
             </div>
           </MenuItem>
           <MenuItem
-            onClick={() => handleCloseMenu("Meeting")}
-            className="hover:bg-purple-50 transition-colors group"
+            onClick={() => user?.role !== 'manager' && handleCloseMenu("Meeting")}
+            disabled={user?.role === 'manager'}
+            className={`hover:bg-purple-50 transition-colors group ${user?.role === 'manager' ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center mr-3">
-              <CalendarMonthRoundedIcon className="text-purple-500 group-hover:scale-110 transition-transform" />
+              <CalendarMonthRoundedIcon className={`text-purple-500 group-hover:scale-110 transition-transform ${user?.role === 'manager' ? 'opacity-50' : ''}`} />
             </div>
             <div>
               <span className="font-medium block">Schedule Meeting</span>
@@ -589,11 +598,12 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
             </div>
           </MenuItem>
           <MenuItem
-            onClick={() => handleCloseMenu("Call")}
-            className="hover:bg-green-50 transition-colors group"
+            onClick={() => user?.role !== 'manager' && handleCloseMenu("Call")}
+            disabled={user?.role === 'manager'}
+            className={`hover:bg-green-50 transition-colors group ${user?.role === 'manager' ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center mr-3">
-              <CallOutlinedIcon className="text-green-500 group-hover:scale-110 transition-transform" />
+              <CallOutlinedIcon className={`text-green-500 group-hover:scale-110 transition-transform ${user?.role === 'manager' ? 'opacity-50' : ''}`} />
             </div>
             <div>
               <span className="font-medium block">Log Call</span>
@@ -1002,30 +1012,34 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
         }}
       >
         <MenuItem
-          onClick={handleEditActivity}
-          className="hover:bg-indigo-50 transition-colors"
+          onClick={() => user?.role !== 'manager' && handleEditActivity()}
+          disabled={user?.role === 'manager'}
+          className={`hover:bg-indigo-50 transition-colors ${user?.role === 'manager' ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <EditIcon fontSize="small" className="mr-3 text-indigo-500" />
+          <EditIcon fontSize="small" className={`mr-3 text-indigo-500 ${user?.role === 'manager' ? 'opacity-50' : ''}`} />
           <span className="font-medium">Edit Task</span>
         </MenuItem>
         <MenuItem
           onClick={() => {
+            if (user?.role === 'manager') return;
             const task = storeTasks.find((t: TaskType) => t.id === contextMenu.itemId);
             if (task && task.id) {
               handleCompleteTask(task.id, task.title);
             }
           }}
-          className="hover:bg-green-50 transition-colors"
+          disabled={user?.role === 'manager'}
+          className={`hover:bg-green-50 transition-colors ${user?.role === 'manager' ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <CheckCircleIcon fontSize="small" className="mr-3 text-green-500" />
+          <CheckCircleIcon fontSize="small" className={`mr-3 text-green-500 ${user?.role === 'manager' ? 'opacity-50' : ''}`} />
           <span className="font-medium">Mark as Completed</span>
         </MenuItem>
         <Divider className="my-1" />
         <MenuItem
-          onClick={handleDeleteActivity}
-          className="hover:bg-red-50 transition-colors text-red-600"
+          onClick={() => user?.role !== 'manager' && handleDeleteActivity()}
+          disabled={user?.role === 'manager'}
+          className={`hover:bg-red-50 transition-colors text-red-600 ${user?.role === 'manager' ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <DeleteIcon fontSize="small" className="mr-3" />
+          <DeleteIcon fontSize="small" className={`mr-3 ${user?.role === 'manager' ? 'opacity-50' : ''}`} />
           <span className="font-medium">Delete Task</span>
         </MenuItem>
       </Menu>
@@ -1044,31 +1058,35 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
         }}
       >
         <MenuItem
-          onClick={handleEditActivity}
-          className="hover:bg-purple-50 transition-colors"
+          onClick={() => user?.role !== 'manager' && handleEditActivity()}
+          disabled={user?.role === 'manager'}
+          className={`hover:bg-purple-50 transition-colors ${user?.role === 'manager' ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <EditIcon fontSize="small" className="mr-3 text-purple-500" />
+          <EditIcon fontSize="small" className={`mr-3 text-purple-500 ${user?.role === 'manager' ? 'opacity-50' : ''}`} />
           <span className="font-medium">Edit Meeting</span>
         </MenuItem>
         <MenuItem
           onClick={() => {
+            if (user?.role === 'manager') return;
             const meeting = meetings.find((m) => m._id === contextMenu.itemId || m.id === contextMenu.itemId);
             if (meeting && meeting._id) {
               handleCompleteMeeting(meeting);
             }
           }}
-          className="hover:bg-green-50 transition-colors"
+          disabled={user?.role === 'manager'}
+          className={`hover:bg-green-50 transition-colors ${user?.role === 'manager' ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <CheckCircleIcon fontSize="small" className="mr-3 text-green-500" />
+          <CheckCircleIcon fontSize="small" className={`mr-3 text-green-500 ${user?.role === 'manager' ? 'opacity-50' : ''}`} />
           <span className="font-medium">Mark as Complete</span>
         </MenuItem>
 
         <Divider className="my-1" />
         <MenuItem
-          onClick={handleDeleteActivity}
-          className="hover:bg-red-50 transition-colors text-red-600"
+          onClick={() => user?.role !== 'manager' && handleDeleteActivity()}
+          disabled={user?.role === 'manager'}
+          className={`hover:bg-red-50 transition-colors text-red-600 ${user?.role === 'manager' ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <DeleteIcon fontSize="small" className="mr-3" />
+          <DeleteIcon fontSize="small" className={`mr-3 ${user?.role === 'manager' ? 'opacity-50' : ''}`} />
           <span className="font-medium">Delete Meeting</span>
         </MenuItem>
       </Menu>
@@ -1087,48 +1105,55 @@ const OpenActivities: React.FC<OpenActivitiesProps> = ({ leadId }) => {
         }}
       >
         <MenuItem
-          onClick={handleEditActivity}
-          className="hover:bg-green-50 transition-colors"
+          onClick={() => user?.role !== 'manager' && handleEditActivity()}
+          disabled={user?.role === 'manager'}
+          className={`hover:bg-green-50 transition-colors ${user?.role === 'manager' ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <EditIcon fontSize="small" className="mr-3 text-green-500" />
+          <EditIcon fontSize="small" className={`mr-3 text-green-500 ${user?.role === 'manager' ? 'opacity-50' : ''}`} />
           <span className="font-medium">Edit Call</span>
         </MenuItem>
         <MenuItem
           onClick={() => {
+            if (user?.role === 'manager') return;
             const call = calls.find((c) => c._id === contextMenu.itemId || c.callId === contextMenu.itemId);
             if (call) {
               handleRescheduleCall(call);
             }
           }}
-          className="hover:bg-indigo-50 transition-colors"
+          disabled={user?.role === 'manager'}
+          className={`hover:bg-indigo-50 transition-colors ${user?.role === 'manager' ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <ScheduleIcon fontSize="small" className="mr-3 text-indigo-500" />
+          <ScheduleIcon fontSize="small" className={`mr-3 text-indigo-500 ${user?.role === 'manager' ? 'opacity-50' : ''}`} />
           <span className="font-medium">Reschedule Call</span>
         </MenuItem>
         <MenuItem
           onClick={() => {
+            if (user?.role === 'manager') return;
             const call = calls.find((c) => c._id === contextMenu.itemId || c.callId === contextMenu.itemId);
             if (call) {
               handleCompleteCall(call);
             }
           }}
-          className="hover:bg-emerald-50 transition-colors"
+          disabled={user?.role === 'manager'}
+          className={`hover:bg-emerald-50 transition-colors ${user?.role === 'manager' ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <CheckCircleIcon fontSize="small" className="mr-3 text-emerald-500" />
+          <CheckCircleIcon fontSize="small" className={`mr-3 text-emerald-500 ${user?.role === 'manager' ? 'opacity-50' : ''}`} />
           <span className="font-medium">Mark as Completed</span>
         </MenuItem>
         <Divider className="my-1" />
 
         <MenuItem
           onClick={() => {
+            if (user?.role === 'manager') return;
             const call = calls.find((c) => c._id === contextMenu.itemId || c.callId === contextMenu.itemId);
             if (call) {
               handleCancelCall(call);
             }
           }}
-          className="hover:bg-orange-50 transition-colors"
+          disabled={user?.role === 'manager'}
+          className={`hover:bg-orange-50 transition-colors ${user?.role === 'manager' ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <CancelIcon fontSize="small" className="mr-3 text-orange-500" />
+          <CancelIcon fontSize="small" className={`mr-3 text-orange-500 ${user?.role === 'manager' ? 'opacity-50' : ''}`} />
           <span className="font-medium">Cancel Call</span>
         </MenuItem>
       </Menu>

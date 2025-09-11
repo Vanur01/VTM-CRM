@@ -42,11 +42,34 @@ interface UploadProgress {
 
 const EXTENSIONS: Record<FileTypeFilter, string[]> = {
   images: ["jpg", "jpeg", "png", "gif", "bmp", "svg"],
-  documents: ["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt"],
+  documents: ["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "csv"],
   videos: ["mp4", "mov", "avi", "mkv", "webm"],
   others: [],
   all: [],
 };
+
+// Allowed MIME types for document uploads (matching backend validation)
+const ALLOWED_DOCUMENT_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain',
+  'text/csv'
+];
+
+// File type descriptions for user-friendly error messages
+const ALLOWED_FILE_DESCRIPTIONS = [
+  'PDF documents (.pdf)',
+  'Word documents (.doc, .docx)',
+  'Excel spreadsheets (.xls, .xlsx)',
+  'PowerPoint presentations (.ppt, .pptx)',
+  'Text files (.txt)',
+  'CSV files (.csv)'
+];
 
 const AttachmentSection: React.FC<AttachmentSectionProps> = ({
   attachments = [],
@@ -107,6 +130,17 @@ const AttachmentSection: React.FC<AttachmentSectionProps> = ({
     return attachment.fileName || attachment.originalName || getFileName(attachment.url);
   };
 
+  // Validate file type before upload
+  const validateFileType = (file: File): { isValid: boolean; error?: string } => {
+    if (!ALLOWED_DOCUMENT_TYPES.includes(file.type)) {
+      return {
+        isValid: false,
+        error: `Invalid file type "${file.type}". Only document files are allowed: ${ALLOWED_FILE_DESCRIPTIONS.join(', ')}`
+      };
+    }
+    return { isValid: true };
+  };
+
   const simulateUploadProgress = (fileName: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       setUploadProgress({ fileName, progress: 0, status: 'uploading' });
@@ -147,6 +181,26 @@ const AttachmentSection: React.FC<AttachmentSectionProps> = ({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
+      
+      // Validate file type first
+      const validation = validateFileType(file);
+      if (!validation.isValid) {
+        setUploadProgress({
+          fileName: file.name,
+          progress: 0,
+          status: 'error',
+          error: validation.error
+        });
+        
+        // Clear error after 5 seconds
+        setTimeout(() => setUploadProgress(null), 5000);
+        
+        // Clear the input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        return;
+      }
       
       try {
         // Start progress simulation
@@ -239,7 +293,12 @@ const AttachmentSection: React.FC<AttachmentSectionProps> = ({
           <div className="p-2 bg-indigo-100 rounded-lg">
             <InsertDriveFileIcon className="text-indigo-600" fontSize="small" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-800">Attachments</h2>
+          <div>
+            <h2 className="text-xl font-semibold text-gray-800">Attachments</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Only document files allowed: PDF, Word, Excel, PowerPoint, Text, CSV
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <FormControl size="small" sx={{ minWidth: 120 }}>
@@ -249,11 +308,8 @@ const AttachmentSection: React.FC<AttachmentSectionProps> = ({
               label="File Type"
               onChange={(e) => setSelectedType(e.target.value as FileTypeFilter)}
             >
-              <MenuItem value="all">All Files</MenuItem>
-              <MenuItem value="images">Images</MenuItem>
+              <MenuItem value="all">All Documents</MenuItem>
               <MenuItem value="documents">Documents</MenuItem>
-              <MenuItem value="videos">Videos</MenuItem>
-              <MenuItem value="others">Others</MenuItem>
             </Select>
           </FormControl>
 
@@ -264,24 +320,25 @@ const AttachmentSection: React.FC<AttachmentSectionProps> = ({
             className="hidden"
             id="file-upload"
             disabled={!!uploadProgress}
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv"
           />
           <motion.button
-            whileHover={{ scale: uploadProgress ? 1 : 1.02 }}
-            whileTap={{ scale: uploadProgress ? 1 : 0.98 }}
+            whileHover={{ scale: uploadProgress || user?.role === 'manager' ? 1 : 1.02 }}
+            whileTap={{ scale: uploadProgress || user?.role === 'manager' ? 1 : 0.98 }}
             onClick={() => fileInputRef.current?.click()}
-            disabled={!!uploadProgress}
+            disabled={!!uploadProgress || user?.role === 'manager'}
             className={`px-5 py-2.5 ${
-              uploadProgress 
+              uploadProgress || user?.role === 'manager'
                 ? 'bg-gray-400 cursor-not-allowed' 
                 : 'bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 cursor-pointer'
             } text-white rounded-sm transition-all shadow-sm flex items-center group`}
           >
             <AddIcon
               fontSize="small"
-              className={`mr-2 ${uploadProgress ? '' : 'group-hover:rotate-90'} transition-transform`}
+              className={`mr-2 ${uploadProgress || user?.role === 'manager' ? '' : 'group-hover:rotate-90'} transition-transform`}
             />
             <span className="font-medium">
-              {uploadProgress ? "Uploading..." : "Upload File"}
+              {uploadProgress ? "Uploading..." : user?.role === 'manager' ? "Upload Disabled" : "Upload Document"}
             </span>
           </motion.button>
         </div>
@@ -372,7 +429,7 @@ const AttachmentSection: React.FC<AttachmentSectionProps> = ({
                   </IconButton>
                 </Tooltip>
                 
-                {!attachment._id.startsWith('temp-') && (
+                {!attachment._id.startsWith('temp-') && user?.role !== 'manager' && (
                   <Tooltip title="Delete">
                     <IconButton
                       size="small"
@@ -406,9 +463,12 @@ const AttachmentSection: React.FC<AttachmentSectionProps> = ({
             className="text-center py-12 border-2 border-dashed border-gray-200 rounded-lg"
           >
             <InsertDriveFileIcon className="text-gray-400 text-6xl mb-4 mx-auto" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No attachments yet</h3>
-            <p className="text-gray-500 mb-6">Upload files to share with your team</p>
-            <motion.button
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No documents yet</h3>
+            <p className="text-gray-500 mb-2">Upload document files to share with your team</p>
+            <p className="text-xs text-gray-400 mb-6">
+              Supported formats: PDF, Word (.doc, .docx), Excel (.xls, .xlsx), PowerPoint (.ppt, .pptx), Text (.txt), CSV
+            </p>
+            {/* <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => fileInputRef.current?.click()}
@@ -416,8 +476,8 @@ const AttachmentSection: React.FC<AttachmentSectionProps> = ({
               className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg transition-all shadow-sm flex items-center mx-auto"
             >
               <AddIcon fontSize="small" className="mr-2" />
-              Upload your first file
-            </motion.button>
+              Upload your first document
+            </motion.button> */}
           </motion.div>
         )}
       </div>

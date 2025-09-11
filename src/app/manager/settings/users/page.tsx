@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import ConfirmationDialog from '@/components/sales-crm/ConfirmationDialog';
-import AssignUsersToManagerDialog from '@/components/sales-crm/AssignUsersToManagerDialog';
 import useUserStore from '@/stores/salesCrmStore/useUserStore';
 import { useAuthStore } from '@/stores/salesCrmStore/useAuthStore';
-import { ChevronLeft, ChevronRight, MoreHorizontal, Loader2, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MoreHorizontal, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
@@ -22,8 +21,7 @@ export default function UsersPage() {
     getUserById,
     updateUser,
     toggleUserActive,
-    deleteUser,
-    assignUserToManager
+    deleteUser
   } = useUserStore();
   const { user: currentUser, company } = useAuthStore();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -50,16 +48,21 @@ export default function UsersPage() {
   });
   const [actionDropdownOpen, setActionDropdownOpen] = useState<string | null>(null);
   const actionPopoverRef = useRef<HTMLDivElement | null>(null);
-  const [isAssignUsersDialogOpen, setIsAssignUsersDialogOpen] = useState(false);
-  const [managerToAssignUsers, setManagerToAssignUsers] = useState<any | null>(null);
 
   useEffect(() => {
+    console.log('useEffect triggered - currentUser:', currentUser);
     if (currentUser?.companyId) {
       if (currentUser?.role === 'admin') {
+        console.log('Fetching all users for admin');
         fetchAllUsers(currentUser.companyId);
-      } else if (currentUser?.role === 'manager') {
-        fetchUsersByManager(currentUser.companyId);
+      } else if (currentUser?.role === 'manager' && currentUser?._id) {
+        console.log('Fetching users for manager with ID:', currentUser._id);
+        fetchUsersByManager(currentUser._id);
+      } else {
+        console.log('Manager role but no _id:', currentUser);
       }
+    } else {
+      console.log('No companyId found:', currentUser);
     }
   }, [fetchAllUsers, fetchUsersByManager, currentUser]);
 
@@ -109,8 +112,8 @@ export default function UsersPage() {
       if (currentUser?.companyId) {
         if (currentUser?.role === 'admin') {
           await fetchAllUsers(currentUser.companyId);
-        } else if (currentUser?.role === 'manager') {
-          await fetchUsersByManager(currentUser.companyId);
+        } else if (currentUser?.role === 'manager' && currentUser?._id) {
+          await fetchUsersByManager(currentUser._id);
         }
       }
       
@@ -146,8 +149,8 @@ export default function UsersPage() {
       // Refresh users list
       if (currentUser?.role === 'admin') {
         await fetchAllUsers(currentUser.companyId);
-      } else if (currentUser?.role === 'manager') {
-        await fetchUsersByManager(currentUser.companyId);
+      } else if (currentUser?.role === 'manager' && currentUser?._id) {
+        await fetchUsersByManager(currentUser._id);
       }
     } catch (error) {
       toast.error('Failed to toggle user status');
@@ -175,8 +178,8 @@ export default function UsersPage() {
       // Refresh users list
       if (currentUser?.role === 'admin') {
         await fetchAllUsers(currentUser.companyId);
-      } else if (currentUser?.role === 'manager') {
-        await fetchUsersByManager(currentUser.companyId);
+      } else if (currentUser?.role === 'manager' && currentUser?._id) {
+        await fetchUsersByManager(currentUser._id);
       }
     } catch (error) {
       toast.error('Failed to delete user');
@@ -242,8 +245,8 @@ export default function UsersPage() {
       // Refresh users list
       if (currentUser?.role === 'admin') {
         await fetchAllUsers(currentUser.companyId);
-      } else if (currentUser?.role === 'manager') {
-        await fetchUsersByManager(currentUser.companyId);
+      } else if (currentUser?.role === 'manager' && currentUser?._id) {
+        await fetchUsersByManager(currentUser._id);
       }
       
       setIsEditDialogOpen(false);
@@ -259,42 +262,6 @@ export default function UsersPage() {
     }
   };
 
-  const handleAssignUsersClick = (manager: any) => {
-    // Close the dropdown first
-    setActionDropdownOpen(null);
-    
-    setManagerToAssignUsers(manager);
-    setIsAssignUsersDialogOpen(true);
-  };
-
-  const handleAssignUsersToManager = async (userEmails: string[]) => {
-    if (!managerToAssignUsers || !currentUser?.companyId) {
-      toast.error('Missing required information');
-      return;
-    }
-
-    try {
-      await assignUserToManager({
-        companyId: currentUser.companyId,
-        managerId: managerToAssignUsers._id,
-        userEmails
-      });
-      
-      toast.success(`Successfully assigned ${userEmails.length} user${userEmails.length !== 1 ? 's' : ''} to ${managerToAssignUsers.name}`);
-      
-      // Refresh users list
-      if (currentUser?.role === 'admin') {
-        await fetchAllUsers(currentUser.companyId);
-      }
-      
-      setIsAssignUsersDialogOpen(false);
-      setManagerToAssignUsers(null);
-    } catch (error) {
-      toast.error('Failed to assign users to manager');
-      throw error; // Re-throw to let the dialog handle it
-    }
-  };
-
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
@@ -304,19 +271,65 @@ export default function UsersPage() {
     setCurrentPage(1);
   };
 
-  // Determine which users to display based on role
-  const displayUsers = currentUser?.role === 'admin' ? allUsers : users;
+  // Display users for manager only
+  const displayUsers = users;
+  
+  // Add debugging for the current state
+  console.log('Page: Current users state:', users);
+  console.log('Page: Display users:', displayUsers);
+  console.log('Page: Users length:', users.length);
+  console.log('Page: Loading state:', loading);
+  console.log('Page: Error state:', error);
+
+  // Show loading state
+  if (loading && !users.length) {
+    return (
+      <div className="p-6">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Users Management</h1>
+        </div>
+        <div className="text-center py-8">
+          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Loading users...</h3>
+          <p className="text-gray-500">Please wait while we fetch your users.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
       <div className="p-6">
         <div className="text-center py-8">
           <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to load users</h3>
-          <p className="text-gray-500">Please try again later or contact support if the problem persists.</p>
+          <p className="text-gray-500 mb-4">Error: {error}</p>
+          <p className="text-gray-500 mb-4">Please try again later or contact support if the problem persists.</p>
+          <button
+            onClick={() => {
+              if (currentUser?.role === 'manager' && currentUser?._id) {
+                fetchUsersByManager(currentUser._id);
+              } else if (currentUser?.role === 'admin' && currentUser?.companyId) {
+                fetchAllUsers(currentUser.companyId);
+              }
+            }}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            disabled={loading}
+          >
+            {loading ? 'Retrying...' : 'Retry'}
+          </button>
         </div>
       </div>
     );
   }
+
+  // Enhanced debugging with more details
+  console.log('Page: Final render check - displayUsers:', displayUsers);
+  console.log('Page: displayUsers type:', typeof displayUsers);
+  console.log('Page: displayUsers is array:', Array.isArray(displayUsers));
+  console.log('Page: displayUsers length:', displayUsers?.length);
+  console.log('Page: Sample user (first):', displayUsers?.[0]);
+  console.log('Page: Loading state:', loading);
+  console.log('Page: Error state:', error);
 
   if (!displayUsers || displayUsers.length === 0) {
     return (
@@ -432,85 +445,91 @@ export default function UsersPage() {
     { header: 'Actions', accessor: 'actions' },
   ];
 
-  const renderRow = (user: any, idx: number) => (
-    <tr
-      key={user._id}
-      className="group hover:bg-gray-50/70 transition-colors duration-150"
-    >
-      <td className="px-6 py-4 font-medium text-gray-900">{user.name}</td>
-      <td className="px-6 py-4 text-gray-700">{user.email}</td>
-      <td className="px-6 py-4">
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          user.role === 'admin' 
-            ? 'bg-indigo-100 text-indigo-800' 
-            : user.role === 'manager' 
-            ? 'bg-yellow-100 text-yellow-800' 
-            : 'bg-gray-100 text-gray-800'
-        }`}>
-          {user.role?.charAt(0).toUpperCase() + user.role?.slice(1) || 'User'}
-        </span>
-      </td>
-      <td className="px-6 py-4">
-        <span
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            user.isActive 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-red-100 text-red-800'
-          }`}
-        >
-          {user.isActive ? 'Active' : 'Inactive'}
-        </span>
-      </td>
-      <td className="px-6 py-4 relative">
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              className="p-1.5 rounded-md hover:bg-gray-100 transition-colors group-hover:opacity-100"
-              aria-label="Actions"
-            >
-              <MoreHorizontal className="w-4 h-4 text-gray-500" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-40 p-0" align="end">
-            <button
-              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-              onClick={() => handleViewClick(user)}
-            >
-              View
-            </button>
-            <button
-              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-              onClick={() => handleEditClick(user)}
-            >
-              Edit
-            </button>
-            {/* Show "Assign Users" button only for managers and only if current user is admin */}
-            {user.role === 'manager' && currentUser?.role === 'admin' && (
+  const renderRow = (user: any, idx: number) => {
+    // Add safety check for user object
+    if (!user) {
+      console.warn('renderRow: user is undefined at index', idx);
+      return null;
+    }
+
+    // Use user._id, user.id, or fallback to index for unique key
+    const key = user._id || user.id || `user-${idx}`;
+    const userId = user._id || user.id;
+
+    console.log(`renderRow: Processing user ${idx}:`, { key, userId, user });
+
+    return (
+      <tr
+        key={key}
+        className="group hover:bg-gray-50/70 transition-colors duration-150"
+      >
+        <td className="px-6 py-4 font-medium text-gray-900">{user?.name || 'N/A'}</td>
+        <td className="px-6 py-4 text-gray-700">{user?.email || 'N/A'}</td>
+        <td className="px-6 py-4">
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            user?.role === 'admin' 
+              ? 'bg-indigo-100 text-indigo-800' 
+              : user?.role === 'manager' 
+              ? 'bg-yellow-100 text-yellow-800' 
+              : 'bg-gray-100 text-gray-800'
+          }`}>
+            {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1) || 'User'}
+          </span>
+        </td>
+        <td className="px-6 py-4">
+          <span
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              user?.isActive 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-red-100 text-red-800'
+            }`}
+          >
+            {user?.isActive ? 'Active' : 'Inactive'}
+          </span>
+        </td>
+        <td className="px-6 py-4 relative">
+          <Popover>
+            <PopoverTrigger asChild>
               <button
-                className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-colors flex items-center"
-                onClick={() => handleAssignUsersClick(user)}
+                className="p-1.5 rounded-md hover:bg-gray-100 transition-colors group-hover:opacity-100"
+                aria-label="Actions"
               >
-                <Users className="w-4 h-4 mr-2" />
-                Assign Users
+                <MoreHorizontal className="w-4 h-4 text-gray-500" />
               </button>
-            )}
-            <button
-              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-              onClick={() => handleToggleStatus(user._id, user.isActive)}
-            >
-              {user.isActive ? 'Deactivate' : 'Activate'}
-            </button>
-            <button
-              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-              onClick={() => handleDeleteClick(user._id)}
-            >
-              Delete
-            </button>
-          </PopoverContent>
-        </Popover>
-      </td>
-    </tr>
-  );
+            </PopoverTrigger>
+            <PopoverContent className="w-40 p-0" align="end">
+              <button
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                onClick={() => handleViewClick(user)}
+              >
+                View
+              </button>
+              <button
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                onClick={() => handleEditClick(user)}
+              >
+                Edit
+              </button>
+              <button
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                onClick={() => userId && handleToggleStatus(userId, user.isActive)}
+                disabled={!userId}
+              >
+                {user?.isActive ? 'Deactivate' : 'Activate'}
+              </button>
+              <button
+                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                onClick={() => userId && handleDeleteClick(userId)}
+                disabled={!userId}
+              >
+                Delete
+              </button>
+            </PopoverContent>
+          </Popover>
+        </td>
+      </tr>
+    );
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -560,7 +579,9 @@ export default function UsersPage() {
                   </td>
                 </tr>
               ) : (
-                displayUsers.map((user, idx) => renderRow(user, idx))
+                displayUsers
+                  .filter((user) => user != null) // Filter out null/undefined users
+                  .map((user, idx) => renderRow(user, idx))
               )}
             </tbody>
           </table>
@@ -846,20 +867,6 @@ export default function UsersPage() {
         type="danger"
         disableConfirm={loading}
       />
-
-      {/* Assign Users to Manager Dialog */}
-      {managerToAssignUsers && (
-        <AssignUsersToManagerDialog
-          isOpen={isAssignUsersDialogOpen}
-          onClose={() => {
-            setIsAssignUsersDialogOpen(false);
-            setManagerToAssignUsers(null);
-          }}
-          onAssign={handleAssignUsersToManager}
-          managerId={managerToAssignUsers._id}
-          managerName={managerToAssignUsers.name}
-        />
-      )}
     </div>
   );
 }

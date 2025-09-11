@@ -314,6 +314,68 @@ export const getAllLeadsByUser = async (
   };
 };
 
+export const getAllManagerLeads = async (
+  companyId: string,
+  filters?: LeadFilters
+): Promise<{
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    response: Array<Lead>;
+  };
+}> => {
+  const queryParams = new URLSearchParams();
+
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        // Handle array values (like tags)
+        if (Array.isArray(value)) {
+          value.forEach((item) => {
+            if (item !== undefined && item !== null && item !== '') {
+              queryParams.append(key, String(item));
+            }
+          });
+        } else {
+          queryParams.append(key, String(value));
+        }
+      }
+    });
+  }
+
+  const url = `/lead/getAllManagerLeads/${companyId}${
+    queryParams.toString() ? `?${queryParams.toString()}` : ""
+  }`;
+
+  console.log('getAllManagerLeads: Making API call to:', url);
+
+  const response = await axiosInstance.get(url);
+
+  console.log('getAllManagerLeads: API response:', response.data);
+
+  // Map API response to our expected format
+  return {
+    success: response.data.success,
+    statusCode: response.data.statusCode,
+    message: response.data.message,
+    data: {
+      total: response.data.result?.total || response.data.data?.total || 0,
+      page: response.data.result?.page || response.data.data?.page || 1,
+      limit: response.data.result?.limit || response.data.data?.limit || 10,
+      totalPages: response.data.result?.totalPages || response.data.data?.totalPages || 1,
+      response: (response.data.result?.leads || response.data.data?.leads || response.data.result || []).map((lead: any) => ({
+        ...lead,
+        leadId: lead.leadId || lead._id // Ensure leadId is available
+      })),
+    },
+  };
+};
+
 export const getAllDeleteLeads = async (): Promise<any> => {
   const response = await axiosInstance.get<any>("/lead/getAllDeleteLeads");
   return response.data;

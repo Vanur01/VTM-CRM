@@ -26,7 +26,7 @@ export default function AddTaskPage() {
   const { pushToRolePath } = useRoleBasedRouter();
   const { addTask, isLoading: storeIsLoading } = useTasksStore();
   const { user } = useAuthStore();
-  const { leads, fetchLeads, isLoading: leadsLoading } = useLeadsStore();
+  const { leads, fetchLeads, fetchLeadsByUser, isLoading: leadsLoading } = useLeadsStore();
   
   const [formData, setFormData] = useState<CreateTaskPayload>({
     title: "",
@@ -41,9 +41,13 @@ export default function AddTaskPage() {
   // Fetch leads when component mounts
   useEffect(() => {
     if (user?.companyId) {
-      fetchLeads(user.companyId);
+      if (user.role === 'admin') {
+        fetchLeads(user.companyId);
+      } else if (user.role === 'user') {
+        fetchLeadsByUser(user.companyId);
+      }
     }
-  }, [user?.companyId, fetchLeads]);
+  }, [user?.companyId, user?.role, fetchLeads, fetchLeadsByUser]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>

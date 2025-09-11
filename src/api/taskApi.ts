@@ -231,6 +231,25 @@ const taskApi = {
         throw new Error('Failed to complete task. Please check your connection and try again.');
       }
     }
+  },
+
+  getManagerUsersTasks: async (companyId: string, filters?: TaskFilters): Promise<TaskResponse> => {
+    try {
+      const queryParams = new URLSearchParams();
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            queryParams.append(key, value.toString());
+          }
+        });
+      }
+      const response = await axios.get<TaskResponse>(
+        `/task/getManagerUsersTasks/${companyId}?${queryParams.toString()}`
+      );
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 
