@@ -196,10 +196,10 @@ const CallsPage = () => {
         limit: itemsPerPage
       });
     } catch (error) {
-      setDeleteError(error instanceof Error ? error.message : "Failed to delete call");
+      setDeleteError((error as Error)?.message || "Failed to delete call");
       setSuccessMessage({
         title: "Error",
-        message: error instanceof Error ? error.message : "Failed to delete call",
+        message: (error as Error)?.message || "Failed to delete call",
       });
       setShowSuccessDialog(true);
     } finally {
@@ -238,10 +238,10 @@ const CallsPage = () => {
       window.location.reload();
 
     } catch (error) {
-      setDeleteError(error instanceof Error ? error.message : "Failed to delete calls");
+      setDeleteError((error as Error)?.message || "Failed to delete calls");
       setSuccessMessage({
         title: "Error",
-        message: error instanceof Error ? error.message : "Failed to delete calls",
+        message: (error as Error)?.message || "Failed to delete calls",
       });
       setShowSuccessDialog(true);
     } finally {
@@ -338,10 +338,10 @@ const CallsPage = () => {
         <td className="py-4 px-4">{formatDate(item.callStartTime)}</td>
         <td className="py-4 px-4">{item.callAgenda}</td>
         <td className="py-4 px-4">
-          {typeof item.leadId === 'object' ? item.leadId.fullName : 'N/A'}
+          {item.leadId && typeof item.leadId === 'object' ? item.leadId.fullName : item.leadId || 'N/A'}
         </td>
         <td className="py-4 px-4">
-          {typeof item.callOwner === 'object' ? item.callOwner.name : 'N/A'}
+          {item.callOwner && typeof item.callOwner === 'object' ? item.callOwner.name : item.callOwner || 'N/A'}
         </td>
       </tr>
     );

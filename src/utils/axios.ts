@@ -3,7 +3,7 @@ import { useAuthStore } from '@/stores/salesCrmStore/useAuthStore';
 
 
 const axiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://audit.vanurmedia.in',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://vanurmedia.in/api/v1',
   withCredentials: true,
 });
 
