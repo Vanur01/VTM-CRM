@@ -482,6 +482,36 @@ export default function CRMDashboard() {
                   Team Overview
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Display Managers */}
+                  {dashboardData?.managers.map((manager) => (
+                    <div key={manager._id} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                          <span className="text-purple-700 font-semibold text-sm">
+                            {manager.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-slate-800">{manager.name}</h4>
+                          <p className="text-xs text-slate-600">{manager.role}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-slate-400" />
+                          <span className="text-sm text-slate-600">{manager.email}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${manager.isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                          <span className="text-sm text-slate-600">
+                            {manager.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Display Users */}
                   {dashboardData?.users.map((user) => (
                     <div key={user._id} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
                       <div className="flex items-center gap-3 mb-3">

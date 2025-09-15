@@ -17,13 +17,22 @@ import { sendEmailToLead } from "@/api/emailApi";
 import ConfirmationDialog from "@/components/sales-crm/ConfirmationDialog";
 import AssignLeadsDialog from "@/components/sales-crm/AssignLeadsDialog";
 import EmailDialog from "@/components/sales-crm/EmailDialog";
+import ImportLeadsDialog from "@/components/sales-crm/ImportLeadsDialog";
 import { pageLimit } from "@/utils/data";
 import { useAuthStore } from "@/stores/salesCrmStore/useAuthStore";
 
 const LeadPage = () => {
   const router = useRouter();
-  const { leads, totalLeads, isLoading, fetchLeads, deleteLead, assignLead } =
-    useLeadsStore();
+  const { 
+    leads, 
+    totalLeads, 
+    isLoading, 
+    fetchLeads, 
+    fetchLeadsByUser, 
+    fetchManagerLeads, 
+    deleteLead, 
+    assignLead 
+  } = useLeadsStore();
   const { setSelectedItems, clearSelectedItems } = useSelectedItemsStore();
   const { user } = useAuthStore();
 
@@ -53,17 +62,27 @@ const LeadPage = () => {
   } | null>(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [leadToEmail, setLeadToEmail] = useState<Lead | null>(null);
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = pageLimit; // Change this value to control items per page
 
   useEffect(() => {
     if (user && user?.companyId) {
-      fetchLeads(user?.companyId, {
+      const filters = {
         page: currentPage,
         limit: itemsPerPage,
-      });
+      };
+      
+      // Role-based data fetching
+      if (user.role === 'admin') {
+        fetchLeads(user.companyId, filters);
+      } else if (user.role === 'manager') {
+        fetchManagerLeads(user.companyId, filters);
+      } else {
+        fetchLeadsByUser(user.companyId, filters);
+      }
     }
-  }, [fetchLeads, currentPage, itemsPerPage, user?.companyId]);
+  }, [fetchLeads, fetchLeadsByUser, fetchManagerLeads, currentPage, itemsPerPage, user?.companyId, user?.role]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -243,7 +262,19 @@ const LeadPage = () => {
 
       // Refresh leads list
       if (user && user.companyId) {
-        await fetchLeads(user.companyId);
+        const filters = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
+        
+        // Role-based data fetching
+        if (user.role === 'admin') {
+          await fetchLeads(user.companyId, filters);
+        } else if (user.role === 'manager') {
+          await fetchManagerLeads(user.companyId, filters);
+        } else {
+          await fetchLeadsByUser(user.companyId, filters);
+        }
       }
 
       // Auto hide success message after 3 seconds
@@ -291,6 +322,24 @@ const LeadPage = () => {
       });
       setShowSuccessDialog(true);
     }
+  };
+
+  const handleImportComplete = () => {
+    // API call is now handled in ImportLeadsDialog based on user role
+    // No need to refresh here as it's done automatically after import
+    
+    setShowImportDialog(false);
+    setSuccessMessage({
+      title: "Success",
+      message: "Leads have been successfully imported!",
+    });
+    setShowSuccessDialog(true);
+
+    // Auto hide success message after 3 seconds
+    setTimeout(() => {
+      setShowSuccessDialog(false);
+      setSuccessMessage({ title: "", message: "" });
+    }, 3000);
   };
 
   const renderRow = (item: Lead, index: number) => {
@@ -449,7 +498,40 @@ const LeadPage = () => {
   return (
     <div className="h-full overflow-y-auto px-4 py-4 rounded-xl custom-scrollbar space-y-6">
       <div className="overflow-auto max-h-full shadow bg-white rounded-lg border border-gray-200">
-        <SelectedHeaderData total={totalLeads} selected={selectedRows.length} />
+        {/* Enhanced Header with Import Button */}
+        {/* <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-gray-700">
+              Total Leads: <strong>{totalLeads}</strong>
+            </p>
+            <p className="text-sm text-gray-700">
+              Selected: <strong>{selectedRows.length}</strong>
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {user?.role !== 'user' && (
+              <button
+                onClick={() => setShowImportDialog(true)}
+                className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              >
+                <svg
+                  className="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  />
+                </svg>
+                Import Leads
+              </button>
+            )}
+          </div>
+        </div> */}
         <Table
           columns={updatedColumns}
           data={leads.filter((lead) => lead && lead._id)}
@@ -528,6 +610,13 @@ const LeadPage = () => {
           leadToEmail ? `${leadToEmail.firstName} ${leadToEmail.lastName}` : ""
         }
         lead={leadToEmail}
+      />
+
+      {/* Import Leads Dialog */}
+      <ImportLeadsDialog
+        open={showImportDialog}
+        onClose={() => setShowImportDialog(false)}
+        onImportComplete={handleImportComplete}
       />
     </div>
   );

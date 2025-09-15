@@ -17,6 +17,7 @@ import { sendEmailToLead } from "@/api/emailApi";
 import ConfirmationDialog from "@/components/sales-crm/ConfirmationDialog";
 import AssignLeadsDialog from "@/components/sales-crm/AssignLeadsDialog";
 import EmailDialog from "@/components/sales-crm/EmailDialog";
+import ImportLeadsDialog from "@/components/sales-crm/ImportLeadsDialog";
 import { pageLimit } from "@/utils/data";
 import { useAuthStore } from "@/stores/salesCrmStore/useAuthStore";
 
@@ -54,6 +55,7 @@ const LeadPage = () => {
   } | null>(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [leadToEmail, setLeadToEmail] = useState<Lead | null>(null);
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = pageLimit; // Change this value to control items per page
 
@@ -299,6 +301,24 @@ const LeadPage = () => {
     }
   };
 
+  const handleImportComplete = () => {
+    // API call is now handled in ImportLeadsDialog based on user role
+    // No need to refresh here as it's done automatically after import
+    
+    // Show success message
+    setSuccessMessage({
+      title: "Import Complete",
+      message: "Leads have been successfully imported and the list has been refreshed.",
+    });
+    setShowSuccessDialog(true);
+
+    // Auto hide success message after 3 seconds
+    setTimeout(() => {
+      setShowSuccessDialog(false);
+      setSuccessMessage({ title: "", message: "" });
+    }, 3000);
+  };
+
   const renderRow = (item: Lead, index: number) => {
     const isMenuOpen = Boolean(menuAnchorEls[index]);
     const isSelected = selectedRows.includes(index);
@@ -395,7 +415,18 @@ const LeadPage = () => {
   return (
     <div className="h-full overflow-y-auto px-4 py-4 rounded-xl custom-scrollbar space-y-6">
       <div className="overflow-auto max-h-full shadow bg-white rounded-lg border border-gray-200">
-        <SelectedHeaderData total={totalLeads} selected={selectedRows.length} />
+        <div className="flex items-center justify-end p-4 border-b border-gray-200">
+          {/* <SelectedHeaderData total={totalLeads} selected={selectedRows.length} /> */}
+          <button
+            onClick={() => setShowImportDialog(true)}
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14,13V17H10V13H7L12,8L17,13M19.35,10.03C18.67,6.59 15.64,4 12,4C9.11,4 6.6,5.64 5.35,8.03C2.34,8.36 0,10.9 0,14A6,6 0 0,0 6,20H19A5,5 0 0,0 24,15C24,12.36 21.95,10.22 19.35,10.03Z" />
+            </svg>
+            Upload Excel
+          </button>
+        </div>
         <Table columns={updatedColumns} data={leads} renderRow={renderRow} />
 
         {/* Pagination */}
@@ -468,6 +499,13 @@ const LeadPage = () => {
         recipientEmail={leadToEmail?.email || ""}
         recipientName={leadToEmail ? `${leadToEmail.firstName} ${leadToEmail.lastName}` : ""}
         lead={leadToEmail}
+      />
+
+      {/* Import Leads Dialog */}
+      <ImportLeadsDialog
+        open={showImportDialog}
+        onClose={() => setShowImportDialog(false)}
+        onImportComplete={handleImportComplete}
       />
     </div>
   );

@@ -18,6 +18,7 @@ import {
   updateNote,
   uploadFile,
   deleteAttachment,
+  importLeads,
 } from "@/api/leadsApi";
 
 interface LeadsState {
@@ -60,6 +61,7 @@ interface LeadsActions {
   ) => Promise<void>;
   uploadFile: (leadId: string, file: File) => Promise<void>;
   deleteAttachment: (leadId: string, attachmentId: string) => Promise<void>;
+  importLeads: (file: File) => Promise<{ importedCount: number; duplicateCount: number; message: string; }>;
 }
 
 type LeadsStore = LeadsState & LeadsActions;
@@ -771,6 +773,25 @@ export const useLeadsStore = create<LeadsStore>((set, get) => ({
             : "Failed to delete attachment",
         isLoading: false,
       });
+    }
+  },
+
+  importLeads: async (file: File) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await importLeads(file);
+      // Return the import result data from the correct response structure
+      return {
+        importedCount: response.result?.importedCount || 0,
+        duplicateCount: response.result?.duplicateCount || 0,
+        message: response.message || response.result?.message || "Import completed",
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to import leads";
+      set({ error: errorMessage });
+      throw new Error(errorMessage);
+    } finally {
+      set({ isLoading: false });
     }
   },
 }));

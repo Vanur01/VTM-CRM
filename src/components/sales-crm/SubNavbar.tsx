@@ -27,7 +27,7 @@ import AssignLeadsDialog from "@/components/sales-crm/AssignLeadsDialog";
 import BulkMailDialog from "@/components/sales-crm/BulkMailDialog";
 import EmailDialog from "@/components/sales-crm/EmailDialog";
 import { useDealsStore } from "@/stores/salesCrmStore/useDealsStore";
-import { getAllLeads, getLeadById } from "@/api/leadsApi";
+import { getAllLeads, getAllLeadsByUser, getAllManagerLeads, getLeadById } from "@/api/leadsApi";
 import { sendBulkEmailsToLeads } from "@/api/emailApi";
 import SearchBar from './SearchBar';
 
@@ -130,7 +130,7 @@ export default function SubNav({
   const currentSection = getCurrentSection();
   const config = sectionConfigs[currentSection] || sectionConfigs.leads;
   const { user } = useAuthStore();
-  const { bulkDeleteLeads, bulkAssignLeads, fetchLeads } = useLeadsStore();
+  const { bulkDeleteLeads, bulkAssignLeads, fetchLeads, fetchLeadsByUser, fetchManagerLeads } = useLeadsStore();
   const { deleteAllMeetings, bulkDeleteMeetings, fetchMeetings } = useMeetingsStore();
   const { bulkDeleteCalls, fetchAllCalls } = useCallsStore();
   const { bulkDeleteTasks, fetchTasks, deleteAllTasks } = useTasksStore();
@@ -234,7 +234,16 @@ export default function SubNav({
       });
       setShowSuccessDialog(true);
 
-      const response = await getAllLeads(user?.companyId || "");
+      // Use role-based API calls for export
+      let response;
+      if (user?.role === 'admin') {
+        response = await getAllLeads(user?.companyId || "");
+      } else if (user?.role === 'manager') {
+        response = await getAllManagerLeads(user?.companyId || "");
+      } else {
+        response = await getAllLeadsByUser(user?.companyId || "");
+      }
+      
       const leads = response.data.response;
 
       // Define fields for CSV
@@ -598,8 +607,16 @@ export default function SubNav({
 
     setIsProcessing(true);
     try {
-      // Get the selected leads to extract their emails
-      const response = await getAllLeads(user?.companyId || "");
+      // Get the selected leads to extract their emails using role-based API
+      let response;
+      if (user?.role === 'admin') {
+        response = await getAllLeads(user?.companyId || "");
+      } else if (user?.role === 'manager') {
+        response = await getAllManagerLeads(user?.companyId || "");
+      } else {
+        response = await getAllLeadsByUser(user?.companyId || "");
+      }
+      
       const allLeads = response.data.response;
       const selectedLeads = allLeads.filter((lead: any) => 
         selectedItems.includes(lead.id)
@@ -693,7 +710,16 @@ export default function SubNav({
         if (selectedItems.length === 1) {
           // Single lead selected - use EmailDialog
           try {
-            const response = await getAllLeads(user?.companyId || "");
+            // Use role-based API calls to get lead details
+            let response;
+            if (user?.role === 'admin') {
+              response = await getAllLeads(user?.companyId || "");
+            } else if (user?.role === 'manager') {
+              response = await getAllManagerLeads(user?.companyId || "");
+            } else {
+              response = await getAllLeadsByUser(user?.companyId || "");
+            }
+            
             const allLeads = response.data.response;
             const selectedLead = allLeads.find((lead: any) => lead.id === selectedItems[0]);
             
@@ -907,9 +933,9 @@ export default function SubNav({
       />
 
       <ImportLeadsDialog
-        isOpen={showImportDialog}
+        open={showImportDialog}
         onClose={() => setShowImportDialog(false)}
-        onSuccess={() => {
+        onImportComplete={() => {
           setShowImportDialog(false);
           setSuccessMessage({
             title: "Success",
@@ -918,21 +944,8 @@ export default function SubNav({
           });
           setShowSuccessDialog(true);
           
-          // Refresh leads data instead of full page reload
-          if (user?.companyId) {
-            setTimeout(() => {
-              fetchLeads(user.companyId, {});
-            }, 1000);
-          }
-        }}
-        onError={(errorMessage) => {
-          setShowImportDialog(false);
-          setSuccessMessage({
-            title: "Import Failed",
-            message: errorMessage,
-            type: "danger",
-          });
-          setShowSuccessDialog(true);
+          // Role-based data refresh after import - no need for setTimeout as ImportLeadsDialog handles the refresh
+          // The dialog will call the appropriate API based on user role automatically
         }}
       />
 

@@ -121,10 +121,10 @@ interface BaseResponse {
 }
 
 interface ImportLeadsResponse extends BaseResponse {
-  duplicateCount?: number;
-  data?: {
-    message?: string;
+  result?: {
+    importedCount?: number;
     duplicateCount?: number;
+    message?: string;
   };
 }
 
