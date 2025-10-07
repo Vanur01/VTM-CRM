@@ -31,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <>
       {/* <PushNotificationProvider /> */}
-      <LenisProvider/>
+      {/* <LenisProvider/> */}
       <Header />
       {children}
       <FAQ/>
