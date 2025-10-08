@@ -101,10 +101,10 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({ open, onClose, type, le
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/20 bg-opacity-40 flex items-start justify-center pt-4">
-      <div className="bg-white w-full max-w-2xl mx-auto rounded-lg shadow-lg relative p-6">
+    <div className="fixed inset-0 z-50 bg-black/20 bg-opacity-40 flex items-start justify-center pt-4 pb-4">
+      <div className="bg-white w-full max-w-2xl mx-auto rounded-lg shadow-lg relative max-h-[90vh] flex flex-col">
         {/* Header with close button */}
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-4 p-6 pb-0 flex-shrink-0">
           <h2 className="text-xl font-bold">Create New {type}</h2>
           <button
             onClick={onClose}
@@ -116,8 +116,9 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({ open, onClose, type, le
           </button>
         </div>
 
-        {/* Dynamic form based on activity type */}
-        <div className="space-y-1">
+        {/* Dynamic form based on activity type - Scrollable content */}
+        <div className="flex-1 overflow-y-auto px-6 pb-6">
+          <div className="space-y-1">
           {type === "Call" && (
             <CallFormComponent 
               onSubmit={handleSubmit} 
@@ -140,7 +141,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({ open, onClose, type, le
             />
           )}
         </div>
-
+        </div>
 
       </div>
     </div>
