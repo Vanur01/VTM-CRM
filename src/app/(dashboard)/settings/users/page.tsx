@@ -52,6 +52,8 @@ export default function UsersPage() {
   const actionPopoverRef = useRef<HTMLDivElement | null>(null);
   const [isAssignUsersDialogOpen, setIsAssignUsersDialogOpen] = useState(false);
   const [managerToAssignUsers, setManagerToAssignUsers] = useState<any | null>(null);
+  const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (currentUser?.companyId) {
@@ -84,10 +86,51 @@ export default function UsersPage() {
 
   console.log(currentUser?.role)
 
+  // Form validation function
+  const validateForm = () => {
+    const errors: {[key: string]: string} = {};
+
+    if (!newUser.name.trim()) {
+      errors.name = 'Name is required';
+    }
+
+    if (!newUser.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUser.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+
+    if (!newUser.mobile.trim()) {
+      errors.mobile = 'Mobile number is required';
+    } else if (!/^\d{10}$/.test(newUser.mobile)) {
+      errors.mobile = 'Mobile number must be 10 digits';
+    }
+
+    if (!newUser.password.trim()) {
+      errors.password = 'Password is required';
+    } else if (newUser.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters long';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleAddUser = async () => {
+    // Clear previous errors
+    setFormErrors({});
+
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
+      let response: any;
+      
       if (currentUser?.role === 'admin' && currentUser?.companyId) {
-        await addUserOrManagerByAdmin(currentUser.companyId, {
+        response = await addUserOrManagerByAdmin(currentUser.companyId, {
           name: newUser.name,
           email: newUser.email,
           mobile: newUser.mobile,
@@ -95,7 +138,7 @@ export default function UsersPage() {
           role: newUser.role
         });
       } else if (currentUser?.role === 'manager' && currentUser?.companyId) {
-        await addUserByManager(currentUser.companyId, {
+        response = await addUserByManager(currentUser.companyId, {
           name: newUser.name,
           email: newUser.email,
           mobile: newUser.mobile,
@@ -104,7 +147,14 @@ export default function UsersPage() {
         });
       }
       
+      // Check if the response contains any error message from backend
+      // Even if API returns success:1, if there's a message, it's likely a validation error
+      if (response?.message && response.message.trim() !== '') {
+        toast.error(response.message);
+        return; // Exit early - don't show success message or close dialog
+      }
       
+      // If we reach here, the user was added successfully
       // Refresh the users list
       if (currentUser?.companyId) {
         if (currentUser?.role === 'admin') {
@@ -123,9 +173,29 @@ export default function UsersPage() {
         role: 'user',
       });
       toast.success('User added successfully');
-    } catch (e) {
-      toast.error('Failed to add user');
+    } catch (e: any) {
+      console.error('Error adding user:', e);
+      // Extract error message from the response
+      const errorMessage = e?.response?.data?.message || e?.message || 'Failed to add user. Please try again.';
+      toast.error(errorMessage);
+      // Don't close the dialog or clear the form on error, so user can retry
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  // Function to reset form and close dialog
+  const handleCloseAddDialog = () => {
+    setIsAddDialogOpen(false);
+    setNewUser({
+      name: '',
+      email: '',
+      mobile: '',
+      password: '',
+      role: 'user',
+    });
+    setFormErrors({});
+    setIsSubmitting(false);
   };
 
 
@@ -352,52 +422,97 @@ export default function UsersPage() {
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Add New User</h2>
                 <button 
-                  onClick={() => setIsAddDialogOpen(false)}
+                  onClick={handleCloseAddDialog}
                   className="text-gray-500 hover:text-gray-700"
+                  disabled={isSubmitting}
                 >
                   ×
                 </button>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={newUser.name}
-                    onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    onChange={(e) => {
+                      setNewUser({ ...newUser, name: e.target.value });
+                      if (formErrors.name) {
+                        setFormErrors({ ...formErrors, name: '' });
+                      }
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
+                      formErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    }`}
                     placeholder="Enter name"
+                    disabled={isSubmitting}
                   />
+                  {formErrors.name && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
                   <input
                     type="email"
                     value={newUser.email}
-                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    onChange={(e) => {
+                      setNewUser({ ...newUser, email: e.target.value });
+                      if (formErrors.email) {
+                        setFormErrors({ ...formErrors, email: '' });
+                      }
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
+                      formErrors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    }`}
                     placeholder="Enter email"
+                    disabled={isSubmitting}
                   />
+                  {formErrors.email && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Mobile <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={newUser.mobile}
-                    onChange={(e) => setNewUser({ ...newUser, mobile: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    placeholder="Enter mobile"
+                    onChange={(e) => {
+                      setNewUser({ ...newUser, mobile: e.target.value });
+                      if (formErrors.mobile) {
+                        setFormErrors({ ...formErrors, mobile: '' });
+                      }
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
+                      formErrors.mobile ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    }`}
+                    placeholder="Enter 10-digit mobile number"
+                    disabled={isSubmitting}
                   />
+                  {formErrors.mobile && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.mobile}</p>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Password <span className="text-red-500">*</span></label>
                   <input
                     type="password"
                     value={newUser.password}
-                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    placeholder="Enter password"
+                    onChange={(e) => {
+                      setNewUser({ ...newUser, password: e.target.value });
+                      if (formErrors.password) {
+                        setFormErrors({ ...formErrors, password: '' });
+                      }
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
+                      formErrors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    }`}
+                    placeholder="Enter password (min 8 characters)"
+                    disabled={isSubmitting}
                   />
+                  {formErrors.password && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
@@ -405,17 +520,38 @@ export default function UsersPage() {
                     value={newUser.role}
                     onChange={(e) => setNewUser({ ...newUser, role: e.target.value as 'user' | 'manager' })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    disabled={isSubmitting}
                   >
                     <option value="user">User</option>
                     {currentUser?.role === 'admin' && <option value="manager">Manager</option>}
                   </select>
                 </div>
-                <button
-                  onClick={handleAddUser}
-                  className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                >
-                  Create User
-                </button>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleCloseAddDialog}
+                    disabled={isSubmitting}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAddUser}
+                    disabled={isSubmitting}
+                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Creating...
+                      </>
+                    ) : (
+                      'Create User'
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -606,52 +742,97 @@ export default function UsersPage() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Add New User</h2>
               <button 
-                onClick={() => setIsAddDialogOpen(false)}
+                onClick={handleCloseAddDialog}
                 className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+                disabled={isSubmitting}
               >
                 ×
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   value={newUser.name}
-                  onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  onChange={(e) => {
+                    setNewUser({ ...newUser, name: e.target.value });
+                    if (formErrors.name) {
+                      setFormErrors({ ...formErrors, name: '' });
+                    }
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
+                    formErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  }`}
                   placeholder="Enter name"
+                  disabled={isSubmitting}
                 />
+                {formErrors.name && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
                 <input
                   type="email"
                   value={newUser.email}
-                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  onChange={(e) => {
+                    setNewUser({ ...newUser, email: e.target.value });
+                    if (formErrors.email) {
+                      setFormErrors({ ...formErrors, email: '' });
+                    }
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
+                    formErrors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  }`}
                   placeholder="Enter email"
+                  disabled={isSubmitting}
                 />
+                {formErrors.email && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Mobile <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   value={newUser.mobile}
-                  onChange={(e) => setNewUser({ ...newUser, mobile: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="Enter mobile"
+                  onChange={(e) => {
+                    setNewUser({ ...newUser, mobile: e.target.value });
+                    if (formErrors.mobile) {
+                      setFormErrors({ ...formErrors, mobile: '' });
+                    }
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
+                    formErrors.mobile ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter 10-digit mobile number"
+                  disabled={isSubmitting}
                 />
+                {formErrors.mobile && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.mobile}</p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password <span className="text-red-500">*</span></label>
                 <input
                   type="password"
                   value={newUser.password}
-                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="Enter password"
+                  onChange={(e) => {
+                    setNewUser({ ...newUser, password: e.target.value });
+                    if (formErrors.password) {
+                      setFormErrors({ ...formErrors, password: '' });
+                    }
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
+                    formErrors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter password (min 8 characters)"
+                  disabled={isSubmitting}
                 />
+                {formErrors.password && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
@@ -659,17 +840,38 @@ export default function UsersPage() {
                   value={newUser.role}
                   onChange={(e) => setNewUser({ ...newUser, role: e.target.value as 'user' | 'manager' })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  disabled={isSubmitting}
                 >
                   <option value="user">User</option>
                   {currentUser?.role === 'admin' && <option value="manager">Manager</option>}
                 </select>
               </div>
-              <button
-                onClick={handleAddUser}
-                className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                Create User
-              </button>
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleCloseAddDialog}
+                  disabled={isSubmitting}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddUser}
+                  disabled={isSubmitting}
+                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Creating...
+                    </>
+                  ) : (
+                    'Create User'
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

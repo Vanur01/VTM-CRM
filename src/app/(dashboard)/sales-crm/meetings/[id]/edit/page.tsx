@@ -5,9 +5,7 @@ import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useMeetingsStore } from "@/stores/salesCrmStore/useMeetingsStore";
 import { useAuthStore } from "@/stores/salesCrmStore/useAuthStore";
 import type { CreateMeetingRequest } from "@/api/meetingsApi";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+
 import {
   LocationOn,
   Business,
@@ -33,6 +31,25 @@ const EditMeetingPage = () => {
   const params = useParams();
   const searchParams = useSearchParams();
   const isReschedule = searchParams.get("reschedule") === "true";
+
+  // Get current time in India Standard Time (IST)
+  const getCurrentTime = () => {
+    const now = new Date();
+    // Convert to IST (UTC+5:30)
+    const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+    const istTime = new Date(now.getTime() + istOffset);
+    return istTime.toISOString().slice(0, 16);
+  };
+
+  // Convert ISO datetime to datetime-local format for IST display
+  const formatDateTimeForInput = (isoString: string) => {
+    if (!isoString) return getCurrentTime();
+    const date = new Date(isoString);
+    // Convert to IST (UTC+5:30)
+    const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+    const istTime = new Date(date.getTime() + istOffset);
+    return istTime.toISOString().slice(0, 16);
+  };
 
   const id = params?.id as string;
   const {
@@ -129,15 +146,6 @@ const EditMeetingPage = () => {
       ...prev,
       [field]: value,
     }));
-  };
-
-  const handleDateChange = (field: string, value: Date | null) => {
-    if (value) {
-      setFormData((prev) => ({
-        ...prev,
-        [field]: value.toISOString(),
-      }));
-    }
   };
 
   const handleAddParticipant = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -494,49 +502,39 @@ const EditMeetingPage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     From Date & Time <span className="text-red-500">*</span>
                   </label>
-                  <LocalizationProvider dateAdapter={AdapterDateFns}>
-                    <DateTimePicker
-                      value={new Date(formData.fromDateTime)}
-                      onChange={(newValue) => {
-                        if (newValue) {
-                          handleDateChange("fromDateTime", newValue);
-                        }
-                      }}
-                      className="w-full"
-                      slotProps={{
-                        textField: {
-                          variant: "outlined",
-                          className:
-                            "w-full border border-gray-300 rounded-md shadow-sm",
-                        },
-                      }}
+                  <div className="relative">
+                    <input
+                      type="datetime-local"
+                      className={`w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all ${
+                        user?.role === 'manager' ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
+                      }`}
+                      value={formatDateTimeForInput(formData.fromDateTime)}
+                      onChange={(e) => handleChange('fromDateTime', e.target.value)}
+                      disabled={user?.role === 'manager'}
+                      required
                     />
-                  </LocalizationProvider>
+                    <AccessTime className="absolute left-3 top-2.5 text-gray-400" />
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     To Date & Time <span className="text-red-500">*</span>
                   </label>
-                  <LocalizationProvider dateAdapter={AdapterDateFns}>
-                    <DateTimePicker
-                      value={new Date(formData.toDateTime)}
-                      onChange={(newValue) => {
-                        if (newValue) {
-                          handleDateChange("toDateTime", newValue);
-                        }
-                      }}
-                      className="w-full"
-                      slotProps={{
-                        textField: {
-                          variant: "outlined",
-                          className:
-                            "w-full border border-gray-300 rounded-md shadow-sm",
-                        },
-                      }}
-                      minDateTime={new Date(formData.fromDateTime)}
+                  <div className="relative">
+                    <input
+                      type="datetime-local"
+                      className={`w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all ${
+                        user?.role === 'manager' ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
+                      }`}
+                      value={formatDateTimeForInput(formData.toDateTime)}
+                      onChange={(e) => handleChange('toDateTime', e.target.value)}
+                      min={formatDateTimeForInput(formData.fromDateTime)}
+                      disabled={user?.role === 'manager'}
+                      required
                     />
-                  </LocalizationProvider>
+                    <AccessTime className="absolute left-3 top-2.5 text-gray-400" />
+                  </div>
                 </div>
 
                 <div>

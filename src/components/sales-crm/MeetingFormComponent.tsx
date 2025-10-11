@@ -28,14 +28,31 @@ const MeetingFormComponent: React.FC<MeetingFormComponentProps> = ({
   leadId,
   companyId,
 }) => {
+  // Get current time dynamically in India Standard Time (IST)
+  const getCurrentTime = () => {
+    const now = new Date();
+    // Convert to IST (UTC+5:30)
+    const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+    const istTime = new Date(now.getTime() + istOffset);
+    return istTime.toISOString().slice(0, 16);
+  };
+  
+  const getOneHourLater = () => {
+    const now = new Date();
+    // Convert to IST (UTC+5:30) and add 1 hour
+    const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+    const oneHourLater = new Date(now.getTime() + istOffset + 60 * 60 * 1000);
+    return oneHourLater.toISOString().slice(0, 16);
+  };
+
   const [formData, setFormData] = useState<MeetingFormData>({
     meetingVenue: "In-office",
     location: "",
     allDay: false,
     title: "",
     status: "scheduled",
-    fromDateTime: new Date(new Date().setHours(new Date().getHours() + 1, 0, 0, 0)).toISOString().slice(0, 16),
-    toDateTime: new Date(new Date().setHours(new Date().getHours() + 2, 0, 0, 0)).toISOString().slice(0, 16),
+    fromDateTime: getCurrentTime(),
+    toDateTime: getOneHourLater(),
     host: "",
     notes: "",
     participants: [],
@@ -274,6 +291,7 @@ const MeetingFormComponent: React.FC<MeetingFormComponentProps> = ({
                   value={formData.fromDateTime}
                   onChange={handleInputChange}
                   disabled={isSubmitting}
+                  min={getCurrentTime()}
                   className={`w-full px-3 py-2 border border-gray-300 rounded-md  focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
                     isSubmitting ? "opacity-70 cursor-not-allowed" : ""
                   }`}
@@ -291,6 +309,7 @@ const MeetingFormComponent: React.FC<MeetingFormComponentProps> = ({
                   value={formData.toDateTime}
                   onChange={handleInputChange}
                   disabled={isSubmitting}
+                  min={formData.fromDateTime || getCurrentTime()}
                   className={`w-full px-3 py-2 border border-gray-300 rounded-md  focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
                     isSubmitting ? "opacity-70 cursor-not-allowed" : ""
                   }`}

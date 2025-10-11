@@ -135,7 +135,7 @@ export default function RegisterPage() {
 
         const response = await register(registerData);
 
-        if (response.success) {
+        if (response.success && response.result) {
           // Save registered user data
           setRegisteredUser({
             _id: response.result._id,
@@ -149,13 +149,13 @@ export default function RegisterPage() {
           // Move to company setup step
           setActiveStep(1);
         } else {
-          setError(response.message);
+          setError(response.message || "Registration failed. Please try again.");
         }
       } catch (err: any) {
-        setError(
-          err?.response?.data?.message ||
-            "Registration failed. Please try again."
-        );
+        const errorMessage = err?.response?.data?.message || 
+                            err?.message || 
+                            "Registration failed. Please try again.";
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }

@@ -200,9 +200,6 @@ const NoteSection: React.FC<NoteSectionProps> = ({ notes, leadId }) => {
                       <div className="flex justify-between items-center">
                         <div className="text-xs text-gray-400">
                           <span className="mr-2">Created: {new Date(note.createdAt).toLocaleDateString()}</span>
-                          {note.updatedAt !== note.createdAt && (
-                            <span>Updated: {new Date(note.updatedAt).toLocaleDateString()}</span>
-                          )}
                         </div>
                         <div className="flex space-x-2">
                           {user?.role !== 'manager' && (

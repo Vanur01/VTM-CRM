@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import * as XLSX from 'xlsx';
 import {
   Users,
   Phone,
@@ -90,6 +91,189 @@ export default function CRMDashboard() {
     fetchDashboard(user.companyId, startDate, endDate);
   };
 
+  const exportToCsv = () => {
+    if (!dashboardData) return;
+
+    // Create a new workbook
+    const workbook = XLSX.utils.book_new();
+
+    // 1. Dashboard Summary Tab
+    const summaryData = [
+      ['Dashboard Summary'],
+      ['Generated on:', new Date().toLocaleString()],
+      ['Timeframe:', selectedTimeframe],
+      ['User:', user?.name || ''],
+      ['Company ID:', user?.companyId || '']
+    ];
+    const summaryWorksheet = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(workbook, summaryWorksheet, 'Dashboard Summary');
+
+    // 2. Overview Counts Tab
+    const countsData = [
+      ['Metric', 'Count'],
+      ['Total Leads', dashboardData.counts.totalLeads.toString()],
+      ['Calls', dashboardData.counts.calls.toString()],
+      ['Meetings', dashboardData.counts.meetings.toString()],
+      ['Tasks', dashboardData.counts.tasks.toString()],
+      ['Users', dashboardData.counts.users.toString()],
+      ['Managers', dashboardData.counts.managers.toString()]
+    ];
+    const countsWorksheet = XLSX.utils.aoa_to_sheet(countsData);
+    XLSX.utils.book_append_sheet(workbook, countsWorksheet, 'Overview Counts');
+
+    // 3. Leads by Stage Tab
+    const leadsByStageData = [
+      ['Status', 'Count']
+    ];
+    dashboardData.leadsByStage.forEach(stage => {
+      leadsByStageData.push([stage.status, stage.count.toString()]);
+    });
+    const leadsByStageWorksheet = XLSX.utils.aoa_to_sheet(leadsByStageData);
+    XLSX.utils.book_append_sheet(workbook, leadsByStageWorksheet, 'Leads by Stage');
+
+    // 4. Follow-up Leads Tab
+    if (dashboardData.followLeads.length > 0) {
+      const followUpData = [
+        ['Name', 'Email', 'Phone', 'Status', 'Follow Up Date', 'Company']
+      ];
+      dashboardData.followLeads.forEach(lead => {
+        const followUpDate = lead.followUpDate ? new Date(lead.followUpDate).toLocaleDateString() : '';
+        followUpData.push([
+          lead.fullName,
+          lead.email,
+          lead.phone,
+          lead.status,
+          followUpDate,
+          (lead as any).company || ''
+        ]);
+      });
+      const followUpWorksheet = XLSX.utils.aoa_to_sheet(followUpData);
+      XLSX.utils.book_append_sheet(workbook, followUpWorksheet, 'Follow-up Leads');
+    }
+
+    // 5. Recent Tasks Tab
+    if (dashboardData.activities.tasks.length > 0) {
+      const tasksData = [
+        ['Title', 'Description', 'Priority', 'Status', 'Created Date', 'Owner']
+      ];
+      dashboardData.activities.tasks.forEach(task => {
+        const createdDate = new Date(task.createdAt).toLocaleDateString();
+        tasksData.push([
+          task.title,
+          task.description,
+          task.priority,
+          task.status,
+          createdDate,
+          (task as any).taskOwner || ''
+        ]);
+      });
+      const tasksWorksheet = XLSX.utils.aoa_to_sheet(tasksData);
+      XLSX.utils.book_append_sheet(workbook, tasksWorksheet, 'Recent Tasks');
+    }
+
+    // 6. Recent Calls Tab
+    if (dashboardData.activities.calls.length > 0) {
+      const callsData = [
+        ['Purpose', 'Agenda', 'Type', 'Status', 'Start Time', 'Result', 'Notes', 'Created Date']
+      ];
+      dashboardData.activities.calls.forEach(call => {
+        const startTime = new Date(call.callStartTime).toLocaleString();
+        const createdDate = new Date(call.createdAt).toLocaleDateString();
+        callsData.push([
+          call.callPurpose,
+          call.callAgenda,
+          call.callType,
+          call.outgoingCallStatus,
+          startTime,
+          call.callResult || '',
+          call.notes || '',
+          createdDate
+        ]);
+      });
+      const callsWorksheet = XLSX.utils.aoa_to_sheet(callsData);
+      XLSX.utils.book_append_sheet(workbook, callsWorksheet, 'Recent Calls');
+    }
+
+    // 7. Recent Meetings Tab
+    if (dashboardData.activities.meetings.length > 0) {
+      const meetingsData = [
+        ['Title', 'Venue', 'Location', 'Status', 'From Date', 'To Date', 'Host', 'Participants Count', 'Notes', 'Created Date']
+      ];
+      dashboardData.activities.meetings.forEach(meeting => {
+        const meetingData = meeting as any;
+        const fromDate = meetingData.fromDateTime ? new Date(meetingData.fromDateTime).toLocaleString() : '';
+        const toDate = meetingData.toDateTime ? new Date(meetingData.toDateTime).toLocaleString() : '';
+        const createdDate = new Date(meetingData.createdAt).toLocaleDateString();
+        meetingsData.push([
+          meetingData.title,
+          meetingData.meetingVenue,
+          meetingData.location || '',
+          meetingData.status,
+          fromDate,
+          toDate,
+          meetingData.host || '',
+          meetingData.participants?.length || 0,
+          meetingData.notes || '',
+          createdDate
+        ]);
+      });
+      const meetingsWorksheet = XLSX.utils.aoa_to_sheet(meetingsData);
+      XLSX.utils.book_append_sheet(workbook, meetingsWorksheet, 'Recent Meetings');
+    }
+
+    // 8. Team Members Tab
+    if (dashboardData.managers.length > 0 || dashboardData.users.length > 0) {
+      const teamData = [
+        ['Name', 'Email', 'Role', 'Status', 'Type']
+      ];
+      
+      dashboardData.managers.forEach(manager => {
+        teamData.push([
+          manager.name,
+          manager.email,
+          manager.role,
+          manager.isActive ? 'Active' : 'Inactive',
+          'Manager'
+        ]);
+      });
+      
+      dashboardData.users.forEach(user => {
+        teamData.push([
+          user.name,
+          user.email,
+          user.role,
+          user.isActive ? 'Active' : 'Inactive',
+          'User'
+        ]);
+      });
+      
+      const teamWorksheet = XLSX.utils.aoa_to_sheet(teamData);
+      XLSX.utils.book_append_sheet(workbook, teamWorksheet, 'Team Members');
+    }
+
+    // 9. Converted Leads Tab (if any)
+    if (dashboardData.convertedLeads && dashboardData.convertedLeads.length > 0) {
+      const convertedData = [
+        ['Name', 'Email', 'Phone', 'Company', 'Converted Date']
+      ];
+      dashboardData.convertedLeads.forEach(lead => {
+        convertedData.push([
+          (lead as any).fullName || '',
+          (lead as any).email || '',
+          (lead as any).phone || '',
+          (lead as any).company || '',
+          (lead as any).convertedDate ? new Date((lead as any).convertedDate).toLocaleDateString() : ''
+        ]);
+      });
+      const convertedWorksheet = XLSX.utils.aoa_to_sheet(convertedData);
+      XLSX.utils.book_append_sheet(workbook, convertedWorksheet, 'Converted Leads');
+    }
+
+    // Generate and download the Excel file
+    const fileName = `dashboard-export-${selectedTimeframe}-${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+  };
+
   // Prepare chart data for leads by stage
   const leadsByStageData = dashboardData ? {
     labels: dashboardData.leadsByStage.map(stage => stage.status),
@@ -175,7 +359,7 @@ export default function CRMDashboard() {
             </select>
             <button
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow"
-              onClick={exportDashboard}
+              onClick={exportToCsv}
             >
               <Download className="h-4 w-4" />
               <span className="font-medium">Export</span>

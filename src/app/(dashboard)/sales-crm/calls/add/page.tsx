@@ -27,10 +27,19 @@ export default function AddCallPage() {
   const { user } = useAuthStore();
   const { leads, fetchLeads, fetchLeadsByUser, isLoading: leadsLoading } = useLeadsStore();
   
+  // Get current time in India Standard Time (IST)
+  const getCurrentTime = () => {
+    const now = new Date();
+    // Convert to IST (UTC+5:30)
+    const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+    const istTime = new Date(now.getTime() + istOffset);
+    return istTime.toISOString().slice(0, 16);
+  };
+  
   const [formData, setFormData] = useState<CreateCallRequest>({
     callType: "outbound",
     outgoingCallStatus: "scheduled",
-    callStartTime: "",
+    callStartTime: getCurrentTime(),
     callPurpose: "",
     callAgenda: "",
     callResult: "",

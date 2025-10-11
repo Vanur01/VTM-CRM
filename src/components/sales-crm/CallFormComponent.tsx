@@ -22,10 +22,19 @@ const CALL_TYPES = ["outbound", "inbound"] as const;
 const CALL_STATUSES = ["scheduled", "completed", "missed", "cancel"] as const;
 
 const CallFormComponent: React.FC<CallFormComponentProps> = ({ onSubmit, leadId, companyId }) => {
+  // Get current time in India Standard Time (IST)
+  const getCurrentTime = () => {
+    const now = new Date();
+    // Convert to IST (UTC+5:30)
+    const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+    const istTime = new Date(now.getTime() + istOffset);
+    return istTime.toISOString().slice(0, 16);
+  };
+
   const [formData, setFormData] = useState<CallFormData>({
     callType: 'outbound',
     outgoingCallStatus: 'scheduled',
-    callStartTime: '',
+    callStartTime: getCurrentTime(),
     callPurpose: '',
     callAgenda: '',
     callResult: '',
@@ -163,6 +172,7 @@ const CallFormComponent: React.FC<CallFormComponentProps> = ({ onSubmit, leadId,
                   value={formData.callStartTime}
                   onChange={handleChange}
                   disabled={isSubmitting}
+                  min={getCurrentTime()}
                   className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
                     isSubmitting ? "opacity-70 cursor-not-allowed" : ""
                   }`}

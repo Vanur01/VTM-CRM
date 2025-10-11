@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useMeetingsStore } from '@/stores/salesCrmStore/useMeetingsStore';
-import { useAuthStore } from '@/stores/salesCrmStore/useAuthStore';
-import { useLeadsStore } from '@/stores/salesCrmStore/useLeadsStore';
-import { useRoleBasedRouter } from '@/hooks/useRoleBasedRouter';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useMeetingsStore } from "@/stores/salesCrmStore/useMeetingsStore";
+import { useAuthStore } from "@/stores/salesCrmStore/useAuthStore";
+import { useLeadsStore } from "@/stores/salesCrmStore/useLeadsStore";
+import { useRoleBasedRouter } from "@/hooks/useRoleBasedRouter";
 import {
   LocationOn,
   Business,
@@ -16,101 +16,119 @@ import {
   People,
   Cancel,
   Add,
-} from '@mui/icons-material';
-import { Switch, Chip, TextField, Autocomplete } from '@mui/material';
-import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+} from "@mui/icons-material";
+import { Switch, Chip, TextField, Autocomplete } from "@mui/material";
 
 const MEETING_VENUES = ["In-office", "Client location", "Online"] as const;
-const MEETING_STATUSES = ["scheduled", "completed", "missed", "cancel", "rescheduled"] as const;
+const MEETING_STATUSES = [
+  "scheduled",
+  "completed",
+  "missed",
+  "cancel",
+  "rescheduled",
+] as const;
 
 const CreateMeetingPage = () => {
   const router = useRouter();
   const { pushToRolePath } = useRoleBasedRouter();
   const { addMeeting, isLoading } = useMeetingsStore();
   const { user } = useAuthStore();
-  const { leads, fetchLeads, fetchLeadsByUser, isLoading: leadsLoading } = useLeadsStore();
+  const {
+    leads,
+    fetchLeads,
+    fetchLeadsByUser,
+    isLoading: leadsLoading,
+  } = useLeadsStore();
   const [error, setError] = useState<string | null>(null);
   const [participants, setParticipants] = useState<string[]>([]);
-  const [participantInput, setParticipantInput] = useState<string>('');
+  const [participantInput, setParticipantInput] = useState<string>("");
   const [selectedLead, setSelectedLead] = useState<string>("");
 
+  // Get current time in India Standard Time (IST)
+  const getCurrentTime = () => {
+    const now = new Date();
+    // Convert to IST (UTC+5:30)
+    const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+    const istTime = new Date(now.getTime() + istOffset);
+    return istTime.toISOString().slice(0, 16);
+  };
+
+  // Get one hour later in IST
+  const getOneHourLater = () => {
+    const now = new Date();
+    // Convert to IST (UTC+5:30) and add 1 hour
+    const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+    const istTime = new Date(now.getTime() + istOffset + 60 * 60 * 1000); // Add 1 hour
+    return istTime.toISOString().slice(0, 16);
+  };
+
   const [formData, setFormData] = useState({
-    meetingVenue: 'In-office' as typeof MEETING_VENUES[number],
-    location: '',
+    meetingVenue: "In-office" as (typeof MEETING_VENUES)[number],
+    location: "",
     allDay: false,
-    title: 'New Meeting',
-    status: 'scheduled' as typeof MEETING_STATUSES[number],
-    leadId: '', // Will be set from selected lead
-    companyId: user?.companyId || '',
-    fromDateTime: new Date(new Date().setHours(new Date().getHours() + 1, 0, 0, 0)).toISOString(),
-    toDateTime: new Date(new Date().setHours(new Date().getHours() + 2, 0, 0, 0)).toISOString(),
-    host: user?.email || '',
-    notes: '',
+    title: "New Meeting",
+    status: "scheduled" as (typeof MEETING_STATUSES)[number],
+    leadId: "", // Will be set from selected lead
+    companyId: user?.companyId || "",
+    fromDateTime: getCurrentTime(),
+    toDateTime: getOneHourLater(),
+    host: user?.email || "",
+    notes: "",
     participants: [] as string[],
     participantsReminder: true,
   });
-  
+
   // Fetch leads when component mounts
   useEffect(() => {
     if (user?.companyId) {
-      if (user.role === 'admin') {
+      if (user.role === "admin") {
         fetchLeads(user.companyId);
-      } else if (user.role === 'user') {
+      } else if (user.role === "user") {
         fetchLeadsByUser(user.companyId);
       }
     }
   }, [user?.companyId, user?.role, fetchLeads, fetchLeadsByUser]);
 
   const handleChange = (field: string, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
-  const handleDateChange = (field: string, value: Date | null) => {
-    if (value) {
-      setFormData(prev => ({
-        ...prev,
-        [field]: value.toISOString()
-      }));
-    }
-  };
-
   const handleAddParticipant = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Enter' && participantInput.trim() !== '') {
+    if (event.key === "Enter" && participantInput.trim() !== "") {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(participantInput)) {
         setError("Please enter a valid email address");
         return;
       }
-      
+
       if (!participants.includes(participantInput)) {
         setParticipants([...participants, participantInput]);
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          participants: [...prev.participants, participantInput]
+          participants: [...prev.participants, participantInput],
         }));
       }
-      setParticipantInput('');
+      setParticipantInput("");
     }
   };
 
   const handleDeleteParticipant = (participantToDelete: string) => {
     const updatedParticipants = participants.filter(
-      participant => participant !== participantToDelete
+      (participant) => participant !== participantToDelete
     );
     setParticipants(updatedParticipants);
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      participants: updatedParticipants
+      participants: updatedParticipants,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    
+
     // Validate emails format
     if (!formData.host || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.host)) {
       setError("Please enter a valid host email address");
@@ -122,7 +140,7 @@ const CreateMeetingPage = () => {
       setError("Please select a lead for this meeting");
       return;
     }
-    
+
     if (!user?.companyId) {
       setError("Company ID is required");
       return;
@@ -145,17 +163,17 @@ const CreateMeetingPage = () => {
         leadId: selectedLead,
         companyId: user.companyId,
       };
-      
+
       console.log("Creating meeting with data:", meetingDataToSubmit);
       console.log("Selected lead:", selectedLead);
       console.log("Company ID:", user.companyId);
-      
+
       await addMeeting(meetingDataToSubmit);
       console.log("Meeting created successfully");
-      pushToRolePath('/sales-crm/meetings');
+      pushToRolePath("/sales-crm/meetings");
     } catch (error: any) {
-      setError(error?.message || 'Failed to create meeting. Please try again.');
-      console.error('Error creating meeting:', error);
+      setError(error?.message || "Failed to create meeting. Please try again.");
+      console.error("Error creating meeting:", error);
     }
   };
 
@@ -163,14 +181,24 @@ const CreateMeetingPage = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Main Content */}
       <div className="mx-auto py-20 px-4 sm:px-6 lg:px-8 pt-8">
-        <h1 className="text-3xl font-bold text-center text-gray-900 mb-8">Create New Meeting</h1>
+        <h1 className="text-3xl font-bold text-center text-gray-900 mb-8">
+          Create New Meeting
+        </h1>
 
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                <svg
+                  className="h-5 w-5 text-red-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div className="ml-3">
@@ -201,14 +229,14 @@ const CreateMeetingPage = () => {
                       type="text"
                       className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                       value={formData.title}
-                      onChange={(e) => handleChange('title', e.target.value)}
+                      onChange={(e) => handleChange("title", e.target.value)}
                       placeholder="e.g., Project Kickoff, Weekly Update"
                       required
                     />
                     <Event className="absolute left-3 top-2.5 text-gray-400" />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Meeting Venue <span className="text-red-500">*</span>
@@ -217,7 +245,9 @@ const CreateMeetingPage = () => {
                     <select
                       className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                       value={formData.meetingVenue}
-                      onChange={(e) => handleChange('meetingVenue', e.target.value)}
+                      onChange={(e) =>
+                        handleChange("meetingVenue", e.target.value)
+                      }
                       required
                     >
                       {MEETING_VENUES.map((venue) => (
@@ -229,7 +259,7 @@ const CreateMeetingPage = () => {
                     <LocationOn className="absolute left-3 top-2.5 text-gray-400" />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Location <span className="text-red-500">*</span>
@@ -239,62 +269,14 @@ const CreateMeetingPage = () => {
                       type="text"
                       className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                       value={formData.location}
-                      onChange={(e) => handleChange('location', e.target.value)}
+                      onChange={(e) => handleChange("location", e.target.value)}
                       placeholder="e.g., Office Address, Meeting Link"
                       required
                     />
                     <Business className="absolute left-3 top-2.5 text-gray-400" />
                   </div>
                 </div>
-
-              
-                
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    From Date & Time <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DateTimePicker
-                        value={new Date(formData.fromDateTime)}
-                        onChange={(date) => handleDateChange('fromDateTime', date)}
-                        slotProps={{ 
-                          textField: { 
-                            fullWidth: true,
-                            required: true,
-                          
-                            className: "pl-8"
-                          } 
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    To Date & Time <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DateTimePicker
-                        value={new Date(formData.toDateTime)}
-                        onChange={(date) => handleDateChange('toDateTime', date)}
-                        slotProps={{ 
-                          textField: { 
-                            fullWidth: true,
-                            required: true,
-
-                            className: "pl-8"
-                          } 
-                        }}
-                        minDateTime={new Date(formData.fromDateTime)}
-                      />
-                    </LocalizationProvider>
-                  </div>
-                </div>
-
-                  <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Status
                   </label>
@@ -302,7 +284,7 @@ const CreateMeetingPage = () => {
                     <select
                       className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                       value={formData.status}
-                      onChange={(e) => handleChange('status', e.target.value)}
+                      onChange={(e) => handleChange("status", e.target.value)}
                       required
                     >
                       {MEETING_STATUSES.map((status) => (
@@ -317,12 +299,51 @@ const CreateMeetingPage = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    From Date & Time <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="datetime-local"
+                      className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                      value={formData.fromDateTime}
+                      onChange={(e) =>
+                        handleChange("fromDateTime", e.target.value)
+                      }
+                      required
+                    />
+                    <AccessTime className="absolute left-3 top-2.5 text-gray-400" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    To Date & Time <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="datetime-local"
+                      className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                      value={formData.toDateTime}
+                      onChange={(e) =>
+                        handleChange("toDateTime", e.target.value)
+                      }
+                      min={formData.fromDateTime}
+                      required
+                    />
+                    <AccessTime className="absolute left-3 top-2.5 text-gray-400" />
+                  </div>
+                </div>
+
+                
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     All Day Meeting
                   </label>
                   <div className="flex items-center">
                     <Switch
                       checked={formData.allDay}
-                      onChange={(e) => handleChange('allDay', e.target.checked)}
+                      onChange={(e) => handleChange("allDay", e.target.checked)}
                       color="primary"
                     />
                   </div>
@@ -354,7 +375,10 @@ const CreateMeetingPage = () => {
                     >
                       <option value="">-- Select a Lead --</option>
                       {leads.map((lead) => (
-                        <option key={lead._id || lead.id} value={lead._id || lead.id}>
+                        <option
+                          key={lead._id || lead.id}
+                          value={lead._id || lead.id}
+                        >
                           {lead.firstName} {lead.lastName} ({lead.email})
                         </option>
                       ))}
@@ -362,7 +386,9 @@ const CreateMeetingPage = () => {
                     <Email className="absolute left-3 top-2.5 text-gray-400" />
                   </div>
                   {leadsLoading && (
-                    <div className="text-sm text-gray-500 mt-1">Loading leads...</div>
+                    <div className="text-sm text-gray-500 mt-1">
+                      Loading leads...
+                    </div>
                   )}
                 </div>
 
@@ -375,14 +401,14 @@ const CreateMeetingPage = () => {
                       type="email"
                       className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                       value={formData.host}
-                      onChange={(e) => handleChange('host', e.target.value)}
+                      onChange={(e) => handleChange("host", e.target.value)}
                       placeholder="host@example.com"
                       required
                     />
                     <Email className="absolute left-3 top-2.5 text-gray-400" />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Participant Reminder
@@ -390,7 +416,9 @@ const CreateMeetingPage = () => {
                   <div className="flex items-center">
                     <Switch
                       checked={formData.participantsReminder}
-                      onChange={(e) => handleChange('participantsReminder', e.target.checked)}
+                      onChange={(e) =>
+                        handleChange("participantsReminder", e.target.checked)
+                      }
                       color="primary"
                     />
                     <span className="ml-2 text-sm text-gray-500">
@@ -398,7 +426,7 @@ const CreateMeetingPage = () => {
                     </span>
                   </div>
                 </div>
-                
+
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Meeting Notes
@@ -407,11 +435,11 @@ const CreateMeetingPage = () => {
                     rows={4}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                     value={formData.notes}
-                    onChange={(e) => handleChange('notes', e.target.value)}
+                    onChange={(e) => handleChange("notes", e.target.value)}
                     placeholder="Add any notes or details about this meeting..."
                   ></textarea>
                 </div>
-                
+
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Meeting Participants
@@ -428,9 +456,9 @@ const CreateMeetingPage = () => {
                     }}
                     onChange={(event, newValue) => {
                       setParticipants(newValue);
-                      setFormData(prev => ({
+                      setFormData((prev) => ({
                         ...prev,
-                        participants: newValue
+                        participants: newValue,
                       }));
                     }}
                     renderTags={(value, getTagProps) =>
@@ -458,7 +486,7 @@ const CreateMeetingPage = () => {
                               <People className="ml-2 mr-2 text-gray-400" />
                               {params.InputProps.startAdornment}
                             </>
-                          )
+                          ),
                         }}
                       />
                     )}
@@ -488,9 +516,25 @@ const CreateMeetingPage = () => {
             >
               {isLoading ? (
                 <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   Creating...
                 </span>
