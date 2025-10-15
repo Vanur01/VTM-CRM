@@ -9,6 +9,7 @@ import usePushNotifications from "@/hooks/usePushNotifications";
 import Link from "next/link";
 import {
   Phone,
+  User,
   UserCircle,
   Settings as LucideSettings,
   Recycle,
@@ -256,12 +257,12 @@ export default function MainSidebar({
       {
         href:
           user?.role === "admin"
-            ? `/settings/user/${user?._id}`
+            ? "/settings/profile"
             : user?.role === "manager"
-            ? `/manager/settings/user/${user?._id}`
-            : `/user/settings/user/${user?._id}`,
-        icon: <UserCircle className="w-4 h-4 stroke-[1.5]" />,
-        label: "Personal Settings",
+            ? `/manager/settings/manager-profile/${user?._id}`
+            : "/user/settings/profile",
+        icon: <User className="w-4 h-4 stroke-[1.5]" />,
+        label: "Profile",
       },
       {
         href:

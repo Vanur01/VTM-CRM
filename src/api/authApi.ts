@@ -162,6 +162,29 @@ export async function login(
   return response.data;
 }
 
+// Google Login API
+export async function googleLogin(
+  firebaseToken: string,
+  deviceToken: string,
+  email: string
+) {
+  console.log("🔥 Calling Google Login API with:", { firebaseToken, deviceToken, email });
+  
+  const response = await axiosInstance.post<LoginResponse>(
+    "/user/login",
+    { 
+      loginType: "google",
+      firebaseToken: firebaseToken,
+      deviceToken: deviceToken,
+      email: email,
+      password: "google_auth_placeholder" // Placeholder as backend expects it
+    }
+  );
+
+  console.log("🔥 Google Login API Response:", response.data);
+  return response.data;
+}
+
 export const register = async (
   data: RegisterRequest
 ): Promise<RegisterResponse> => {

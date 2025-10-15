@@ -381,6 +381,21 @@ export const getAllDeleteLeads = async (): Promise<any> => {
   return response.data;
 };
 
+export const getRecycleBin = async (): Promise<{
+  success: boolean;
+  statusCode: number;
+  message: string;
+  result: {
+    total: number;
+    page: number;
+    pages: number;
+    leads: Lead[];
+  };
+}> => {
+  const response = await axiosInstance.get("/admin/recycleBin");
+  return response.data;
+};
+
 export const getLeadById = async (id: string, companyId: string): Promise<GetLeadResponse> => {
   if (!companyId) {
     throw new Error("Company ID is required to fetch lead details");

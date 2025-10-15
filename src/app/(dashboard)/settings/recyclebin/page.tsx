@@ -9,7 +9,17 @@ import { useRecycleBinStore } from "@/stores/salesCrmStore/userecyclebinStore";
 import { toast } from "sonner";
 
 export default function RecycleBinPage() {
-  const { deletedLeads, isLoading, error, fetchDeletedLeads, restoreLead, permanentlyDeleteLead, bulkDeleteLeads, clearError } = useRecycleBinStore();
+  const { 
+    deletedLeads, 
+    isLoading, 
+    error, 
+    totalLeads,
+    fetchDeletedLeads, 
+    restoreLead, 
+    permanentlyDeleteLead, 
+    bulkDeleteLeads, 
+    clearError 
+  } = useRecycleBinStore();
   const [leadToDelete, setLeadToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
@@ -154,12 +164,26 @@ export default function RecycleBinPage() {
   }
 
   const columns = [
-    { header: 'Select', accessor: 'select' },
+    { 
+      header: (
+        <input
+          type="checkbox"
+          checked={selectedLeads.length === deletedLeads.length && deletedLeads.length > 0}
+          onChange={toggleSelectAll}
+          className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          aria-label="Select all leads"
+        />
+      ), 
+      accessor: 'select' 
+    },
     { header: 'Name', accessor: 'name' },
     { header: 'Company', accessor: 'company' },
     { header: 'Email', accessor: 'email' },
     { header: 'Phone', accessor: 'phone' },
+    { header: 'Status', accessor: 'status' },
+    { header: 'Source', accessor: 'source' },
     { header: 'Deleted At', accessor: 'deletedAt' },
+    { header: 'Actions', accessor: 'actions' },
   ];
 
   const renderRow = (lead: any) => (
@@ -174,13 +198,58 @@ export default function RecycleBinPage() {
         />
       </td>
       <td className="p-2 font-medium">
-        {lead.firstName} {lead.lastName}
+        <div className="flex flex-col">
+          <span>{lead.firstName} {lead.lastName}</span>
+          {lead.title && <span className="text-sm text-gray-500">{lead.title}</span>}
+        </div>
       </td>
-      <td className="p-2">{lead.company}</td>
-      <td className="p-2">{lead.email}</td>
-      <td className="p-2">{lead.phone}</td>
+      <td className="p-2">{lead.companyName || lead.company || 'N/A'}</td>
       <td className="p-2">
+        <a href={`mailto:${lead.email}`} className="text-blue-600 hover:underline">
+          {lead.email}
+        </a>
+      </td>
+      <td className="p-2">
+        <a href={`tel:${lead.phone}`} className="text-blue-600 hover:underline">
+          {lead.phone}
+        </a>
+      </td>
+      <td className="p-2">
+        <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
+          lead.status === 'New' ? 'bg-green-100 text-green-800' :
+          lead.status === 'Qualified' ? 'bg-blue-100 text-blue-800' :
+          lead.status === 'Converted' ? 'bg-purple-100 text-purple-800' :
+          lead.status === 'Lost' ? 'bg-red-100 text-red-800' :
+          'bg-gray-100 text-gray-800'
+        }`}>
+          {lead.status}
+        </span>
+      </td>
+      <td className="p-2">
+        <span className="text-sm text-gray-600">{lead.source || 'N/A'}</span>
+      </td>
+      <td className="p-2 text-sm text-gray-600">
         {format(new Date(lead.updatedAt), "MMM dd, yyyy HH:mm")}
+      </td>
+      <td className="p-2">
+        <div className="flex space-x-2">
+          <button
+            onClick={() => handleRestore(lead._id)}
+            disabled={isRestoring}
+            className="text-blue-600 hover:text-blue-800 disabled:opacity-50"
+            title="Restore lead"
+          >
+            <RotateCcw className={`h-4 w-4 ${isRestoring ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            onClick={() => setLeadToDelete(lead._id)}
+            disabled={isDeleting}
+            className="text-red-600 hover:text-red-800 disabled:opacity-50"
+            title="Permanently delete lead"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       </td>
     </tr>
   );
@@ -207,6 +276,30 @@ export default function RecycleBinPage() {
         </div>
 
         <div className="p-6">
+          {/* Summary Section */}
+          {!isLoading && deletedLeads.length > 0 && (
+            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <Circle className="h-4 w-4 text-red-500" />
+                    <span className="text-sm font-medium text-gray-700">
+                      Total Deleted Leads: {totalLeads}
+                    </span>
+                  </div>
+                  {selectedLeads.length > 0 && (
+                    <div className="flex items-center space-x-2">
+                      <Circle className="h-4 w-4 text-blue-500" />
+                      <span className="text-sm font-medium text-blue-700">
+                        Selected: {selectedLeads.length}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between mb-4">
             <div className="flex gap-2">
               <button
@@ -258,7 +351,21 @@ export default function RecycleBinPage() {
       <ConfirmationDialog
         show={!!leadToDelete}
         title="Are you absolutely sure?"
-        message="This action cannot be undone. This will permanently delete the lead and remove it from our servers."
+        message={
+          <div className="space-y-2">
+            <p>This action cannot be undone. This will permanently delete the lead and remove it from our servers.</p>
+            {leadToDelete && (
+              <div className="p-3 bg-red-50 rounded-md">
+                <p className="text-sm text-red-800">
+                  Lead: <strong>{deletedLeads.find(l => l._id === leadToDelete)?.firstName} {deletedLeads.find(l => l._id === leadToDelete)?.lastName}</strong>
+                </p>
+                <p className="text-xs text-red-600">
+                  Email: {deletedLeads.find(l => l._id === leadToDelete)?.email}
+                </p>
+              </div>
+            )}
+          </div>
+        }
         onConfirm={() => leadToDelete && handlePermanentDelete(leadToDelete)}
         onCancel={() => setLeadToDelete(null)}
         confirmText={isDeleting ? "Deleting..." : "Delete Permanently"}

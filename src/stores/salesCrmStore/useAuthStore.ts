@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import Cookies from "js-cookie";
-import { login, logout, generateNewTokens } from "@/api/authApi";
+import { login, googleLogin, logout, generateNewTokens } from "@/api/authApi";
 
 export interface User {
   _id: string;
@@ -89,6 +89,11 @@ interface AuthActions {
     email: string,
     password: string,
     deviceToken: string
+  ) => Promise<void>;
+  googleLoginUser: (
+    firebaseToken: string,
+    deviceToken: string,
+    email: string
   ) => Promise<void>;
   logoutUser: (fcmToken?: string) => Promise<void>;
   refreshTokens: () => Promise<void>;
@@ -216,6 +221,100 @@ export const useAuthStore = create<AuthStore>()((set) => ({
       Cookies.set("company", JSON.stringify(companyObj), COOKIE_OPTIONS);
     }
     console.log({ user: userObj, company: companyObj });
+  },
+
+  googleLoginUser: async (firebaseToken, deviceToken, email) => {
+    console.log("🔥 Store: Starting Google login with:", { firebaseToken, deviceToken, email });
+    
+    const response = await googleLogin(firebaseToken, deviceToken, email);
+    if (!response.success) {
+      throw new Error(response.message || "Google login failed");
+    }
+    
+    console.log("🔥 Store: Google login response:", response);
+    
+    const { user: userData, company: companyData, subscription } = response.result;
+    
+    const userObj: User = {
+      _id: userData._id,
+      name: userData.name,
+      email: userData.email,
+      mobile: userData.mobile || '',
+      role: userData.role || 'USER',
+      isActive: Boolean(userData.isActive),
+      deviceTokens: Array.isArray(userData.deviceTokens) ? userData.deviceTokens : [],
+      status: userData.status || 1,
+      userType: userData.userType || userData.role?.toUpperCase() || 'USER',
+      signupStatus: userData.signupStatus || 1,
+      subscription: subscription
+        ? {
+            _id: subscription._id,
+            plan: {
+              _id: typeof subscription.plan === "string"
+                ? subscription.plan
+                : (subscription.plan as { _id: string })?._id || "",
+              name: "",
+              description: "",
+              price: 0,
+              billingCycle: subscription.billingCycle || "",
+              isActive: true,
+              isFree: false,
+              trialDays: 0,
+              features: {
+                meeting: false,
+                task: false,
+                deal: false,
+                reporting: false,
+                analytics: false,
+                lead: false,
+                call: false,
+                maxUsers: 0,
+                storage: 0,
+              },
+              createdAt: "",
+              updatedAt: "",
+            },
+            startDate: subscription.startedAt || "",
+            endDate: subscription.expiresAt || "",
+            trialEndDate: "",
+            status: subscription.subscriptionStatus || "",
+            paymentStatus: subscription.paymentStatus || "",
+            billingCycle: subscription.billingCycle || "",
+          }
+        : null,
+      billingCycle: subscription?.billingCycle || "",
+      companyId: userData.company || "",
+    };
+
+    const companyObj: Company | null = companyData ? {
+      _id: companyData._id,
+      user: companyData.user,
+      companyId: companyData.companyId,
+      companyName: companyData.companyName,
+      size: companyData.size,
+      industry: companyData.industry,
+      managers: companyData.managers || [],
+      users: companyData.users || [],
+      createdAt: companyData.createdAt,
+      updatedAt: companyData.updatedAt,
+    } : null;
+
+    set({
+      token: userData.tokens,
+      refreshToken: userData.refreshTokens,
+      isAuthenticated: true,
+      user: userObj,
+      company: companyObj,
+    });
+    
+    Cookies.set("token", userData.tokens, COOKIE_OPTIONS);
+    Cookies.set("refreshToken", userData.refreshTokens, COOKIE_OPTIONS);
+    Cookies.set("user", JSON.stringify(userObj), COOKIE_OPTIONS);
+    if (companyObj) {
+      Cookies.set("company", JSON.stringify(companyObj), COOKIE_OPTIONS);
+    }
+    
+    console.log("🔥 Store: Google login completed successfully", { user: userObj, company: companyObj });
   },
 
   logoutUser: async (deviceToken?: string) => {

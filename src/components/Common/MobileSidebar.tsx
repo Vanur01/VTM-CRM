@@ -8,6 +8,7 @@ import { useAuthStore } from "@/stores/salesCrmStore/useAuthStore";
 import usePushNotifications from "@/hooks/usePushNotifications";
 import {
   Phone,
+  User,
   UserCircle,
   Settings as LucideSettings,
   Recycle,
@@ -156,12 +157,12 @@ export default function MobileSidebar(props: MobileSidebarProps) {
     () => [
       {
         href: user?.role === "admin" 
-          ? `/settings/user/${user?._id}` 
+          ? "/settings/profile" 
           : user?.role === "manager"
-          ? `/manager/settings/user/${user?._id}`
-          : `/user/settings/user/${user?._id}`,
+          ? "/manager/settings/profile"
+          : "/user/settings/profile",
         icon: <UserCircle className="w-4 h-4" />,
-        label: "Personal Settings",
+        label: "Profile",
       },
       {
         href: user?.role === "admin" 

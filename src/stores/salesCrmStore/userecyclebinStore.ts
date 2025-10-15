@@ -1,45 +1,13 @@
 import { create } from 'zustand';
-import { getAllDeleteLeads, restoreLeads, deleteLead, bulkDeleteLead } from '../../api/leadsApi';
-
-// Define the lead type based on the actual API response
-interface DeletedLead {
-  _id: string;
-  ownerId: string;
-  company: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  website: string;
-  title: string;
-  industry: string;
-  leadSource: string;
-  leadStatus: string;
-  priority: string;
-  status: string;
-  followUpDate: string;
-  lastStatusChange: string;
-  convertedDate: string | null;
-  attachments: any;
-  notes: string | null;
-  attachment: string[];
-  isConverted: boolean;
-  createdAt: string;
-  updatedAt: string;
-  isDeleted: boolean;
-  openTasks: any[];
-  openMeetings: any[];
-  openCalls: any[];
-  closeTasks: any[];
-  closeMeetings: any[];
-  closeCalls: any[];
-  __v: number;
-}
+import { getRecycleBin, restoreLeads, deleteLead, bulkDeleteLead, Lead } from '../../api/leadsApi';
 
 interface RecycleBinStore {
-  deletedLeads: DeletedLead[];
+  deletedLeads: Lead[];
   isLoading: boolean;
   error: string | null;
+  totalLeads: number;
+  currentPage: number;
+  totalPages: number;
   fetchDeletedLeads: () => Promise<void>;
   restoreLead: (id: string) => Promise<void>;
   permanentlyDeleteLead: (id: string) => Promise<void>;
@@ -51,34 +19,36 @@ export const useRecycleBinStore = create<RecycleBinStore>((set, get) => ({
   deletedLeads: [],
   isLoading: false,
   error: null,
+  totalLeads: 0,
+  currentPage: 1,
+  totalPages: 1,
 
   clearError: () => set({ error: null }),
 
   fetchDeletedLeads: async () => {
     try {
       set({ isLoading: true, error: null });
-      const response = await getAllDeleteLeads();
-      console.log('API Response:', response); // Debug log
+      const response = await getRecycleBin();
+      console.log('Recycle Bin API Response:', response);
       
-      // Handle both response structures
-      if (response && response.data) {
-        if (Array.isArray(response.data)) {
-          // Empty response: data is an empty array
-          set({ deletedLeads: [], isLoading: false });
-        } else if (response.data.leads && Array.isArray(response.data.leads)) {
-          // Response with leads: data is an object with leads array
-          set({ deletedLeads: response.data.leads, isLoading: false });
-        } else {
-          console.error('Unexpected response structure:', response);
-          set({ error: 'Invalid response structure from server', isLoading: false });
-        }
+      if (response && response.success && response.result) {
+        set({ 
+          deletedLeads: response.result.leads || [],
+          totalLeads: response.result.total || 0,
+          currentPage: response.result.page || 1,
+          totalPages: response.result.pages || 1,
+          isLoading: false 
+        });
       } else {
         console.error('Unexpected response structure:', response);
         set({ error: 'Invalid response structure from server', isLoading: false });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching deleted leads:', error);
-      set({ error: 'Failed to fetch deleted leads', isLoading: false });
+      set({ 
+        error: error?.response?.data?.message || error?.message || 'Failed to fetch deleted leads', 
+        isLoading: false 
+      });
     }
   },
 
@@ -86,12 +56,21 @@ export const useRecycleBinStore = create<RecycleBinStore>((set, get) => ({
     try {
       set({ isLoading: true });
       await restoreLeads({ leadIds: [id] });
+      
+      // Remove the restored lead from the list
       set((state) => ({
         deletedLeads: state.deletedLeads.filter((lead) => lead._id !== id),
+        totalLeads: Math.max(0, state.totalLeads - 1),
         isLoading: false,
       }));
-    } catch (error) {
-      set({ isLoading: false });
+      
+      // Refresh the list to get updated data
+      await get().fetchDeletedLeads();
+    } catch (error: any) {
+      set({ 
+        error: error?.response?.data?.message || error?.message || 'Failed to restore lead',
+        isLoading: false 
+      });
       throw error;
     }
   },
@@ -99,18 +78,26 @@ export const useRecycleBinStore = create<RecycleBinStore>((set, get) => ({
   permanentlyDeleteLead: async (id: string) => {
     try {
       set({ isLoading: true });
-      const lead = get().deletedLeads.find((l: DeletedLead) => l._id === id);
+      
+      // Find the lead to get company ID (assuming we need it for deletion)
+      const lead = get().deletedLeads.find(l => l._id === id);
       if (!lead) {
         throw new Error('Lead not found');
       }
-      const companyId = lead.company;
-      await deleteLead(id, companyId);
+      
+      await deleteLead(id, lead.companyId || '');
+      
+      // Remove the deleted lead from the list
       set((state) => ({
-        deletedLeads: state.deletedLeads.filter((l: DeletedLead) => l._id !== id),
+        deletedLeads: state.deletedLeads.filter((lead) => lead._id !== id),
+        totalLeads: Math.max(0, state.totalLeads - 1),
         isLoading: false,
       }));
-    } catch (error) {
-      set({ isLoading: false });
+    } catch (error: any) {
+      set({ 
+        error: error?.response?.data?.message || error?.message || 'Failed to permanently delete lead',
+        isLoading: false 
+      });
       throw error;
     }
   },
@@ -118,18 +105,26 @@ export const useRecycleBinStore = create<RecycleBinStore>((set, get) => ({
   bulkDeleteLeads: async (leadIds: string[]) => {
     try {
       set({ isLoading: true });
-      const firstLead = get().deletedLeads.find((l: DeletedLead) => l._id === leadIds[0]);
+      
+      // Get company ID from the first lead (assuming all leads are from same company)
+      const firstLead = get().deletedLeads.find(l => leadIds.includes(l._id));
       if (!firstLead) {
-        throw new Error('Lead not found');
+        throw new Error('No leads found to delete');
       }
-      const companyId = firstLead.company;
-      await bulkDeleteLead({ leadIds }, companyId);
+      
+      await bulkDeleteLead({ leadIds }, firstLead.companyId || '');
+      
+      // Remove the deleted leads from the list
       set((state) => ({
-        deletedLeads: state.deletedLeads.filter((l: DeletedLead) => !leadIds.includes(l._id)),
+        deletedLeads: state.deletedLeads.filter((lead) => !leadIds.includes(lead._id)),
+        totalLeads: Math.max(0, state.totalLeads - leadIds.length),
         isLoading: false,
       }));
-    } catch (error) {
-      set({ isLoading: false });
+    } catch (error: any) {
+      set({ 
+        error: error?.response?.data?.message || error?.message || 'Failed to permanently delete leads',
+        isLoading: false 
+      });
       throw error;
     }
   },

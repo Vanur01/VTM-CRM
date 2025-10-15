@@ -10,6 +10,8 @@ import { FcGoogle } from "react-icons/fc";
 import CircularProgress from "@mui/material/CircularProgress";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { auth, googleProvider } from "../../../../lib/firebaseClient";
+import { signInWithPopup } from "firebase/auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -22,7 +24,7 @@ export default function LoginPage() {
   const [step, setStep] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const { user, loginUser } = useAuthStore();
+  const { user, loginUser, googleLoginUser } = useAuthStore();
 
   const steps = [
     {
@@ -119,6 +121,63 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    console.log("🔥 Google login button clicked");
+    setLoading(true);
+    setError("");
+    
+    try {
+      // Get Firebase ID token from Google sign-in
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log("🔥 Firebase sign-in result:", result);
+      
+      const firebaseToken = await result.user.getIdToken();
+      const userEmail = result.user.email;
+      console.log("🔥 Firebase ID token obtained:", firebaseToken);
+      console.log("🔥 User email from Google:", userEmail);
+      
+      if (!userEmail) {
+        throw new Error("No email found in Google account");
+      }
+      
+      // Get FCM device token
+      let deviceToken: string | null = fcmToken;
+      if (!deviceToken) {
+        deviceToken = await generateFCMToken();
+      }
+      console.log("🔥 Device token:", deviceToken);
+      
+      // Call backend API for Google login
+      await googleLoginUser(firebaseToken, deviceToken || "default_device_token", userEmail);
+      
+      console.log("🔥 Google login successful!");
+      toast.success("Google login successful!", {
+        position: "top-center",
+        style: { background: "#4caf50", color: "#fff" },
+      });
+      
+      // Check role and navigate accordingly
+      const role = useAuthStore.getState().user?.role;
+      console.log("🔥 User role after login:", role);
+
+      if (role === "superadmin" || role === "admin") {
+        router.push("/sales-crm/home");
+      } else if (role === "manager") {
+        router.push("/manager/sales-crm/home");
+      } else if (role === "user") {
+        router.push("/user/sales-crm/home");
+      } else {
+        router.push("/");
+      }
+    } catch (err: any) {
+      console.error("🔥 Google login error:", err);
+      setError(err?.message || "Google login failed");
+      toast.error(err?.message || "Google login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const textVariants = {
     initial: {
       opacity: 0,
@@ -167,8 +226,16 @@ export default function LoginPage() {
             <p className="text-sm text-gray-600 mt-2">Login to your account</p>
           </div>
 
-          <button className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-            <FcGoogle className="w-5 h-5" />
+          <button 
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <CircularProgress size={20} className="text-gray-600" />
+            ) : (
+              <FcGoogle className="w-5 h-5" />
+            )}
             <span className="text-gray-700 font-medium text-sm sm:text-base">
               Continue with Google
             </span>
