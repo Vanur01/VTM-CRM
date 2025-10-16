@@ -29,6 +29,7 @@ import {
   ShoppingCart,
   ArrowDownCircle,
   Package,
+  GitBranch,
 } from "lucide-react";
 import Profilesheet from "@/components/sales-crm/Profilesheet";
 import ConfirmationDialog from "@/components/sales-crm/ConfirmationDialog";
@@ -72,7 +73,12 @@ export default function MainSidebar({
   const [reportsExpanded, setReportsExpanded] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
-  const basePath = user?.role === "admin" ? "/sales-crm" : user?.role === "manager" ? "/manager/sales-crm" : "/user/sales-crm";
+  const basePath =
+    user?.role === "admin"
+      ? "/sales-crm"
+      : user?.role === "manager"
+      ? "/manager/sales-crm"
+      : "/user/sales-crm";
 
   // Navigation items with consistent icon styling
   const navigationItems = useMemo<NavigationItem[]>(
@@ -87,6 +93,7 @@ export default function MainSidebar({
         path: `${basePath}/leads`,
         icon: <Target className="w-5 h-5 stroke-[1.5]" />,
       },
+
       // {
       //   label: "Deals",
       //   path: `${basePath}/deals`,
@@ -112,6 +119,7 @@ export default function MainSidebar({
         path: `${basePath}/reports`,
         icon: <FileText className="w-5 h-5 stroke-[1.5]" />,
       },
+
       ...(user?.role === "admin"
         ? [
             {
@@ -126,12 +134,23 @@ export default function MainSidebar({
         path: "/sales-crm/support",
         icon: <Headphones className="w-5 h-5 stroke-[1.5]" />,
       },
+
+      {
+        label: "Lead Chain",
+        path: `${basePath}/lead-chain`,
+        icon: <GitBranch className="w-5 h-5 stroke-[1.5]" />,
+      },
     ],
     [basePath, user?.role]
   );
 
   // Finance base path for finance modules
-  const financeBasePath = user?.role === "admin" ? "/finance" : user?.role === "manager" ? "/manager/finance" : "/user/finance";
+  const financeBasePath =
+    user?.role === "admin"
+      ? "/finance"
+      : user?.role === "manager"
+      ? "/manager/finance"
+      : "/user/finance";
 
   // Sales module items
   const salesItems = useMemo<NavigationItem[]>(
@@ -277,7 +296,10 @@ export default function MainSidebar({
       ...(user?.role === "admin" || user?.role === "manager"
         ? [
             {
-              href: user?.role === "admin" ? "/settings/users" : "/manager/settings/users",
+              href:
+                user?.role === "admin"
+                  ? "/settings/users"
+                  : "/manager/settings/users",
               icon: <LucideSettings className="w-4 h-4 stroke-[1.5]" />,
               label: "User Management",
             },
@@ -308,7 +330,9 @@ export default function MainSidebar({
 
     // Check if current path is in finance module (admin, manager, and user routes)
     const isFinanceRoute =
-      pathname.startsWith("/finance/") || pathname.startsWith("/user/finance/") || pathname.startsWith("/manager/finance/");
+      pathname.startsWith("/finance/") ||
+      pathname.startsWith("/user/finance/") ||
+      pathname.startsWith("/manager/finance/");
 
     if (matchedSetting) {
       setActiveTab("");

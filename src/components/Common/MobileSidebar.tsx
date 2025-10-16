@@ -30,6 +30,7 @@ import {
   Package,
   ChevronLeft,
   ChevronRight,
+  GitBranch,
 } from "lucide-react";
 import Profilesheet from "@/components/sales-crm/Profilesheet";
 import ConfirmationDialog from "@/components/sales-crm/ConfirmationDialog";
@@ -69,39 +70,88 @@ export default function MobileSidebar(props: MobileSidebarProps) {
   const [reportsExpanded, setReportsExpanded] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
-  const basePath = user?.role === "admin" ? "/sales-crm" : user?.role === "manager" ? "/manager/sales-crm" : "/user/sales-crm";
+  const basePath =
+    user?.role === "admin"
+      ? "/sales-crm"
+      : user?.role === "manager"
+      ? "/manager/sales-crm"
+      : "/user/sales-crm";
   // console.log("Base Path:", basePath);
   // console.log("User Role:---", user?.role);
 
   // here i want to print all the user data
   // console.log("User Data: -=-= --- ", user?.companyId);
-  
+
   // Store the company ID in localStorage for use throughout the app
   useEffect(() => {
     if (user?.companyId) {
-      localStorage.setItem('currentCompanyId', user.companyId);
+      localStorage.setItem("currentCompanyId", user.companyId);
       console.log("Company ID stored in localStorage:", user.companyId);
     }
   }, [user?.companyId]);
 
-  const financeBasePath = user?.role === "admin" ? "/finance" : user?.role === "manager" ? "/manager/finance" : "/user/finance";
+  const financeBasePath =
+    user?.role === "admin"
+      ? "/finance"
+      : user?.role === "manager"
+      ? "/manager/finance"
+      : "/user/finance";
 
   // Navigation items (Sales CRM)
   const navigationItems = useMemo<NavigationItem[]>(
     () => [
-      { label: "Dashboard", path: `${basePath}/home`, icon: <LayoutDashboard className="w-5 h-5" /> },
-      { label: "Leads", path: `${basePath}/leads`, icon: <Target className="w-5 h-5" /> },
+      {
+        label: "Dashboard",
+        path: `${basePath}/home`,
+        icon: <LayoutDashboard className="w-5 h-5" />,
+      },
+      {
+        label: "Leads",
+        path: `${basePath}/leads`,
+        icon: <Target className="w-5 h-5" />,
+      },
+
       // { label: "Deals", path: `${basePath}/deals`, icon: <Store className="w-5 h-5" /> },
-      { label: "Tasks", path: `${basePath}/tasks`, icon: <ClipboardList className="w-5 h-5" /> },
-      { label: "Calls", path: `${basePath}/calls`, icon: <Phone className="w-5 h-5" /> },
-      { label: "Meetings", path: `${basePath}/meetings`, icon: <Calendar className="w-5 h-5" /> },
-      { label: "Reports", path: `${basePath}/reports`, icon: <FileText className="w-5 h-5" /> },
+      {
+        label: "Tasks",
+        path: `${basePath}/tasks`,
+        icon: <ClipboardList className="w-5 h-5" />,
+      },
+      {
+        label: "Calls",
+        path: `${basePath}/calls`,
+        icon: <Phone className="w-5 h-5" />,
+      },
+      {
+        label: "Meetings",
+        path: `${basePath}/meetings`,
+        icon: <Calendar className="w-5 h-5" />,
+      },
+      {
+        label: "Reports",
+        path: `${basePath}/reports`,
+        icon: <FileText className="w-5 h-5" />,
+      },
+
       ...(user?.role === "admin"
         ? [
-            { label: "Analytics", path: `${basePath}/analytics`, icon: <BarChart3 className="w-5 h-5" /> },
+            {
+              label: "Analytics",
+              path: `${basePath}/analytics`,
+              icon: <BarChart3 className="w-5 h-5" />,
+            },
           ]
         : []),
-      { label: "Support", path: `/sales-crm/support`, icon: <Headphones className="w-5 h-5" /> },
+      {
+        label: "Support",
+        path: `/sales-crm/support`,
+        icon: <Headphones className="w-5 h-5" />,
+      },
+      {
+        label: "Lead Chain",
+        path: `${basePath}/lead-chain`,
+        icon: <GitBranch className="w-5 h-5" />,
+      },
     ],
     [basePath, user?.role]
   );
@@ -109,14 +159,46 @@ export default function MobileSidebar(props: MobileSidebarProps) {
   // Sales module items
   const salesItems = useMemo<NavigationItem[]>(
     () => [
-      { label: "Clients", path: `${financeBasePath}/clients`, icon: <Users className="w-4 h-4" /> },
-      { label: "Quotations", path: `${financeBasePath}/quotations`, icon: <FileText className="w-4 h-4" /> },
-      { label: "Performa Invoices", path: `${financeBasePath}/performa-invoices`, icon: <FileText className="w-4 h-4" /> },
-      { label: "Invoices", path: `${financeBasePath}/invoices`, icon: <FileText className="w-4 h-4" /> },
-      { label: "Sales Orders", path: `${financeBasePath}/sales-orders`, icon: <ShoppingCart className="w-4 h-4" /> },
-      { label: "Payment Received", path: `${financeBasePath}/payment-received`, icon: <ClipboardList className="w-4 h-4" /> },
-      { label: "Delivery Challans", path: `${financeBasePath}/delivery-challans`, icon: <Package className="w-4 h-4" /> },
-      { label: "Credit Notes", path: `${financeBasePath}/credit-notes`, icon: <FileText className="w-4 h-4" /> },
+      {
+        label: "Clients",
+        path: `${financeBasePath}/clients`,
+        icon: <Users className="w-4 h-4" />,
+      },
+      {
+        label: "Quotations",
+        path: `${financeBasePath}/quotations`,
+        icon: <FileText className="w-4 h-4" />,
+      },
+      {
+        label: "Performa Invoices",
+        path: `${financeBasePath}/performa-invoices`,
+        icon: <FileText className="w-4 h-4" />,
+      },
+      {
+        label: "Invoices",
+        path: `${financeBasePath}/invoices`,
+        icon: <FileText className="w-4 h-4" />,
+      },
+      {
+        label: "Sales Orders",
+        path: `${financeBasePath}/sales-orders`,
+        icon: <ShoppingCart className="w-4 h-4" />,
+      },
+      {
+        label: "Payment Received",
+        path: `${financeBasePath}/payment-received`,
+        icon: <ClipboardList className="w-4 h-4" />,
+      },
+      {
+        label: "Delivery Challans",
+        path: `${financeBasePath}/delivery-challans`,
+        icon: <Package className="w-4 h-4" />,
+      },
+      {
+        label: "Credit Notes",
+        path: `${financeBasePath}/credit-notes`,
+        icon: <FileText className="w-4 h-4" />,
+      },
     ],
     [financeBasePath]
   );
@@ -124,11 +206,31 @@ export default function MobileSidebar(props: MobileSidebarProps) {
   // Purchases module items
   const purchasesItems = useMemo<NavigationItem[]>(
     () => [
-      { label: "Purchases & Expenses", path: `${financeBasePath}/expenses`, icon: <ArrowDownCircle className="w-4 h-4" /> },
-      { label: "Purchase Orders", path: `${financeBasePath}/purchase-orders`, icon: <ShoppingCart className="w-4 h-4" /> },
-      { label: "Payments Made", path: `${financeBasePath}/payments-made`, icon: <ClipboardList className="w-4 h-4" /> },
-      { label: "Vendors", path: `${financeBasePath}/vendors`, icon: <Users className="w-4 h-4" /> },
-      { label: "Debit Notes", path: `${financeBasePath}/debit-notes`, icon: <FileText className="w-4 h-4" /> },
+      {
+        label: "Purchases & Expenses",
+        path: `${financeBasePath}/expenses`,
+        icon: <ArrowDownCircle className="w-4 h-4" />,
+      },
+      {
+        label: "Purchase Orders",
+        path: `${financeBasePath}/purchase-orders`,
+        icon: <ShoppingCart className="w-4 h-4" />,
+      },
+      {
+        label: "Payments Made",
+        path: `${financeBasePath}/payments-made`,
+        icon: <ClipboardList className="w-4 h-4" />,
+      },
+      {
+        label: "Vendors",
+        path: `${financeBasePath}/vendors`,
+        icon: <Users className="w-4 h-4" />,
+      },
+      {
+        label: "Debit Notes",
+        path: `${financeBasePath}/debit-notes`,
+        icon: <FileText className="w-4 h-4" />,
+      },
     ],
     [financeBasePath]
   );
@@ -136,8 +238,16 @@ export default function MobileSidebar(props: MobileSidebarProps) {
   // Inventory module items
   const inventoryItems = useMemo<NavigationItem[]>(
     () => [
-      { label: "Category", path: `${financeBasePath}/inventory/category`, icon: <LayoutDashboard className="w-4 h-4" /> },
-      { label: "Items", path: `${financeBasePath}/inventory/items`, icon: <Package className="w-4 h-4" /> },
+      {
+        label: "Category",
+        path: `${financeBasePath}/inventory/category`,
+        icon: <LayoutDashboard className="w-4 h-4" />,
+      },
+      {
+        label: "Items",
+        path: `${financeBasePath}/inventory/items`,
+        icon: <Package className="w-4 h-4" />,
+      },
     ],
     [financeBasePath]
   );
@@ -145,9 +255,21 @@ export default function MobileSidebar(props: MobileSidebarProps) {
   // Reports module items
   const reportsItems = useMemo<NavigationItem[]>(
     () => [
-      { label: "All Reports", path: `${financeBasePath}/reports`, icon: <FileText className="w-4 h-4" /> },
-      { label: "GSTR1", path: `${financeBasePath}/reports/gstr1summary`, icon: <BarChart3 className="w-4 h-4" /> },
-      { label: "GSTR2", path: `${financeBasePath}/reports/gstr2summary`, icon: <BarChart3 className="w-4 h-4" /> },
+      {
+        label: "All Reports",
+        path: `${financeBasePath}/reports`,
+        icon: <FileText className="w-4 h-4" />,
+      },
+      {
+        label: "GSTR1",
+        path: `${financeBasePath}/reports/gstr1summary`,
+        icon: <BarChart3 className="w-4 h-4" />,
+      },
+      {
+        label: "GSTR2",
+        path: `${financeBasePath}/reports/gstr2summary`,
+        icon: <BarChart3 className="w-4 h-4" />,
+      },
     ],
     [financeBasePath]
   );
@@ -156,35 +278,44 @@ export default function MobileSidebar(props: MobileSidebarProps) {
   const settingsMenuItems = useMemo<SettingsItem[]>(
     () => [
       {
-        href: user?.role === "admin" 
-          ? "/settings/profile" 
-          : user?.role === "manager"
-          ? "/manager/settings/profile"
-          : "/user/settings/profile",
+        href:
+          user?.role === "admin"
+            ? "/settings/profile"
+            : user?.role === "manager"
+            ? "/manager/settings/profile"
+            : "/user/settings/profile",
         icon: <UserCircle className="w-4 h-4" />,
         label: "Profile",
       },
       {
-        href: user?.role === "admin" 
-          ? "/settings/email" 
-          : user?.role === "manager"
-          ? "/manager/settings/email"
-          : "/user/settings/email",
+        href:
+          user?.role === "admin"
+            ? "/settings/email"
+            : user?.role === "manager"
+            ? "/manager/settings/email"
+            : "/user/settings/email",
         icon: <Mail className="w-4 h-4" />,
         label: "Email",
       },
       ...(user?.role === "admin" || user?.role === "manager"
         ? [
-            { 
-              href: user?.role === "admin" ? "/settings/users" : "/manager/settings/users", 
-              icon: <LucideSettings className="w-4 h-4" />, 
-              label: "User Management" 
+            {
+              href:
+                user?.role === "admin"
+                  ? "/settings/users"
+                  : "/manager/settings/users",
+              icon: <LucideSettings className="w-4 h-4" />,
+              label: "User Management",
             },
           ]
         : []),
       ...(user?.role === "admin"
         ? [
-            { href: "/settings/recyclebin", icon: <Recycle className="w-4 h-4" />, label: "Recycle Bin" },
+            {
+              href: "/settings/recyclebin",
+              icon: <Recycle className="w-4 h-4" />,
+              label: "Recycle Bin",
+            },
           ]
         : []),
     ],
@@ -193,9 +324,16 @@ export default function MobileSidebar(props: MobileSidebarProps) {
 
   // Active state detection
   useEffect(() => {
-    const matchedTab = navigationItems.find(tab => pathname === tab.path || pathname.startsWith(tab.path + "/"));
-    const matchedSetting = settingsMenuItems.find(item => pathname === item.href || pathname.startsWith(item.href + "/"));
-    const isFinanceRoute = pathname.startsWith("/finance/") || pathname.startsWith("/user/finance/") || pathname.startsWith("/manager/finance/");
+    const matchedTab = navigationItems.find(
+      (tab) => pathname === tab.path || pathname.startsWith(tab.path + "/")
+    );
+    const matchedSetting = settingsMenuItems.find(
+      (item) => pathname === item.href || pathname.startsWith(item.href + "/")
+    );
+    const isFinanceRoute =
+      pathname.startsWith("/finance/") ||
+      pathname.startsWith("/user/finance/") ||
+      pathname.startsWith("/manager/finance/");
 
     if (matchedSetting) {
       setActiveTab && setActiveTab("");
@@ -210,23 +348,27 @@ export default function MobileSidebar(props: MobileSidebarProps) {
       setSettingsExpanded(false);
       setSalesCrmExpanded(false);
       // Determine which finance module to expand based on the route
-      if (pathname.includes("/clients") || 
-          pathname.includes("/quotations") || 
-          pathname.includes("/performa-invoices") || 
-          pathname.includes("/invoices") || 
-          pathname.includes("/sales-orders") || 
-          pathname.includes("/payment-received") || 
-          pathname.includes("/delivery-challans") || 
-          pathname.includes("/credit-notes")) {
+      if (
+        pathname.includes("/clients") ||
+        pathname.includes("/quotations") ||
+        pathname.includes("/performa-invoices") ||
+        pathname.includes("/invoices") ||
+        pathname.includes("/sales-orders") ||
+        pathname.includes("/payment-received") ||
+        pathname.includes("/delivery-challans") ||
+        pathname.includes("/credit-notes")
+      ) {
         setSalesExpanded(true);
         setPurchasesExpanded(false);
         setInventoryExpanded(false);
         setReportsExpanded(false);
-      } else if (pathname.includes("/expenses") || 
-                 pathname.includes("/purchase-orders") || 
-                 pathname.includes("/payments-made") || 
-                 pathname.includes("/vendors") || 
-                 pathname.includes("/debit-notes")) {
+      } else if (
+        pathname.includes("/expenses") ||
+        pathname.includes("/purchase-orders") ||
+        pathname.includes("/payments-made") ||
+        pathname.includes("/vendors") ||
+        pathname.includes("/debit-notes")
+      ) {
         setSalesExpanded(false);
         setPurchasesExpanded(true);
         setInventoryExpanded(false);
@@ -262,46 +404,52 @@ export default function MobileSidebar(props: MobileSidebarProps) {
   }, [pathname, navigationItems, settingsMenuItems, setActiveTab]);
 
   // Handlers
-  const navigateTo = useCallback((label: string) => {
-    const item = navigationItems.find(t => t.label === label);
-    if (item) {
-      setActiveTab && setActiveTab(item.label);
-      setSettingsExpanded(false);
-      setSalesCrmExpanded(true);
-      setSalesExpanded(false);
-      setPurchasesExpanded(false);
-      setInventoryExpanded(false);
-      setReportsExpanded(false);
-      router.push(item.path);
-      onClose && onClose();
-    }
-  }, [navigationItems, setActiveTab, router, onClose]);
+  const navigateTo = useCallback(
+    (label: string) => {
+      const item = navigationItems.find((t) => t.label === label);
+      if (item) {
+        setActiveTab && setActiveTab(item.label);
+        setSettingsExpanded(false);
+        setSalesCrmExpanded(true);
+        setSalesExpanded(false);
+        setPurchasesExpanded(false);
+        setInventoryExpanded(false);
+        setReportsExpanded(false);
+        router.push(item.path);
+        onClose && onClose();
+      }
+    },
+    [navigationItems, setActiveTab, router, onClose]
+  );
 
-  const handleFinanceNavigation = useCallback((path: string) => {
-    setActiveTab && setActiveTab("");
-    setSalesCrmExpanded(false);
-    setSettingsExpanded(false);
-    router.push(path);
-    onClose && onClose();
-  }, [router, onClose, setActiveTab]);
+  const handleFinanceNavigation = useCallback(
+    (path: string) => {
+      setActiveTab && setActiveTab("");
+      setSalesCrmExpanded(false);
+      setSettingsExpanded(false);
+      router.push(path);
+      onClose && onClose();
+    },
+    [router, onClose, setActiveTab]
+  );
 
   const toggleSettings = useCallback(() => {
-    setSettingsExpanded(prev => !prev);
+    setSettingsExpanded((prev) => !prev);
   }, []);
   const toggleSalesCrm = useCallback(() => {
-    setSalesCrmExpanded(prev => !prev);
+    setSalesCrmExpanded((prev) => !prev);
   }, []);
   const toggleSales = useCallback(() => {
-    setSalesExpanded(prev => !prev);
+    setSalesExpanded((prev) => !prev);
   }, []);
   const togglePurchases = useCallback(() => {
-    setPurchasesExpanded(prev => !prev);
+    setPurchasesExpanded((prev) => !prev);
   }, []);
   const toggleInventory = useCallback(() => {
-    setInventoryExpanded(prev => !prev);
+    setInventoryExpanded((prev) => !prev);
   }, []);
   const toggleReports = useCallback(() => {
-    setReportsExpanded(prev => !prev);
+    setReportsExpanded((prev) => !prev);
   }, []);
 
   const handleLogout = useCallback(async () => {
@@ -315,7 +463,10 @@ export default function MobileSidebar(props: MobileSidebarProps) {
     }
   }, [logoutUser, fcmToken, router, onClose]);
 
-  const isCurrentPath = useCallback((path: string) => pathname === path, [pathname]);
+  const isCurrentPath = useCallback(
+    (path: string) => pathname === path,
+    [pathname]
+  );
 
   return (
     <Drawer
@@ -324,12 +475,14 @@ export default function MobileSidebar(props: MobileSidebarProps) {
       onClose={onClose}
       ModalProps={{ keepMounted: true }}
       PaperProps={{
-        className: "w-72 max-w-full bg-white flex flex-col h-full shadow-lg border-r border-gray-200",
+        className:
+          "w-72 max-w-full bg-white flex flex-col h-full shadow-lg border-r border-gray-200",
       }}
     >
       {/* Header */}
       <header className="flex items-center justify-between h-16 px-4 border-b border-gray-200 shrink-0">
-        <Link href={'/'}
+        <Link
+          href={"/"}
           className="text-2xl font-bold text-blue-600 cursor-pointer select-none"
         >
           Caishen
@@ -356,24 +509,33 @@ export default function MobileSidebar(props: MobileSidebarProps) {
                 ${salesCrmExpanded ? "bg-gray-50 text-gray-900" : ""}
               `}
             >
-              <LayoutDashboard className={`w-5 h-5 stroke-[1.5] ${salesCrmExpanded ? "text-gray-700" : "text-gray-500"}`} />
+              <LayoutDashboard
+                className={`w-5 h-5 stroke-[1.5] ${
+                  salesCrmExpanded ? "text-gray-700" : "text-gray-500"
+                }`}
+              />
               <span>Sales CRM</span>
               <span className="ml-auto text-gray-400">
-                {salesCrmExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                {salesCrmExpanded ? (
+                  <ChevronUp className="w-5 h-5" />
+                ) : (
+                  <ChevronDown className="w-5 h-5" />
+                )}
               </span>
             </button>
             {salesCrmExpanded && (
               <div className="mt-2 ml-4 space-y-1">
-                {navigationItems.map(item => (
+                {navigationItems.map((item) => (
                   <button
                     key={item.label}
                     onClick={() => navigateTo(item.label)}
                     className={`
                       flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm
                       transition-all duration-200
-                      ${activeTab === item.label
-                        ? "bg-indigo-50 text-indigo-700 font-medium"
-                        : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                      ${
+                        activeTab === item.label
+                          ? "bg-indigo-50 text-indigo-700 font-medium"
+                          : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                       }
                     `}
                   >
@@ -395,24 +557,33 @@ export default function MobileSidebar(props: MobileSidebarProps) {
                 ${salesExpanded ? "bg-gray-50 text-gray-900" : ""}
               `}
             >
-              <Users className={`w-5 h-5 stroke-[1.5] ${salesExpanded ? "text-gray-700" : "text-gray-500"}`} />
+              <Users
+                className={`w-5 h-5 stroke-[1.5] ${
+                  salesExpanded ? "text-gray-700" : "text-gray-500"
+                }`}
+              />
               <span>Sales</span>
               <span className="ml-auto text-gray-400">
-                {salesExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                {salesExpanded ? (
+                  <ChevronUp className="w-5 h-5" />
+                ) : (
+                  <ChevronDown className="w-5 h-5" />
+                )}
               </span>
             </button>
             {salesExpanded && (
               <div className="mt-2 ml-4 space-y-1">
-                {salesItems.map(item => (
+                {salesItems.map((item) => (
                   <button
                     key={item.label}
                     onClick={() => handleFinanceNavigation(item.path)}
                     className={`
                       flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm
                       transition-all duration-200
-                      ${pathname === item.path
-                        ? "bg-indigo-50 text-indigo-700 font-medium"
-                        : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                      ${
+                        pathname === item.path
+                          ? "bg-indigo-50 text-indigo-700 font-medium"
+                          : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                       }
                     `}
                   >
@@ -434,24 +605,33 @@ export default function MobileSidebar(props: MobileSidebarProps) {
                 ${purchasesExpanded ? "bg-gray-50 text-gray-900" : ""}
               `}
             >
-              <ArrowDownCircle className={`w-5 h-5 stroke-[1.5] ${purchasesExpanded ? "text-gray-700" : "text-gray-500"}`} />
+              <ArrowDownCircle
+                className={`w-5 h-5 stroke-[1.5] ${
+                  purchasesExpanded ? "text-gray-700" : "text-gray-500"
+                }`}
+              />
               <span>Purchases</span>
               <span className="ml-auto text-gray-400">
-                {purchasesExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                {purchasesExpanded ? (
+                  <ChevronUp className="w-5 h-5" />
+                ) : (
+                  <ChevronDown className="w-5 h-5" />
+                )}
               </span>
             </button>
             {purchasesExpanded && (
               <div className="mt-2 ml-4 space-y-1">
-                {purchasesItems.map(item => (
+                {purchasesItems.map((item) => (
                   <button
                     key={item.label}
                     onClick={() => handleFinanceNavigation(item.path)}
                     className={`
                       flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm
                       transition-all duration-200
-                      ${pathname === item.path
-                        ? "bg-indigo-50 text-indigo-700 font-medium"
-                        : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                      ${
+                        pathname === item.path
+                          ? "bg-indigo-50 text-indigo-700 font-medium"
+                          : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                       }
                     `}
                   >
@@ -473,24 +653,33 @@ export default function MobileSidebar(props: MobileSidebarProps) {
                 ${inventoryExpanded ? "bg-gray-50 text-gray-900" : ""}
               `}
             >
-              <Package className={`w-5 h-5 stroke-[1.5] ${inventoryExpanded ? "text-gray-700" : "text-gray-500"}`} />
+              <Package
+                className={`w-5 h-5 stroke-[1.5] ${
+                  inventoryExpanded ? "text-gray-700" : "text-gray-500"
+                }`}
+              />
               <span>Inventory</span>
               <span className="ml-auto text-gray-400">
-                {inventoryExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                {inventoryExpanded ? (
+                  <ChevronUp className="w-5 h-5" />
+                ) : (
+                  <ChevronDown className="w-5 h-5" />
+                )}
               </span>
             </button>
             {inventoryExpanded && (
               <div className="mt-2 ml-4 space-y-1">
-                {inventoryItems.map(item => (
+                {inventoryItems.map((item) => (
                   <button
                     key={item.label}
                     onClick={() => handleFinanceNavigation(item.path)}
                     className={`
                       flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm
                       transition-all duration-200
-                      ${pathname === item.path
-                        ? "bg-indigo-50 text-indigo-700 font-medium"
-                        : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                      ${
+                        pathname === item.path
+                          ? "bg-indigo-50 text-indigo-700 font-medium"
+                          : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                       }
                     `}
                   >
@@ -512,24 +701,33 @@ export default function MobileSidebar(props: MobileSidebarProps) {
                 ${reportsExpanded ? "bg-gray-50 text-gray-900" : ""}
               `}
             >
-              <BarChart3 className={`w-5 h-5 stroke-[1.5] ${reportsExpanded ? "text-gray-700" : "text-gray-500"}`} />
+              <BarChart3
+                className={`w-5 h-5 stroke-[1.5] ${
+                  reportsExpanded ? "text-gray-700" : "text-gray-500"
+                }`}
+              />
               <span>Reports</span>
               <span className="ml-auto text-gray-400">
-                {reportsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                {reportsExpanded ? (
+                  <ChevronUp className="w-5 h-5" />
+                ) : (
+                  <ChevronDown className="w-5 h-5" />
+                )}
               </span>
             </button>
             {reportsExpanded && (
               <div className="mt-2 ml-4 space-y-1">
-                {reportsItems.map(item => (
+                {reportsItems.map((item) => (
                   <button
                     key={item.label}
                     onClick={() => handleFinanceNavigation(item.path)}
                     className={`
                       flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm
                       transition-all duration-200
-                      ${pathname === item.path
-                        ? "bg-indigo-50 text-indigo-700 font-medium"
-                        : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                      ${
+                        pathname === item.path
+                          ? "bg-indigo-50 text-indigo-700 font-medium"
+                          : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                       }
                     `}
                   >
@@ -554,20 +752,25 @@ export default function MobileSidebar(props: MobileSidebarProps) {
               <LucideSettings className="w-5 h-5 text-gray-500" />
               <span>Settings</span>
               <span className="ml-auto text-gray-400">
-                {settingsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                {settingsExpanded ? (
+                  <ChevronUp className="w-5 h-5" />
+                ) : (
+                  <ChevronDown className="w-5 h-5" />
+                )}
               </span>
             </button>
             {settingsExpanded && (
               <div className="mt-2 ml-4 space-y-1">
-                {settingsMenuItems.map(item => (
+                {settingsMenuItems.map((item) => (
                   <Link key={item.href} href={item.href} onClick={onClose}>
                     <button
                       className={`
                         flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm
                         transition-all duration-200
-                        ${isCurrentPath(item.href)
-                          ? "bg-blue-50 text-indigo-700 font-medium"
-                          : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                        ${
+                          isCurrentPath(item.href)
+                            ? "bg-blue-50 text-indigo-700 font-medium"
+                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                         }
                       `}
                     >
@@ -591,12 +794,20 @@ export default function MobileSidebar(props: MobileSidebarProps) {
             className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-gray-50 transition-all duration-200 border border-transparent hover:border-gray-200"
           >
             <div className="relative">
-              <Avatar src="/user.jpg" sx={{ width: 40, height: 40 }} className="ring-2 ring-gray-200" />
+              <Avatar
+                src="/user.jpg"
+                sx={{ width: 40, height: 40 }}
+                className="ring-2 ring-gray-200"
+              />
               <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
             </div>
             <div className="text-left min-w-0 flex-1">
-              <div className="font-semibold text-sm text-gray-900 truncate">{user?.name || "User"}</div>
-              <div className="text-xs text-gray-500 truncate">{user?.email || "user@crm.com"}</div>
+              <div className="font-semibold text-sm text-gray-900 truncate">
+                {user?.name || "User"}
+              </div>
+              <div className="text-xs text-gray-500 truncate">
+                {user?.email || "user@crm.com"}
+              </div>
             </div>
           </button>
         </div>
@@ -616,14 +827,21 @@ export default function MobileSidebar(props: MobileSidebarProps) {
         open={profileSheetOpen}
         onClose={() => setProfileSheetOpen(false)}
         onLogout={handleLogout}
-        onProfile={() => {router.push("/profile"); setProfileSheetOpen(false); onClose();}}
+        onProfile={() => {
+          router.push("/profile");
+          setProfileSheetOpen(false);
+          onClose();
+        }}
       />
       {/* Logout Confirmation Dialog */}
       <ConfirmationDialog
         show={showLogoutDialog}
         title="Logout"
         message="Are you sure you want to logout? You will be logged out of your account."
-        onConfirm={() => { setShowLogoutDialog(false); handleLogout(); }}
+        onConfirm={() => {
+          setShowLogoutDialog(false);
+          handleLogout();
+        }}
         onCancel={() => setShowLogoutDialog(false)}
         confirmText="Logout"
         cancelText="Cancel"
